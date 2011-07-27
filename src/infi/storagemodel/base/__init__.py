@@ -1,6 +1,5 @@
 
 class SCSIDevice(object):
-
     def with_asi_context(self):
         pass
 

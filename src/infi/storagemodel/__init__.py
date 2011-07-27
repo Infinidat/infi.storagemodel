@@ -22,26 +22,19 @@ class StorageModel(object):
             StorageModel.__instances__["native_multipath"] = NativeMultipathModel()
         return self.__instances__["native_multipath"]
 
-def devlist_example():
+def infinidat_devlist_example():
     model = StorageModel()
     scsi_block_devices = model.scsi.get_all_scsi_block_devices()
     mp_devices = model.native_multipath.get_devices()
-    non_mp_devices = model.native_multipath.pop_non_multipath_scsi_block_devices(scsi_block_devices)
+    non_mp_devices = model.native_multipath.filter_non_multipath_scsi_block_devices(scsi_block_devices)
 
     from .vendor_specific import VendorSpecificFactory
     infibox = VendorSpecificFactory().get_mixin_class_by_vid_pid("NFINIDAT", "InfiniBox")
 
-    for device in mp_devices.filter_vendor_specific_devices(non_mp_devices, infibox):
-        print "\t".join([device.display_name, ])
+    for device in model.native_multipath.filter_vendor_specific_devices(mp_devices, infibox):
+        print "\t".join([device.display_name, device.device_path, device.vendor_specific_mixin.volume_name])
         mp_devices.pop(device)
 
-    for device in mp_devices:
-        print device.display_name
-
     for device in model.scsi.filter_vendor_specific_devices(non_mp_devices, infibox):
-        print "\t".join([device.display_name, device.size_in_bytes])
-        print device.vendor_specific_mixin.volume_name, device.vendor_specific_mixin.box_serial
+        print "\t".join([device.display_name, device.deivce_path, device.size_in_bytes])
         non_mp_devices.pop(device)
-
-    for device in non_mp_devices:
-        print device.display_name
