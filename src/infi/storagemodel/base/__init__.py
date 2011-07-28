@@ -11,7 +11,7 @@ class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):
         super(SupportedVPDPagesDict, self).__init__(dict.copy())
         self.device = device
-        
+
     def _create_value(self, page_code):
         inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
         with self.device.asi_context() as asi:
@@ -99,7 +99,7 @@ class SCSIDevice(object):
                     pass
                 raise
         return SupportedVPDPagesDict(page_dict, self)
-    
+
     @property
     def display_name(self):
         """ returns a friendly device name.
@@ -197,6 +197,12 @@ class ScsiModel(object):
         raise NotImplementedError
 
     def rescan_and_wait_for(self, hctl_map, timeout_in_seconds=None):
+        # TODO: I discussed this with rotem, he wants a different thing:
+        # In this use-cas he's mapping a volume to volume onto a lun to an initiator port, and he wants to wait for
+        # the mapping to wait. He wants to pass a list of (initiator_port, target_port, lun) and have us wait on these.
+        # if initiator_port is None, we shall wait on each initiator_port we are aware of.
+        # this is true for fiberchannel.
+        # for iscsi the tuple is made of (initiator_iqn, initiator_ip, target_iqn, target_ip, lun).
         """ Rescan devices and wait for user-defined changes. Each key is an HCTL object and each value is True/False.
         True means the device should be mapped, False means that it should be unmapped.
         """
@@ -284,13 +290,13 @@ class MultipathDevice(object):
         not all policies are supported on all platforms
         """
         # return a Policy object (FailOverOnly/Custom/...)
-        
+
     @property
     def policy_attributes(self):
         """ names of path attributes relevant to this policy
         """
         pass
-    
+
     def apply_policy(self, policy_builder):
         """
         linux: 
