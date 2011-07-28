@@ -15,7 +15,7 @@ class cached_property(object):
                 # will only be evaluated every 10 min. at maximum.
                 return random.randint(0, 100)
 
-    The value is cached  in the '_cache' attribute of the object instance that
+    The value is cached  in the '_cache' attribute of the object inst that
     has the property getter method wrapped by this decorator. The '_cache'
     attribute value is a dictionary which has a key for every property of the
     object which is wrapped by this decorator. Each entry in the cache is
@@ -25,7 +25,7 @@ class cached_property(object):
 
     To expire a cached property value manually just do::
     
-        del instance._cache[<property name>]
+        del inst._cache[<property name>]
     """
     def __init__(self, fget, doc=None):
         super(cached_property, self).__init__()
@@ -46,6 +46,34 @@ class cached_property(object):
             cache[self.__name__] = value
         return value
 
+class cached_method(object):
+    """Decorator that caches a function's return value each time it is called.
+    If called later with the same arguments, the cached value is returned, and
+    not re-evaluated.
+    """
+    def __init__(self, func):
+        super(cached_method, self).__init__()
+        self.func = func
+        self.__name__ = func.__name__
+        self.__doc__ = func.__doc__
+        self.inst = None
+
+    def __call__(self, *args, **kwargs):
+        try:
+           value = self.inst._cache[self.__name__]
+        except (KeyError, AttributeError):
+           value = self.func(self.inst, *args, **kwargs)
+           try:
+               self.inst._cache[self.__name__] = value
+           except AttributeError:
+               cache = self.inst._cache = {}
+           self.inst._cache[self.__name__] = value
+        return value
+
+    def __get__(self, obj, objtype):
+        self.inst = obj
+        return self
+
 def clear_cache(self):
     if hasattr(self, '_cache'):
         getattr(self, '_cache').clear()
@@ -53,7 +81,7 @@ def clear_cache(self):
 class LazyImmutableDict(object):
     def __init__(self, dict):
         self._dict = dict
-    
+
     def __getitem__(self, key):
         value = self._dict[key]
         if value is None:
@@ -74,3 +102,4 @@ class LazyImmutableDict(object):
 
     def _create_value(self, key):
         raise NotImplementedError()
+
