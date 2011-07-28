@@ -5,7 +5,7 @@ from infi.asi.cdb.inquiry import SupportedVPDPagesInquiryCommand
 from infi.asi.coroutines.sync_adapter import sync_wait
 
 from ..vendor import VendorFactory
-from ..utils import cached_property, clear_cache, LazyImmutableDict
+from ..utils import cached_property, cached_method, clear_cache, LazyImmutableDict
 
 class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):
@@ -41,36 +41,13 @@ class StorageModel(object):
         raise NotImplementedError()
 
 class SCSIDevice(object):
-    def asi_context(self):
-        raise NotImplementedError()
-
-    @cached_property
-    def hctl(self):
-        raise NotImplementedError()
-
-    @cached_property
-    def scsi_serial_number(self):
-        """Returns the SCSI serial of the device or an empty string ("") if not available"""
-        serial = ''
-        if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.scsi_inquiry_pages:
-            serial = self.scsi_inquiry_pages[INQUIRY_PAGE_UNIT_SERIAL_NUMBER].product_serial_number
-        return serial
-
-    @cached_property
-    def scsi_standard_inquiry(self):
-        with self.asi_context() as asi:
-            command = StandardInquiryCommand()
-            return sync_wait(command.execute(asi))
-
     @cached_property
     def scsi_vendor_id(self):
-        # do scsi_standard_inquiry and get the vid
-        pass
+        return self.scsi_standard_inquiry.t10_vendor_identification
 
     @property
     def scsi_product_id(self):
-        # do scsi_standard_inquiry and get the pid
-        pass
+        return self.scsi_standard_inquiry.product_identification
 
     @property
     def scsi_vid_pid(self):
@@ -100,9 +77,36 @@ class SCSIDevice(object):
                 raise
         return SupportedVPDPagesDict(page_dict, self)
 
+    @cached_property
+    def scsi_serial_number(self):
+        """Returns the SCSI serial of the device or an empty string ("") if not available"""
+        serial = ''
+        if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.scsi_inquiry_pages:
+            serial = self.scsi_inquiry_pages[INQUIRY_PAGE_UNIT_SERIAL_NUMBER].product_serial_number
+        return serial
+
+    @cached_property
+    def scsi_standard_inquiry(self):
+        with self.asi_context() as asi:
+            command = StandardInquiryCommand()
+            return sync_wait(command.execute(asi))
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    def asi_context(self):
+        raise NotImplementedError()
+
+    @cached_property
+    def hctl(self):
+        """returns a HCTL object"""
+        raise NotImplementedError()
+
+
     @property
     def display_name(self):
-        """ returns a friendly device name.
+        """returns a friendly device name.
         In Windows, its PHYSICALDRIVE%d, in linux, its sdX.
         """
         # platform implementation
@@ -110,24 +114,21 @@ class SCSIDevice(object):
 
     @property
     def block_access_path(self):
-        """ returns a path for the device
+        """returns a string path for the device
         In Windows, its something under globalroot
-        In linux, its /dev/sdX
-        """
+        In linux, its /dev/sdX"""
         raise NotImplementedError
 
     @property
     def scsi_access_path(self):
-        """ returns a path for the device
+        """returns a string path for the device
         In Windows, its something under globalroot like block_device_path
-        In linux, its /dev/sgX
-        """
+        In linux, its /dev/sgX"""
         raise NotImplementedError
 
     @property
     def connectivity(self):
-        """ Returns a mixin instance of this object and a connectivity interface
-        """
+        """returns a mixin instance of this object and a connectivity interface"""
         # TODO connectivity factory, is it platform specific? for fiberchannel - yes, for iscsi???
         # Return either an iSCSIConnectivityInfo or FiberChannelConnectivityInfo
         from ..connectivity import ConnectivityFactory
