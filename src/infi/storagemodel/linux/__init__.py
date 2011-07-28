@@ -1,4 +1,3 @@
-
 from .. import base
 
 class LinuxSCSIDevice(object):
@@ -12,8 +11,15 @@ class LinuxSCSIBlockDevice(base.SCSIBlockDevice, LinuxSCSIDevice):
 class LinuxSCSIStorageController(base.SCSIStorageController, LinuxSCSIDevice):
     pass
 
-class ScsiModel(base.ScsiModel):
+class LinuxScsiModel(base.ScsiModel):
     pass
 
-class NativeMultipathModel(base.NativeMultipathModel):
+class LinuxNativeMultipathModel(base.NativeMultipathModel):
     pass
+
+class LinuxStorageModel(StorageModel):
+    def _create_scsi_model(self):
+        return LinuxScsiModel()
+
+    def _create_native_multipath_model(self):
+        return LinuxNativeMultipathModel()

@@ -1,34 +1,38 @@
+class VendorSCSIBlockDevice(object):
+    def __init__(self, device):
+        super(VendorSCSIBlockDevice, self).__init__()
+        self.device = device
 
-class VendorSpecificFactory(object):
-    __mixins__ = dict()
-    __initialized__ = False
+class VendorSCSIStorageController(object):
+    def __init__(self, device):
+        super(VendorSCSIStorageController, self).__init__()
+        self.device = device
 
+class VendorMultipathDevice(object):
+    def __init__(self, device):
+        super(VendorMultipathDevice, self).__init__()
+        self.device = device
+
+class VendorFactory(object):
     def __init__(self):
-        super(VendorSpecificFactory, self).__init__()
-        if not VendorSpecificFactory.__initialized__:
-            self._add_inbox_mixins()
-            self.__initialized__ = True
+        super(VendorSpecificFactoryImpl, self).__init__()
+        self.vendor_mapping = {} # (vid, pid) -> dict(block=class, controller=class, multipath=class)
 
-    def _add_inbox_mixins(self):
-        from .infinibox import InfiniBoxMixin
-        VendorSpecificFactory.__mixins__[("NFINIDAT", "InfiniBox")] = InfiniBoxMixin
+    def register(vid_pid, block_class, controller_class, multipath_class):
+        assert vid_pid not in self.vendor_mapping
+        assert issubclass(block_class, VendorSCSIBlockDevice)
+        assert issubclass(controller_class, VendorSCSIStorageController)
+        assert issubclass(multipath_class, VendorMultipathDevice)
+        self.vendor_mapping[vid_pid] = dict(block=block_class, controller=controller_class, multipath=multipath_class)
 
-    def _create_mixin(self, original, mixin_class):
-        raise NotImplementedError
+    def create_block_by_vid_pid(vid_pid, device):
+        assert vid_pid in self.vendor_mapping
+        return self.vendor_mapping[vid_pid]['block'](device)
 
-    def create_mixin_object(self, original):
-        vendor_id, product_id = original.standard_inquiry_data.vendor_id, original.standard_inquiry_data.product_id
-        mixin_class = VendorSpecificFactory.__mixins__.get((vendor_id, product_id), None)
-        if mixin_class is None:
-            return None
-        return self._create_mixin(original, mixin_class)
+    def create_controller_by_vid_pid(vid_pid, device):
+        assert vid_pid in self.vendor_mapping
+        return self.vendor_mapping[vid_pid]['controller'](device)
 
-    def get_mixin_class_by_vid_pid(self, vid, pid):
-        return VendorSpecificFactory.__mixins__[(vid, pid)]
-
-    def iter_available_mixin_classes(self):
-        for k, v in self.__mixins__.iteritems():
-            yield k, v
-
-    def set_mixin_class(self, vid, pid, mixin_class):
-        VendorSpecificFactory.__mixins__[(vid, pid)] = mixin_class
+    def create_multipath_by_vid_pid(vid_pid, device):
+        assert vid_pid in self.vendor_mapping
+        return self.vendor_mapping[vid_pid]['multipath'](device)

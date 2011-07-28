@@ -1,3 +1,4 @@
+from ..vendor import VendorFactory
 
 class SCSIDevice(object):
     def with_asi_context(self):
@@ -21,6 +22,20 @@ class SCSIDevice(object):
         raise NotImplementedError
 
     @property
+    def scsi_vendor_id(self):
+        # do scsi_standard_inquiry and get the vid
+        pass
+
+    @property
+    def scsi_product_id(self):
+        # do scsi_standard_inquiry and get the pid
+        pass
+
+    @property
+    def scsi_vid_pid(self):
+        return (self.scsi_vendor_id, self.scsi_product_id)
+
+    @property
     def scsi_inquiry_pages(self):
         """ return an immutable dict-like object of available inquiry pages from this device
         """
@@ -38,26 +53,23 @@ class SCSIDevice(object):
         raise NotImplementedError
 
     @property
-    def device_path(self):
+    def block_access_path(self):
         """ returns a path for the device
         In Windows, its something under globalroot
-        In linux, its /dev/sgx
+        In linux, its /dev/sdX
         """
         raise NotImplementedError
 
     @property
-    def vendor_specific_mixin(self):
-        """ Returns a mixin object from the factory based on the device's vid, pid
-        If there is no mixing interface available, this property returns None
+    def scsi_access_path(self):
+        """ returns a path for the device
+        In Windows, its something under globalroot like block_device_path
+        In linux, its /dev/sgX
         """
-        from ..vendor_specific import VendorSpecificFactory
-        VendorSpecificFactory().create_mixin_object(self)
-        # TODO vendor factory is NOT!!! platform specific
-        # dev.vendor_specific_mixin.infi_volume
-        pass
+        raise NotImplementedError
 
     @property
-    def connectivity_mixin(self):
+    def connectivity(self):
         """ Returns a mixin instance of this object and a connectivity interface
         """
         # TODO connectivity factory, is it platform specific? for fiberchannel - yes, for iscsi???
@@ -71,8 +83,16 @@ class SCSIBlockDevice(SCSIDevice):
         # platform implementation
         raise NotImplementedError
 
+    @property
+    def vendor(self):
+        """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        return VendorFactory.create_block_by_vid_pid(self.scsi_vid_pid(), self)
+
 class SCSIStorageController(SCSIDevice):
-    pass
+    @property
+    def vendor(self):
+        """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        return VendorFactory.create_controller_by_vid_pid(self.scsi_vid_pid(), self)
 
 class ScsiModel(object):
     def refresh_scsi_block_devices(self):
@@ -147,6 +167,11 @@ class NativeMultipathModel(MultipathFrameworkModel):
 
 class MultipathDevice(object):
     @property
+    def vendor(self):
+        """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        return VendorFactory.create_multipath_by_vid_pid(self.scsi_vid_pid(), self)
+
+    @property
     def device_path(self):
         """ linux: /dev/dm-X
         windows: mpiodisk%d
@@ -196,15 +221,21 @@ class MultipathDevice(object):
     def paths(self):
         pass
 
-
     @property
     def policy(self):
-        """ 'failover only', 'round robin', 'weighted round robin', 'least queue depth', 'least blocks'
+        """ 'failover only', 'round robin', 'weighted round robin', 'least queue depth', 'least blocks',
+        'round robin with subset'
         not all policies are supported on all platforms
         """
-
-    @policy.settr
-    def policy(self, new_policy, paths):
+        # return a Policy object (FailOverOnly/Custom/...)
+        
+    @property
+    def policy_attributes(self):
+        """ names of path attributes relevant to this policy
+        """
+        pass
+    
+    def apply_policy(self, policy_builder):
         """
         linux: 
             failover only: group per path
@@ -219,6 +250,14 @@ class MultipathDevice(object):
             """
         pass
 
+class FailoverOnlyBuilder(object):
+    pass
+
+class RoundRobinWithSubsetBuilder(object):
+    def use_tpgs(self):
+        return self
+
+
 class Path(object):
     @property
     def path_id(self):
@@ -232,10 +271,8 @@ class Path(object):
 
     @property
     def state(self):
-        """ active, inactive, disconnected
+        """ up/down
         """
         pass
 
-    @property
-    def weight(self):
-        pass
+# TODO the policy strategy
