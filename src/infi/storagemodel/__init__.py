@@ -1,36 +1,11 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
-class StorageModel(object):
-    def __init__(self):
-        super(StorageModel, self).__init__()
-        self.scsi_model = None
-        self.native_multipath_model = None
-
-    @property
-    def scsi(self):
-        if self.scsi_model is None:
-            self.scsi_model = self._create_scsi_model()
-        return self.scsi_model
-    
-    @property
-    def native_multipath(self):
-        if self.native_multipath_model is None:
-            self.native_multipath_model = self._create_native_multipath_model()
-        return self.native_multipath_model
-
-    def refresh(self):
-        pass
-
-    def _create_scsi_model(self):
-        raise NotImplementedError()
-
-    def _create_native_multipath(self):
-        raise NotImplementedError()
+__all__ = [ 'get_storage_model' ]
 
 __storage_model = None
 
 def get_storage_model():
-    globals __storage_model
+    global __storage_model
     if __storage_model is None:
         # do platform-specific magic here.
         from platform import system
