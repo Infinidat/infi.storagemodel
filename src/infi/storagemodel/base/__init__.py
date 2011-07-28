@@ -153,11 +153,32 @@ class SCSIStorageController(SCSIDevice):
 
 class ScsiModel(object):
     def refresh_scsi_block_devices(self):
-        """
-        Clears the current device list so next time we'll read the device list from the OS.
-        """
-        raise NotImplementedError
+        clear_cache(self)
 
+    def find_scsi_block_device_by_block_access_path(self, path):
+        """return a SCSIBlockDevice object that matches the given path. raises KeyError if no such device is found"""
+        devices_dict = dict([(device.block_access_path, device) for device in self.get_all_scsi_block_devices()])
+        return devices_dict[path]
+
+    def find_scsi_block_device_by_scsi_access_path(self, path):
+        """return a SCSIBlockDevice object that matches the given path. raises KeyError if no such device is found"""
+        devices_dict = dict([(device.scsi_access_path, device) for device in self.get_all_scsi_block_devices()])
+        return devices_dict[path]
+
+    def find_scsi_block_device_by_hctl(self, hctl):
+        """return a SCSIBlockDevice object that matches the given hctl. raises KeyError if no such device is found"""
+        devices_dict = dict([(device.hctl, device) for device in self.get_all_scsi_block_devices()])
+        return devices_dict[hctl]
+
+    def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
+        """returns only the items from the devices list that are of the specific type"""
+        return filter(lambda x: x.scsi_vid_pid == vid_pid_tuple, devices)
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    @cached_method
     def get_all_scsi_block_devices(self):
         """
         Returns all SCSI block devices
@@ -167,30 +188,6 @@ class ScsiModel(object):
            - 
         """
         raise NotImplementedError
-
-    def find_scsi_block_device_by_devno(self, devno):
-        """ raises KeyError if not found. devno is type of str.
-        on linux: by major/minor
-        on windows: by number of physicaldrive
-        """
-        # TODO this is not cross-platform, should it be in here?
-        raise NotImplementedError
-
-    def find_scsi_block_device_by_path(self, path):
-        """ raises KeyError if not found
-        """
-        # platform specific implementation. if there are several paths (sg, sd), it will search both
-        raise NotImplementedError
-
-    def find_scsi_block_device_by_hctl(self, hctl):
-        """ raises KeyError if not found
-        """
-        raise NotImplementedError
-
-    def filter_vendor_specific_devices(self, devices, vendor_mixin):
-        """ returns only the items from the devices list that are of the specific type
-        """
-        return filter(lambda x: isinstance(x.vendor_specific_mixin, vendor_mixin), devices)
 
     def get_all_storage_controller_devices(self):
         """ Returns a list of SCSIStorageController objects.
