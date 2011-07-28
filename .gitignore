@@ -9,6 +9,7 @@
 *.EGG-INFO
 .coverage
 .settings
+.DS_Store
 
 # eclipse
 .project
