@@ -19,7 +19,7 @@ def infinidat_devlist_example():
     model = get_storage_model()
 
     scsi_block_devices = model.scsi.get_all_scsi_block_devices()
-    mp_devices = model.native_multipath.get_devices()
+    mp_devices = model.native_multipath.get_all_multipath_devices()
     non_mp_devices = model.native_multipath.filter_non_multipath_scsi_block_devices(scsi_block_devices)
 
     infinibox_vid_pid = ("NFINIDAT", "InfiniBox")

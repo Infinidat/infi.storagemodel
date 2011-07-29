@@ -159,7 +159,7 @@ class SCSIStorageController(SCSIDevice):
         return VendorFactory.create_controller_by_vid_pid(self.scsi_vid_pid, self)
 
 class ScsiModel(object):
-    def refresh_scsi_block_devices(self):
+    def refresh(self):
         clear_cache(self)
 
     def find_scsi_block_device_by_block_access_path(self, path):
@@ -218,7 +218,11 @@ class ScsiModel(object):
         raise NotImplementedError
 
 class MultipathFrameworkModel(object):
-    def get_devices(self):
+    def refresh(self):
+        clear_cache(self)
+
+    @cached_method
+    def get_all_multipath_devices(self):
         """ returns all multipath devices claimed by this framework
         """
         # platform implementation
