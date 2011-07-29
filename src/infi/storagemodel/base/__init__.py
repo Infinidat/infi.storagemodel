@@ -31,9 +31,11 @@ class StorageModel(object):
         clear_cache(self)
 
     def _create_scsi_model(self):
+        # platform implementation        
         raise NotImplementedError()
 
     def _create_native_multipath(self):
+        # platform implementation
         raise NotImplementedError()
 
 class InquiryInformationMixin(object):
@@ -95,15 +97,17 @@ class InquiryInformationMixin(object):
 class SCSIDevice(object, InquiryInformationMixin):
     @contextmanager
     def asi_context(self):
+        # platform implementation
         raise NotImplementedError()
 
     @cached_property
     def hctl(self):
         """returns a HCTL object"""
+        # platform implementation
         raise NotImplementedError()
 
 
-    @property
+    @cached_property
     def display_name(self):
         """returns a friendly device name.
         In Windows, its PHYSICALDRIVE%d, in linux, its sdX.
@@ -111,21 +115,23 @@ class SCSIDevice(object, InquiryInformationMixin):
         # platform implementation
         raise NotImplementedError
 
-    @property
+    @cached_property
     def block_access_path(self):
         """returns a string path for the device
         In Windows, its something under globalroot
         In linux, its /dev/sdX"""
+        # platform implementation
         raise NotImplementedError
 
-    @property
+    @cached_property
     def scsi_access_path(self):
         """returns a string path for the device
         In Windows, its something under globalroot like block_device_path
         In linux, its /dev/sgX"""
+        # platform implementation        
         raise NotImplementedError
 
-    @property
+    @cached_property
     def connectivity(self):
         """returns a mixin instance of this object and a connectivity interface"""
         # TODO connectivity factory, is it platform specific? for fiberchannel - yes, for iscsi???
@@ -134,19 +140,19 @@ class SCSIDevice(object, InquiryInformationMixin):
         return ConnectivityFactory.create_mixin_object(self)
 
 class SCSIBlockDevice(SCSIDevice):
-    @property
+    @cached_property
     def size_in_bytes(self):
         # platform implementation
         raise NotImplementedError
 
-    @property
+    @cached_property
     def vendor(self):
         """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
         return VendorFactory.create_block_by_vid_pid(self.scsi_vid_pid, self)
 
 class SCSIStorageController(SCSIDevice):
-    @property
+    @cached_property
     def vendor(self):
         """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
@@ -188,11 +194,14 @@ class ScsiModel(object):
           - Linux:   we scan all the sd* (/sys/class/scsi_disk/*)
            - 
         """
+        # platform implementation
         raise NotImplementedError
 
+    @cached_method
     def get_all_storage_controller_devices(self):
         """ Returns a list of SCSIStorageController objects.
         """
+        # platform implementation
         raise NotImplementedError
 
     def rescan_and_wait_for(self, hctl_map, timeout_in_seconds=None):
@@ -205,17 +214,20 @@ class ScsiModel(object):
         """ Rescan devices and wait for user-defined changes. Each key is an HCTL object and each value is True/False.
         True means the device should be mapped, False means that it should be unmapped.
         """
+        # platform implementation
         raise NotImplementedError
 
 class MultipathFrameworkModel(object):
     def get_devices(self):
         """ returns all multipath devices claimed by this framework
         """
+        # platform implementation
         raise NotImplementedError
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """ returns items from the list that are not part of multipath devices claimed by this framework
         """
+        # platform implementation
         raise NotImplementedError
 
     def filter_vendor_specific_devices(self, devices, vendor_mixin):
