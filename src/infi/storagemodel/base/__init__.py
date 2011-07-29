@@ -224,8 +224,8 @@ class MultipathFrameworkModel(object):
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """ returns items from the list that are not part of multipath devices claimed by this framework
         """
-        # platform implementation
-        raise NotImplementedError
+        hctl_list = [path.hctl for path in [multipath.paths for multipath in self.get_all_multipath_devices()]]
+        filter (lambda device: device.hctl in hctl_list, scsi_block_devices)
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """returns only the items from the devices list that are of the specific type"""
