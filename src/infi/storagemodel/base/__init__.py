@@ -18,8 +18,6 @@ class SupportedVPDPagesDict(LazyImmutableDict):
 class StorageModel(object):
     def __init__(self):
         super(StorageModel, self).__init__()
-        self.scsi_model = None
-        self.native_multipath_model = None
 
     @cached_property
     def scsi(self):
