@@ -6,6 +6,7 @@ from infi.asi.coroutines.sync_adapter import sync_wait
 
 from ..vendor import VendorFactory
 from ..utils import cached_property, cached_method, clear_cache, LazyImmutableDict
+from contextlib import contextmanager
 
 class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):
@@ -91,10 +92,8 @@ class SCSIDevice(object):
             command = StandardInquiryCommand()
             return sync_wait(command.execute(asi))
 
-    #############################
-    # Platform Specific Methods #
-    #############################
-
+class SCSIDevice(object, InquiryInformationMixin):
+    @contextmanager
     def asi_context(self):
         raise NotImplementedError()
 
