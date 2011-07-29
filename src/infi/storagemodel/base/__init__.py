@@ -253,12 +253,6 @@ class MultipathDevice(object, InquiryInformationMixin):
         raise NotImplementedError()
 
     @cached_property
-    def hctl(self):
-        """returns a HCTL object"""
-        # platform implementation
-        raise NotImplementedError()
-
-    @cached_property
     def device_access_path(self):
         """ linux: /dev/dm-X
         windows: mpiodisk%d
