@@ -234,83 +234,67 @@ class MultipathFrameworkModel(object):
         # platform implementation
         raise NotImplementedError
 
-    def filter_vendor_specific_devices(self, devices, vendor_mixin):
-        """ returns only the items from the devices list that are of the specific type
-        """
-        return filter(lambda x: isinstance(x.vendor_specific_mixin, vendor_mixin), devices)
+    def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
+        """returns only the items from the devices list that are of the specific type"""
+        return filter(lambda x: x.scsi_vid_pid == vid_pid_tuple, devices)
 
 class NativeMultipathModel(MultipathFrameworkModel):
     pass
 
-class MultipathDevice(object):
-    @property
-    def vendor(self):
-        """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
-        return VendorFactory.create_multipath_by_vid_pid(self.scsi_vid_pid(), self)
+class MultipathDevice(object, InquiryInformationMixin):
+    @contextmanager
+    def asi_context(self):
+        # platform implementation
+        raise NotImplementedError()
 
-    @property
-    def device_path(self):
+    @cached_property
+    def hctl(self):
+        """returns a HCTL object"""
+        # platform implementation
+        raise NotImplementedError()
+
+    @cached_property
+    def device_access_path(self):
         """ linux: /dev/dm-X
         windows: mpiodisk%d
         """
-        pass
+        # platform implementation
+        raise NotImplementedError
 
-    @property
+    @cached_property
     def display_name(self):
         """ linux: mpathX
         windows: physicaldrive
         """
-        pass
-
-    def with_asi_context(self):
-        """ returns an asi object to the mulipath device itself
-        """
-        # TODO: do we get a context to one of the single-path devices or to the mpath device
-        pass
-
-    @property
-    def scsi_serial_number(self):
-        # TODO is it worth a while to have a base implemtation that gets it from page80 inquiry?
+        # platform implementation
         raise NotImplementedError
 
-    @property
-    def scsi_standard_inquiry(self):
-        """ there is no gurantee on which path this io goes on
-        """
-        # base implementation
-        raise NotImplementedError
-
-    @property
-    def scsi_inquiry_pages(self):
-        """ no warranty that all pages will be fetched from each path
-        """
-        # lazy fetch the list of supported pages. each __getitem__ will be then fetched.
-        # e.g. scsi_inquiry_pages[0x80]
-        # base implementation
-        pass
-
-    @property
+    @cached_property
     def size_in_bytes(self):
         # platform implementation
         raise NotImplementedError
 
-    @property
+    @cached_property
     def paths(self):
-        pass
+        # platform implementation
+        raise NotImplementedError
 
-    @property
+    @cached_property
     def policy(self):
         """ 'failover only', 'round robin', 'weighted round robin', 'least queue depth', 'least blocks',
         'round robin with subset'
         not all policies are supported on all platforms
         """
         # return a Policy object (FailOverOnly/Custom/...)
+        # platform implementation
+        raise NotImplementedError
 
-    @property
+    @cached_property
     def policy_attributes(self):
         """ names of path attributes relevant to this policy
         """
-        pass
+        # platform implementation
+        raise NotImplementedError
 
     def apply_policy(self, policy_builder):
         """
@@ -325,7 +309,14 @@ class MultipathDevice(object):
             round-robin with subset: not supported
             on invalid policy, ValueError is raised
             """
-        pass
+        # platform implementation
+        raise NotImplementedError
+
+    @cached_property
+    def vendor(self):
+        """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        from ..vendor import VendorFactory
+        return VendorFactory.create_multipath_by_vid_pid(self.scsi_vid_pid, self)
 
 class FailoverOnlyBuilder(object):
     pass
@@ -336,20 +327,23 @@ class RoundRobinWithSubsetBuilder(object):
 
 
 class Path(object):
-    @property
+    @cached_property
     def path_id(self):
         """ sdX on linux, PathId on Windows
         """
-        pass
+        # platform implementation
+        raise NotImplementedError
 
-    @property
+    @cached_property
     def hctl(self):
-        pass
+        # platform implementation
+        raise NotImplementedError
 
-    @property
+    @cached_property
     def state(self):
         """ up/down
         """
-        pass
+        # platform implementation
+        raise NotImplementedError
 
 # TODO the policy strategy
