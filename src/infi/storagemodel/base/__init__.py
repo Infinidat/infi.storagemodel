@@ -221,13 +221,6 @@ class MultipathFrameworkModel(object):
     def refresh(self):
         clear_cache(self)
 
-    @cached_method
-    def get_all_multipath_devices(self):
-        """ returns all multipath devices claimed by this framework
-        """
-        # platform implementation
-        raise NotImplementedError
-
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """ returns items from the list that are not part of multipath devices claimed by this framework
         """
@@ -237,6 +230,18 @@ class MultipathFrameworkModel(object):
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """returns only the items from the devices list that are of the specific type"""
         return filter(lambda x: x.scsi_vid_pid == vid_pid_tuple, devices)
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    @cached_method
+    def get_all_multipath_devices(self):
+        """ returns all multipath devices claimed by this framework
+        """
+        # platform implementation
+        raise NotImplementedError
+
 
 class NativeMultipathModel(MultipathFrameworkModel):
     pass
