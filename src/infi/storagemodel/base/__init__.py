@@ -1,10 +1,4 @@
-from infi.asi import AsiCheckConditionError
-from infi.asi.cdb.inquiry import INQUIRY_PAGE_SUPPORTED_VPD_PAGES, INQUIRY_PAGE_UNIT_SERIAL_NUMBER
-from infi.asi.cdb.inquiry import SUPPORTED_VPD_PAGES_COMMANDS, SupportedVPDPagesInquiryCommand
-from infi.asi.cdb.inquiry import SupportedVPDPagesInquiryCommand
-from infi.asi.coroutines.sync_adapter import sync_wait
 
-from ..vendor import VendorFactory
 from ..utils import cached_property, cached_method, clear_cache, LazyImmutableDict
 from contextlib import contextmanager
 
@@ -14,6 +8,9 @@ class SupportedVPDPagesDict(LazyImmutableDict):
         self.device = device
 
     def _create_value(self, page_code):
+        from infi.asi.cdb.inquiry import SUPPORTED_VPD_PAGES_COMMANDS
+        from infi.asi.coroutines.sync_adapter import sync_wait
+
         inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
         with self.device.asi_context() as asi:
             return sync_wait(inquiry_command.execute(asi))
@@ -60,6 +57,10 @@ class SCSIDevice(object):
         For example:
         >>> dev.scsi_inquiry_pages[0x80].product_serial_number
         """
+        from infi.asi.cdb.inquiry import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
+        from infi.asi.cdb.inquiry import SupportedVPDPagesInquiryCommand
+        from infi.asi import AsiCheckConditionError
+        from infi.asi.coroutines.sync_adapter import sync_wait
         command = SupportedVPDPagesInquiryCommand()
 
         page_dict = {}
@@ -81,6 +82,7 @@ class SCSIDevice(object):
     @cached_property
     def scsi_serial_number(self):
         """Returns the SCSI serial of the device or an empty string ("") if not available"""
+        from infi.asi.cdb.inquiry import INQUIRY_PAGE_UNIT_SERIAL_NUMBER
         serial = ''
         if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.scsi_inquiry_pages:
             serial = self.scsi_inquiry_pages[INQUIRY_PAGE_UNIT_SERIAL_NUMBER].product_serial_number
@@ -142,13 +144,15 @@ class SCSIBlockDevice(SCSIDevice):
     @property
     def vendor(self):
         """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
-        return VendorFactory.create_block_by_vid_pid(self.scsi_vid_pid(), self)
+        from ..vendor import VendorFactory
+        return VendorFactory.create_block_by_vid_pid(self.scsi_vid_pid, self)
 
 class SCSIStorageController(SCSIDevice):
     @property
     def vendor(self):
         """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
-        return VendorFactory.create_controller_by_vid_pid(self.scsi_vid_pid(), self)
+        from ..vendor import VendorFactory
+        return VendorFactory.create_controller_by_vid_pid(self.scsi_vid_pid, self)
 
 class ScsiModel(object):
     def refresh_scsi_block_devices(self):
