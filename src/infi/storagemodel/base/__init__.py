@@ -36,16 +36,16 @@ class StorageModel(object):
     def _create_native_multipath(self):
         raise NotImplementedError()
 
-class SCSIDevice(object):
+class InquiryInformationMixin(object):
     @cached_property
     def scsi_vendor_id(self):
         return self.scsi_standard_inquiry.t10_vendor_identification
 
-    @property
+    @cached_property
     def scsi_product_id(self):
         return self.scsi_standard_inquiry.product_identification
 
-    @property
+    @cached_property
     def scsi_vid_pid(self):
         return (self.scsi_vendor_id, self.scsi_product_id)
 
