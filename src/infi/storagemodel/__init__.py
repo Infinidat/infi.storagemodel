@@ -10,6 +10,7 @@ def get_storage_model():
         # do platform-specific magic here.
         from platform import system
         plat = system().lower().replace('-', '')
+        from .base import StorageModel as PlatformStorageModel # helps IDEs
         exec "from .%s import %sStorageModel as PlatformStorageModel" % (plat, plat.capitalize())
         __storage_model = PlatformStorageModel()
     return __storage_model
