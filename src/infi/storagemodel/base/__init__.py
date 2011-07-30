@@ -28,7 +28,9 @@ class StorageModel(object):
         return self._create_native_multipath_model()
 
     def refresh(self):
+        from ..connectivity import ConnectivityFactory
         clear_cache(self)
+        clear_cache(ConnectivityFactory)
 
     def _create_scsi_model(self):
         # platform implementation        
@@ -94,7 +96,17 @@ class InquiryInformationMixin(object):
             command = StandardInquiryCommand()
             return sync_wait(command.execute(asi))
 
-class SCSIDevice(object, InquiryInformationMixin):
+class SCSIDevice(InquiryInformationMixin, object):
+    @cached_property
+    def connectivity(self):
+        """returns either an FCConnnectivity object or ISCSIConnectivity object"""
+        from ..connectivity import ConnectivityFactory
+        return ConnectivityFactory.get_by_device_with_hctl(self)
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
     @contextmanager
     def asi_context(self):
         # platform implementation
@@ -105,7 +117,6 @@ class SCSIDevice(object, InquiryInformationMixin):
         """returns a HCTL object"""
         # platform implementation
         raise NotImplementedError()
-
 
     @cached_property
     def display_name(self):
@@ -131,25 +142,21 @@ class SCSIDevice(object, InquiryInformationMixin):
         # platform implementation        
         raise NotImplementedError
 
-    @cached_property
-    def connectivity(self):
-        """returns a mixin instance of this object and a connectivity interface"""
-        # TODO connectivity factory, is it platform specific? for fiberchannel - yes, for iscsi???
-        # Return either an iSCSIConnectivityInfo or FiberChannelConnectivityInfo
-        from ..connectivity import ConnectivityFactory
-        return ConnectivityFactory.create_mixin_object(self)
-
 class SCSIBlockDevice(SCSIDevice):
-    @cached_property
-    def size_in_bytes(self):
-        # platform implementation
-        raise NotImplementedError
-
     @cached_property
     def vendor(self):
         """ Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
         return VendorFactory.create_block_by_vid_pid(self.scsi_vid_pid, self)
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    @cached_property
+    def size_in_bytes(self):
+        # platform implementation
+        raise NotImplementedError
 
 class SCSIStorageController(SCSIDevice):
     @cached_property
@@ -159,9 +166,6 @@ class SCSIStorageController(SCSIDevice):
         return VendorFactory.create_controller_by_vid_pid(self.scsi_vid_pid, self)
 
 class ScsiModel(object):
-    def refresh(self):
-        clear_cache(self)
-
     def find_scsi_block_device_by_block_access_path(self, path):
         """return a SCSIBlockDevice object that matches the given path. raises KeyError if no such device is found"""
         devices_dict = dict([(device.block_access_path, device) for device in self.get_all_scsi_block_devices()])
@@ -218,9 +222,6 @@ class ScsiModel(object):
         raise NotImplementedError
 
 class MultipathFrameworkModel(object):
-    def refresh(self):
-        clear_cache(self)
-
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """ returns items from the list that are not part of multipath devices claimed by this framework
         """
@@ -246,11 +247,11 @@ class MultipathFrameworkModel(object):
 class NativeMultipathModel(MultipathFrameworkModel):
     pass
 
-class MultipathDevice(object, InquiryInformationMixin):
+class MultipathDevice(InquiryInformationMixin, object):
     @contextmanager
     def asi_context(self):
         # platform implementation
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @cached_property
     def device_access_path(self):
@@ -324,12 +325,20 @@ class RoundRobinWithSubsetBuilder(object):
     def use_tpgs(self):
         return self
 
-
 class Path(object):
     @cached_property
+    def connectivity(self):
+        """returns either an FCConnnectivity object or ISCSIConnectivity object"""
+        from ..connectivity import ConnectivityFactory
+        return ConnectivityFactory.get_by_device_with_hctl(self)
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    @cached_property
     def path_id(self):
-        """ sdX on linux, PathId on Windows
-        """
+        """sdX on linux, PathId on Windows"""
         # platform implementation
         raise NotImplementedError
 
@@ -340,9 +349,9 @@ class Path(object):
 
     @cached_property
     def state(self):
-        """ up/down
-        """
+        """up/down"""
         # platform implementation
         raise NotImplementedError
+
 
 # TODO the policy strategy

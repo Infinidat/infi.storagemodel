@@ -1,7 +1,7 @@
 
 from ..utils import cached_method, cached_property, clear_cache
 from infi.storagemodel.base import SCSIBlockDevice, SCSIDevice, StorageModel, MultipathDevice, SCSIStorageController, \
-    ScsiModel, NativeMultipathModel
+    ScsiModel, NativeMultipathModel, Path
 from contextlib import contextmanager
 from infi.storagemodel.utils import LazyImmutableDict
 
@@ -111,17 +111,13 @@ class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
     # This is the mechanism I found suitable:
     # On the first call to the dict, it fetches the key and values from WMI and uses them from here on
     def __init__(self, wmi_client):
-        super(LazyLoadBalancingInfomrationDict, self).__init__()
+        super(LazyImmutableDict, self).__init__()
         self.wmi_client = wmi_client
 
     @cached_property
     def _dict(self):
         from infi.wmpio import get_load_balace_policies
         return get_load_balace_policies(self.wmi_client)
-
-    @_dict.setter
-    def _dict(self, value):
-        pass
 
 MPIO_BUS_DRIVER_INSTANCE_ID = u"Root\\MPIO\\0000"
 

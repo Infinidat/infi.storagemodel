@@ -13,26 +13,28 @@ class VendorMultipathDevice(object):
         super(VendorMultipathDevice, self).__init__()
         self.device = device
 
-class VendorFactory(object):
+class VendorFactoryImpl(object):
     def __init__(self):
-        super(VendorSpecificFactoryImpl, self).__init__()
+        super(VendorFactoryImpl, self).__init__()
         self.vendor_mapping = {} # (vid, pid) -> dict(block=class, controller=class, multipath=class)
 
-    def register(vid_pid, block_class, controller_class, multipath_class):
+    def register(self, vid_pid, block_class, controller_class, multipath_class):
         assert vid_pid not in self.vendor_mapping
         assert issubclass(block_class, VendorSCSIBlockDevice)
         assert issubclass(controller_class, VendorSCSIStorageController)
         assert issubclass(multipath_class, VendorMultipathDevice)
         self.vendor_mapping[vid_pid] = dict(block=block_class, controller=controller_class, multipath=multipath_class)
 
-    def create_block_by_vid_pid(vid_pid, device):
+    def create_block_by_vid_pid(self, vid_pid, device):
         assert vid_pid in self.vendor_mapping
         return self.vendor_mapping[vid_pid]['block'](device)
 
-    def create_controller_by_vid_pid(vid_pid, device):
+    def create_controller_by_vid_pid(self, vid_pid, device):
         assert vid_pid in self.vendor_mapping
         return self.vendor_mapping[vid_pid]['controller'](device)
 
-    def create_multipath_by_vid_pid(vid_pid, device):
+    def create_multipath_by_vid_pid(self, vid_pid, device):
         assert vid_pid in self.vendor_mapping
         return self.vendor_mapping[vid_pid]['multipath'](device)
+
+VendorFactory = VendorFactoryImpl()
