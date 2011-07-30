@@ -153,8 +153,9 @@ class WindowsMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, Multipa
     def device_access_path(self):
         return self.pdo
 
+    @cached_property
     def paths(self):
-        raise NotImplementedError
+        return [WindowsPath(item) for item in self._multipath_object.PdoInformation]
 
     def policy(self):
         raise NotImplementedError
@@ -164,6 +165,25 @@ class WindowsMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, Multipa
 
     def apply_policy(self, policy_builder):
         raise NotImplementedError
+
+class WindowsPath(Path):
+    def __init__(self, pdo_information):
+        super(WindowsPath, self).__init__()
+        self._pdo_information = pdo_information
+
+    @cached_property
+    def path_id(self):
+        return self._pdo_information.PathIdentifier
+
+    @cached_property
+    def hctl(self):
+        from ..dtypes import HCTL
+        scsi_address = self._pdo_information.ScsiAddress
+        return HCTL(scsi_address.PortNumber, scsi_address.ScsiPathId, scsi_address.TargetId, scsi_address.Lun)
+
+    @cached_property
+    def state(self):
+        return "up"
 
 class WindowsStorageModel(StorageModel):
     def _create_scsi_model(self):
