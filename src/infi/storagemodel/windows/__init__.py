@@ -4,6 +4,7 @@ from infi.storagemodel.base import SCSIBlockDevice, SCSIDevice, StorageModel, Mu
     SCSIModel, NativeMultipathModel, Path
 from contextlib import contextmanager
 from infi.storagemodel.utils import LazyImmutableDict
+from infi.storagemodel.base import multipath
 
 class WindowsDeviceMixin(object):
     @cached_property
@@ -25,6 +26,10 @@ class WindowsDeviceMixin(object):
     def ioctl_interface(self):
         from infi.devicemanager.ioctl import DeviceIoControl
         return DeviceIoControl(self.scsi_access_path)
+
+    @cached_property
+    def instance_id(self):
+        return self._device_object._instance_id
 
 class WindowsSCSIDevice(WindowsDeviceMixin, SCSIDevice):
     def __init__(self, device_object):
@@ -134,7 +139,7 @@ class WindowsNativeMultipathModel(NativeMultipathModel):
                          device_manager.disk_drives)
         multipath_dict = get_multipath_devices(wmi_client)
         policies_dict = LazyLoadBalancingInfomrationDict(wmi_client)
-        return [WindowsMultipathDevice(device_object,
+        return [WindowsNativeMultipathDevice(device_object,
                                        multipath_dict[u"%u_0" % device_object._instance_id],
                                        policies_dict) for device_object in devices]
 
@@ -142,12 +147,58 @@ class WindowsNativeMultipathModel(NativeMultipathModel):
         devices = filter(lambda device: device.parent._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
                          scsi_block_devices)
 
-class WindowsMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, MultipathDevice):
+class WindowsNativeMultipathLoadBalancingContext(multipath.LoadBalancingContext):
+    def __init__(self, policies_dict):
+        super(WindowsNativeMultipathLoadBalancingContext, self).__init__()
+        self._policies_dict = policies_dict
+
+    def get_policy_for_device(self, device):
+        from infi.wmpio.mpclaim import FAIL_OVER_ONLY, ROUND_ROBIN, ROUND_ROBIN_WITH_SUBSET, \
+                                       WEIGHTED_PATHS, LEAST_BLOCKS, LEAST_QUEUE_DEPTH
+        wmpio_policy = self._policies_dict[device.instance_id]
+        policy_number = wmpio_policy.LoadBalancePolicy
+        if policy_number == FAIL_OVER_ONLY:
+            return WindowsFailoverOnly()
+        if policy_number == ROUND_ROBIN:
+            return WindowsRoundRobin()
+        if policy_number == ROUND_ROBIN_WITH_SUBSET:
+            return WindowsRoundRobinWithSubset(device)
+        if policy_number == WEIGHTED_PATHS:
+            return WindowsWeightedPaths(wmpio_policy)
+        if policy_number == LEAST_BLOCKS:
+            return WindowsLeastBlocks()
+        if policy_number == LEAST_QUEUE_DEPTH:
+            return WindowsLeastQueueDepth()
+
+class WindowsFailoverOnly(multipath.FailoverOnly):
+    pass
+
+class WindowsRoundRobin(multipath.RoundRobin):
+    pass
+
+class WindowsRoundRobinWithSubset(multipath.RoundRobinWithSubset):
+    def __init__(self, device):
+        active_paths = filter(lambda path: path.device_state == 1, device.paths)
+        active_path_ids = [path.PathIdentifier for path in active_paths]
+        super(WindowsRoundRobinWithSubset, self).__init__(active_path_ids)
+
+class WindowsWeightedPaths(multipath.WeightedPaths):
+    def __init__(self, wmpio_policy):
+        weights = dict([(path.DsmPathId, path.PathWeight) for path in wmpio_policy.Dsm_Paths])
+        super(WindowsWeightedPaths, self).__init__(weights)
+
+class WindowsLeastBlocks(multipath.LeastBlocks):
+    pass
+
+class WindowsLeastQueueDepth(multipath.LeastQueueDepth):
+    pass
+
+class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, MultipathDevice):
     def __init__(self, device_object, multipath_object, policies_dict):
-        super(WindowsMultipathDevice, self).__init__()
+        super(WindowsNativeMultipathDevice, self).__init__()
         self._device_object = device_object
         self._multipath_object = multipath_object
-        self._policy_object = policies_dict
+        self._policies_dict = policies_dict
 
     @cached_property
     def device_access_path(self):
@@ -157,14 +208,9 @@ class WindowsMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, Multipa
     def paths(self):
         return [WindowsPath(item) for item in self._multipath_object.PdoInformation]
 
-    def policy(self):
-        raise NotImplementedError
-
-    def policy_attributes(self):
-        raise NotImplementedError
-
-    def apply_policy(self, policy_builder):
-        raise NotImplementedError
+    @cached_property
+    def _platform_specific_policy_context(self):
+        return WindowsNativeMultipathLoadBalancingContext(self._policies_dict)
 
 class WindowsPath(Path):
     def __init__(self, pdo_information):
