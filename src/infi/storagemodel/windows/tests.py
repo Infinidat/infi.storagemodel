@@ -19,9 +19,15 @@ class ModelTestCase(unittest.TestCase):
         scsi = model.scsi
         native_multipath = model.native_multipath
 
+    def _assert_block_device(self, device):
+        # TODO I am here
+        self.fail()
+
     def test_get_block_devices(self):
         model = self._get_model()
         block_devices = model.scsi.get_all_scsi_block_devices()
+        for device in block_devices:
+            self._assert_block_device(device):
         return block_devices
 
     def test_get_multipath_devices(self):

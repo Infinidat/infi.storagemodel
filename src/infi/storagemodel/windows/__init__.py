@@ -140,7 +140,7 @@ class WindowsNativeMultipathModel(NativeMultipathModel):
         multipath_dict = get_multipath_devices(wmi_client)
         policies_dict = LazyLoadBalancingInfomrationDict(wmi_client)
         return [WindowsNativeMultipathDevice(device_object,
-                                       multipath_dict[u"%u_0" % device_object._instance_id],
+                                       multipath_dict[u"%s_0" % device_object._instance_id],
                                        policies_dict) for device_object in devices]
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
