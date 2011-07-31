@@ -73,7 +73,7 @@ class SCSIStorageController(SCSIDevice):
         from ..vendor import VendorFactory
         return VendorFactory.create_controller_by_vid_pid(self.scsi_vid_pid, self)
 
-class ScsiModel(object):
+class SCSIModel(object):
     def find_scsi_block_device_by_block_access_path(self, path):
         """return a SCSIBlockDevice object that matches the given path. raises KeyError if no such device is found"""
         devices_dict = dict([(device.block_access_path, device) for device in self.get_all_scsi_block_devices()])

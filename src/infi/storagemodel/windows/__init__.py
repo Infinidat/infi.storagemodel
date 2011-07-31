@@ -1,7 +1,7 @@
 
 from ..utils import cached_method, cached_property, clear_cache
 from infi.storagemodel.base import SCSIBlockDevice, SCSIDevice, StorageModel, MultipathDevice, SCSIStorageController, \
-    ScsiModel, NativeMultipathModel, Path
+    SCSIModel, NativeMultipathModel, Path
 from contextlib import contextmanager
 from infi.storagemodel.utils import LazyImmutableDict
 
@@ -83,7 +83,7 @@ class WindowsSCSIStorageController(WindowsSCSIDevice, SCSIStorageController):
         super(WindowsSCSIStorageController, self).__init__()
         self._device_object = device_object
 
-class WindowsSCSIModel(ScsiModel):
+class WindowsSCSIModel(SCSIModel):
     @cached_method
     def device_manager(self):
         from infi.devicemanager import DeviceManager

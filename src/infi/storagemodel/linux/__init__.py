@@ -11,7 +11,7 @@ class LinuxSCSIBlockDevice(base.SCSIBlockDevice, LinuxSCSIDevice):
 class LinuxSCSIStorageController(base.SCSIStorageController, LinuxSCSIDevice):
     pass
 
-class LinuxScsiModel(base.ScsiModel):
+class LinuxScsiModel(base.SCSIModel):
     def find_scsi_block_device_by_devno(self, devno):
         """ raises KeyError if not found. devno is type of str.
         on linux: by major/minor
