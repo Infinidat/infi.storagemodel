@@ -3,8 +3,11 @@ from ..utils import cached_property, cached_method, clear_cache, LazyImmutableDi
 from contextlib import contextmanager
 
 from .inquiry import SupportedVPDPagesDict, InquiryInformationMixin
-from .scsi import SCSIDevice, SCSIBlockDevice, SCSIStorageController, ScsiModel
+from .scsi import SCSIDevice, SCSIBlockDevice, SCSIModel, SCSIStorageController
 from .multipath import MultipathDevice, Path, MultipathFrameworkModel, NativeMultipathModel
+from .multipath import LoadBalancePolicy, LoadBalancingContext
+from .multipath import FailoverOnly, RoundRobin, RoundRobinWithExplicitSubset, RoundRobinWithTPGSSubset
+from .multipath import WeightedPaths, LeastBlocks, LeastQueueDepth
 
 class StorageModel(object):
     def __init__(self):
