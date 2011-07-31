@@ -89,7 +89,7 @@ class WindowsSCSIStorageController(WindowsSCSIDevice, SCSIStorageController):
         self._device_object = device_object
 
 class WindowsSCSIModel(SCSIModel):
-    @cached_method
+    @cached_property
     def device_manager(self):
         from infi.devicemanager import DeviceManager
         return DeviceManager()
@@ -235,6 +235,5 @@ class WindowsStorageModel(StorageModel):
     def _create_scsi_model(self):
         return WindowsSCSIModel()
 
-    def _create_native_multipath(self):
+    def _create_native_multipath_model(self):
         return WindowsNativeMultipathModel()
-
