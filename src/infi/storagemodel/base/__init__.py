@@ -16,6 +16,7 @@ class StorageModel(object):
 
     @cached_property
     def native_multipath(self):
+        # TODO what to do in case native multipath is not installed?
         return self._create_native_multipath_model()
 
     def refresh(self):

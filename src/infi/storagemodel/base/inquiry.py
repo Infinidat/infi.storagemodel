@@ -1,5 +1,4 @@
-from ..utils import cached_property, cached_method, clear_cache, LazyImmutableDict
-from contextlib import contextmanager
+from ..utils import cached_property, LazyImmutableDict
 
 class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):
