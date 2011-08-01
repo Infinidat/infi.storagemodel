@@ -9,7 +9,9 @@ class SupportedVPDPagesDict(LazyImmutableDict):
     def _create_value(self, page_code):
         from infi.asi.cdb.inquiry import SUPPORTED_VPD_PAGES_COMMANDS
         from infi.asi.coroutines.sync_adapter import sync_wait
-
+        print 'blablabla'
+        print page_code
+        print SUPPORTED_VPD_PAGES_COMMANDS.keys()
         inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
         with self.device.asi_context() as asi:
             return sync_wait(inquiry_command.execute(asi))
@@ -17,11 +19,11 @@ class SupportedVPDPagesDict(LazyImmutableDict):
 class InquiryInformationMixin(object):
     @cached_property
     def scsi_vendor_id(self):
-        return self.scsi_standard_inquiry.t10_vendor_identification
+        return self.scsi_standard_inquiry.t10_vendor_identification.strip()
 
     @cached_property
     def scsi_product_id(self):
-        return self.scsi_standard_inquiry.product_identification
+        return self.scsi_standard_inquiry.product_identification.strip()
 
     @cached_property
     def scsi_vid_pid(self):
@@ -34,10 +36,10 @@ class InquiryInformationMixin(object):
         >>> dev.scsi_inquiry_pages[0x80].product_serial_number
         """
         from infi.asi.cdb.inquiry import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
-        from infi.asi.cdb.inquiry import SupportedVPDPagesInquiryCommand
+        from infi.asi.cdb.inquiry import SupportedVPDPagesCommand
         from infi.asi import AsiCheckConditionError
         from infi.asi.coroutines.sync_adapter import sync_wait
-        command = SupportedVPDPagesInquiryCommand()
+        command = SupportedVPDPagesCommand()
 
         page_dict = {}
         with self.asi_context() as asi:
@@ -66,6 +68,8 @@ class InquiryInformationMixin(object):
 
     @cached_property
     def scsi_standard_inquiry(self):
+        from infi.asi.cdb.inquiry import StandardInquiryCommand
+        from infi.asi.coroutines.sync_adapter import sync_wait
         with self.asi_context() as asi:
             command = StandardInquiryCommand()
             return sync_wait(command.execute(asi))

@@ -1,10 +1,7 @@
 
-from ..utils import cached_method, cached_property, clear_cache
-from infi.storagemodel.base import SCSIBlockDevice, SCSIDevice, StorageModel, MultipathDevice, SCSIStorageController, \
-    SCSIModel, NativeMultipathModel, Path
+from ..utils import cached_method, cached_property, clear_cache, LazyImmutableDict
+from ..base import StorageModel, scsi, multipath
 from contextlib import contextmanager
-from infi.storagemodel.utils import LazyImmutableDict
-from infi.storagemodel.base import multipath
 
 class WindowsDeviceMixin(object):
     @cached_property
@@ -15,7 +12,7 @@ class WindowsDeviceMixin(object):
     def asi_context(self):
         from infi.asi.win32 import OSFile
         from infi.asi import create_platform_command_executer
-        handle = OSFile(self.scsi_access_path)
+        handle = OSFile(self.pdo)
         executer = create_platform_command_executer(handle)
         try:
             yield executer
@@ -25,31 +22,35 @@ class WindowsDeviceMixin(object):
     @cached_property
     def ioctl_interface(self):
         from infi.devicemanager.ioctl import DeviceIoControl
-        return DeviceIoControl(self.scsi_access_path)
+        return DeviceIoControl(self.pdo)
 
     @cached_property
     def instance_id(self):
         return self._device_object._instance_id
 
-class WindowsSCSIDevice(WindowsDeviceMixin, SCSIDevice):
-    def __init__(self, device_object):
-        super(WindowsSCSIDevice, self).__init__()
-        self._device_object = device_object
+    @cached_property
+    def hctl(self):
+        from ..dtypes import HCTL
+        return HCTL(*self.ioctl_interface.scsi_get_address())
 
     @cached_property
     def scsi_vendor_id(self):
         # a faster implemntation on windows
-        return self._device_object.hardware_ids[-2][0:8].replace('_', '')
+        return str(self._device_object.hardware_ids[-2][0:8].replace('_', ''))
 
     @cached_property
     def scsi_product_id(self):
         # a faster implementation on windows
-        return self._device_object.hardware_ids[-2][8:24].replace('_', '')
+        return str(self._device_object.hardware_ids[-2][8:24].replace('_', ''))
 
     @cached_property
-    def hctl(self):
-        from ..dtypes import HCTL
-        return self.ioctl_interface.scsi_get_address()
+    def parent(self):
+        return self._device_object.parent
+
+class WindowsSCSIDevice(WindowsDeviceMixin, scsi.SCSIDevice):
+    def __init__(self, device_object):
+        super(WindowsSCSIDevice, self).__init__()
+        self._device_object = device_object
 
     @cached_property
     def block_access_path(self):
@@ -80,15 +81,15 @@ class WindowsDiskDeviceMixin(object):
     def display_name(self):
         return "PHYSICALDRIVE%s" % self.physical_drive_number
 
-class WindowsSCSIBlockDevice(WindowsDiskDeviceMixin, WindowsSCSIDevice, SCSIBlockDevice):
+class WindowsSCSIBlockDevice(WindowsDiskDeviceMixin, WindowsSCSIDevice, scsi.SCSIBlockDevice):
     pass
 
-class WindowsSCSIStorageController(WindowsSCSIDevice, SCSIStorageController):
+class WindowsSCSIStorageController(WindowsSCSIDevice, scsi.SCSIStorageController):
     def __init__(self, device_object):
         super(WindowsSCSIStorageController, self).__init__()
         self._device_object = device_object
 
-class WindowsSCSIModel(SCSIModel):
+class WindowsSCSIModel(scsi.SCSIModel):
     @cached_property
     def device_manager(self):
         from infi.devicemanager import DeviceManager
@@ -123,7 +124,7 @@ class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
 
 MPIO_BUS_DRIVER_INSTANCE_ID = u"Root\\MPIO\\0000"
 
-class WindowsNativeMultipathModel(NativeMultipathModel):
+class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
     def get_all_multipath_devices(self):
         from infi.devicemanager import DeviceManager
@@ -141,7 +142,7 @@ class WindowsNativeMultipathModel(NativeMultipathModel):
                                        policies_dict) for device_object in devices]
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
-        devices = filter(lambda device: device.parent._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
+        return filter(lambda device: device.parent._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
                          scsi_block_devices)
 
 class WindowsFailoverOnly(multipath.FailoverOnly):
@@ -167,7 +168,7 @@ class WindowsLeastBlocks(multipath.LeastBlocks):
 class WindowsLeastQueueDepth(multipath.LeastQueueDepth):
     pass
 
-class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, MultipathDevice):
+class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, multipath.MultipathDevice):
     def __init__(self, device_object, multipath_object, policies_dict):
         super(WindowsNativeMultipathDevice, self).__init__()
         self._device_object = device_object
@@ -182,7 +183,8 @@ class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, M
     def paths(self):
         return [WindowsPath(item) for item in self._multipath_object.PdoInformation]
 
-    def _get_policy_for_device(self):
+    @cached_property
+    def policy(self):
         from infi.wmpio.mpclaim import FAIL_OVER_ONLY, ROUND_ROBIN, ROUND_ROBIN_WITH_SUBSET, \
                                        WEIGHTED_PATHS, LEAST_BLOCKS, LEAST_QUEUE_DEPTH
         wmpio_policy = self._policies_dict["%s_0" % self.instance_id]
@@ -200,7 +202,7 @@ class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, M
         if policy_number == LEAST_QUEUE_DEPTH:
             return WindowsLeastQueueDepth()
 
-class WindowsPath(Path):
+class WindowsPath(multipath.Path):
     def __init__(self, pdo_information):
         super(WindowsPath, self).__init__()
         self._pdo_information = pdo_information

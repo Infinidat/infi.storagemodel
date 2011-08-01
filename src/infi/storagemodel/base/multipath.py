@@ -65,35 +65,33 @@ class MultipathDevice(InquiryInformationMixin, object):
 
     @cached_property
     def policy(self):
-        self._get_policy_for_device(self)
-
-    def _get_policy_for_device(self):
+        # platform implementation
         raise NotImplementedError
 
 class LoadBalancePolicy(object):
-    _name = None
+    name = None
     def __init__(self):
         self._cache = dict()
 
     @cached_property
     def display_name(self):
-        return self._name
+        return self.name
 
     def apply_on_device(self, device):
         raise NotImplementedError
 
 class FailoverOnly(LoadBalancePolicy):
-    _name = "FailOverOnly"
+    name = "FailOverOnly"
 
     def __init__(self, active_path_id):
         super(FailoverOnly, self).__init__()
         self.active_path_id = active_path_id
 
 class RoundRobin(LoadBalancePolicy):
-    _name = "Round Robin"
+    name = "Round Robin"
 
 class RoundRobinWithSubset(LoadBalancePolicy):
-    _name = "Round Robin with subset"
+    name = "Round Robin with subset"
 
     def __init__(self, active_path_ids):
         super(RoundRobinWithSubset, self).__init__()
@@ -106,17 +104,17 @@ class RoundRobinWithExplicitSubset(RoundRobinWithSubset):
     pass
 
 class WeightedPaths(LoadBalancePolicy):
-    _name = "Weighted Paths"
+    name = "Weighted Paths"
     def __init__(self, weights):
         super(WeightedPaths, self).__init__()
         # weights is a dict of (path_id, weight) items
         self.weights = weights
 
 class LeastBlocks(LoadBalancePolicy):
-    _name = "Least Blocks"
+    name = "Least Blocks"
 
 class LeastQueueDepth(LoadBalancePolicy):
-    _name = "Least Queue Depth"
+    name = "Least Queue Depth"
 
 class Path(object):
     @cached_property

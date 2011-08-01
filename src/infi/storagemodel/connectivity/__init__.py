@@ -5,7 +5,7 @@ class FCConnectivity(object):
         super(FCConnectivity, self).__init__()
         self._device = device
         self._local_port = local_port
-        self._remort_port = remote_port
+        self._remote_port = remote_port
 
     @cached_property
     def initiator_wwn(self):
@@ -19,6 +19,9 @@ class ISCSIConnectivity(object):
     def __init__(self, device):
         super(ISCSIConnectivity, self).__init__()
         self.device = device
+
+class LocalConnectivity(object):
+    pass
 
 class ConnectivityFactoryImpl(object):
     @cached_property
@@ -37,7 +40,6 @@ class ConnectivityFactoryImpl(object):
             local_port, remote_port = fc_mapping
             return FCConnectivity(device, local_port, remote_port)
         # TODO add iSCSI support
-        raise KeyError
-
+        return LocalConnectivity()
 
 ConnectivityFactory = ConnectivityFactoryImpl()

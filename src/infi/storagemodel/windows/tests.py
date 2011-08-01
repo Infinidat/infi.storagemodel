@@ -20,8 +20,19 @@ class ModelTestCase(unittest.TestCase):
         native_multipath = model.native_multipath
 
     def _assert_block_device(self, device):
+        from ..dtypes import HCTL
         self.assertGreater(device.size_in_bytes, 0)
-        self.fail()
+        self.assertIsInstance(device.hctl, HCTL)
+        self.assertTrue(device.display_name.startswith("PHYSICALDRIVE"))
+        self.assertIsInstance(device.block_access_path, unicode)
+        self.assertIsInstance(device.scsi_access_path, unicode)
+        self.assertIsInstance(device.scsi_vendor_id, str)
+        self.assertIsInstance(device.scsi_product_id, str)
+        self.assertEqual(device.scsi_vid_pid, (device.scsi_vendor_id, device.scsi_product_id))
+        _ = device.scsi_inquiry_pages
+        self.assertIsInstance(device.scsi_serial_number, str)
+        _ = device.scsi_standard_inquiry
+        self._assert_connectivity(device)
 
     def test_get_block_devices(self):
         model = self._get_model()
@@ -33,7 +44,34 @@ class ModelTestCase(unittest.TestCase):
     def test_get_multipath_devices(self):
         model = self._get_model()
         multipath_devices = model.native_multipath.get_all_multipath_devices()
+        for device in multipath_devices:
+            self._assert_multipath_device(device)
         return multipath_devices
+
+    def _assert_connectivity(self, item):
+        from ..connectivity import LocalConnectivity, FCConnectivity
+        connectivity = item.connectivity
+        if isinstance(connectivity, LocalConnectivity):
+            return
+        _ = connectivity.initiator_wwn
+        _ = connectivity.target_wwn
+
+    def _assert_multipath_device(self, device):
+        self.assertGreater(device.size_in_bytes, 0)
+        self.assertTrue(device.display_name.startswith("PHYSICALDRIVE"))
+        self.assertIsInstance(device.device_access_path, unicode)
+        self.assertIsInstance(device.scsi_vendor_id, str)
+        self.assertIsInstance(device.scsi_product_id, str)
+        self.assertEqual(device.scsi_vid_pid, (device.scsi_vendor_id, device.scsi_product_id))
+        _ = device.scsi_inquiry_pages
+        self.assertIsInstance(device.scsi_serial_number, str)
+        _ = device.scsi_standard_inquiry
+        from ..dtypes import HCTL
+        for path in device.paths:
+            self.assertIsInstance(path.hctl, HCTL)
+            self._assert_connectivity(path)
+            _ = path.state
+        _ = device.policy
 
 class MockModelTestCase(ModelTestCase):
     def setUp(self):
@@ -64,3 +102,6 @@ class MockModelTestCase(ModelTestCase):
             get_multipath_devices.return_value = dict(someId=MultipathDeviceMock())
             multipath_devices = ModelTestCase.test_get_multipath_devices(self)
             self.assertEqual(len(multipath_devices), 0)
+
+    def _assert_block_device(self, device):
+        pass
