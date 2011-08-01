@@ -1,13 +1,17 @@
 
 from ..utils import cached_property, cached_method, clear_cache, LazyImmutableDict
 from contextlib import contextmanager
+from infi.exceptools import InfiException
 
 from .inquiry import SupportedVPDPagesDict, InquiryInformationMixin
 from .scsi import SCSIDevice, SCSIBlockDevice, SCSIModel, SCSIStorageController
 from .multipath import MultipathDevice, Path, MultipathFrameworkModel, NativeMultipathModel
-from .multipath import LoadBalancePolicy, LoadBalancingContext
+from .multipath import LoadBalancePolicy
 from .multipath import FailoverOnly, RoundRobin, RoundRobinWithExplicitSubset, RoundRobinWithTPGSSubset
 from .multipath import WeightedPaths, LeastBlocks, LeastQueueDepth
+
+class TimeoutError(InfiException):
+    pass
 
 class StorageModel(object):
     def __init__(self):
@@ -26,6 +30,29 @@ class StorageModel(object):
         clear_cache(self)
         clear_cache(ConnectivityFactory)
 
+    def rescan_and_wait_for(self, predicate, timeout_in_seconds=None):
+        """Rescan devices and wait for user-defined predicate."""
+        from time import time, sleep
+        from sys import maxint
+        if timeout_in_seconds is None:
+            timeout_in_seconds = maxint
+        self.initiate_rescan()
+        self.refresh()
+        start_time = time()
+        while not predicate():
+            if time() - start_time >= timeout_in_seconds:
+                raise TimeoutError()
+            sleep(1)
+            self.refresh()
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    def initiate_rescan(self):
+        # platform implementation
+        raise NotImplementedError
+
     def _create_scsi_model(self):
         # platform implementation        
         raise NotImplementedError()
@@ -33,3 +60,5 @@ class StorageModel(object):
     def _create_native_multipath(self):
         # platform implementation
         raise NotImplementedError()
+
+# TODO implement common rescan predicates

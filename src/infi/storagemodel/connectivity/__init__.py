@@ -13,7 +13,7 @@ class FCConnectivity(object):
 
     @cached_property
     def target_wwn(self):
-        return self._remote_port.port_wwns
+        return self._remote_port.port_wwn
 
 class ISCSIConnectivity(object):
     def __init__(self, device):
@@ -27,7 +27,7 @@ class ConnectivityFactoryImpl(object):
         result = {}
         for local_port in get_ports_generator().iter_ports():
             for remote_port in local_port.discovered_ports:
-                result[remote_port].hct = (local_port, remote_port,)
+                result[remote_port.hct] = (local_port, remote_port,)
         return result
 
     def get_by_device_with_hctl(self, device):

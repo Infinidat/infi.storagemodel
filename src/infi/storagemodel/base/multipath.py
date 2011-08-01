@@ -65,22 +65,10 @@ class MultipathDevice(InquiryInformationMixin, object):
 
     @cached_property
     def policy(self):
-        self._platform_specific_policy_context.get_policy_for_device(self)
+        self._get_policy_for_device(self)
 
-    def set_new_policy(self, policy):
-        # we're not going to do this now
+    def _get_policy_for_device(self):
         raise NotImplementedError
-
-    @cached_property
-    def _platform_specific_policy_context(self):
-        raise NotImplementedError
-
-class LoadBalancingContext(object):
-    def get_policy_for_device(self, device):
-        raise NotImplementedError
-
-    def apply_policy_on_device(self, device, policy):
-        policy.apply_on_device(device)
 
 class LoadBalancePolicy(object):
     _name = None
@@ -99,11 +87,7 @@ class FailoverOnly(LoadBalancePolicy):
 
     def __init__(self, active_path_id):
         super(FailoverOnly, self).__init__()
-        self._cache["active_path_id"] = active_path_id
-
-    @cached_property
-    def active_path_id(self):
-        pass
+        self.active_path_id = active_path_id
 
 class RoundRobin(LoadBalancePolicy):
     _name = "Round Robin"
@@ -113,11 +97,7 @@ class RoundRobinWithSubset(LoadBalancePolicy):
 
     def __init__(self, active_path_ids):
         super(RoundRobinWithSubset, self).__init__()
-        self._cache["active_path_ids"] = active_path_ids
-
-    @property
-    def active_path_ids(self):
-        pass
+        self.active_path_ids = active_path_ids
 
 class RoundRobinWithTPGSSubset(RoundRobinWithSubset):
     pass
@@ -129,11 +109,8 @@ class WeightedPaths(LoadBalancePolicy):
     _name = "Weighted Paths"
     def __init__(self, weights):
         super(WeightedPaths, self).__init__()
-        self._cache['weights'] = weights
-
-    @property
-    def weights(self):
-        pass
+        # weights is a dict of (path_id, weight) items
+        self.weights = weights
 
 class LeastBlocks(LoadBalancePolicy):
     _name = "Least Blocks"

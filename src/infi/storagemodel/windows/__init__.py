@@ -66,7 +66,7 @@ class WindowsSCSIDevice(WindowsDeviceMixin, SCSIDevice):
 class WindowsDiskDeviceMixin(object):
     @cached_property
     def size_in_bytes(self):
-        return self.ioctl_interface.disk_get_length_info()
+        return self.ioctl_interface.disk_get_drive_geometry_ex()
 
     @cached_property
     def physical_drive_number(self):
@@ -102,10 +102,7 @@ class WindowsSCSIModel(SCSIModel):
     @cached_method
     def get_all_storage_controller_devices(self):
         from infi.devicemanager.setupapi.constants import SYSTEM_DEVICE_GUID_STRING
-        # Stoage controllers are listed under the SCSI Adapters and their CLASSGUID is this
-        # Unless there are some other SCSI devices that have this GUID (afaik there aren't)
-        # this is good enough
-        return filter(lambda device: device.class_guid == SYSTEM_DEVICE_GUID_STRING,
+        return filter(lambda device: u'ScsiArray' in device.hardware_ids,
                       [WindowsSCSIStorageController(device) for device in self.device_manager.scsi_devices])
 
 class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
@@ -147,29 +144,6 @@ class WindowsNativeMultipathModel(NativeMultipathModel):
         devices = filter(lambda device: device.parent._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
                          scsi_block_devices)
 
-class WindowsNativeMultipathLoadBalancingContext(multipath.LoadBalancingContext):
-    def __init__(self, policies_dict):
-        super(WindowsNativeMultipathLoadBalancingContext, self).__init__()
-        self._policies_dict = policies_dict
-
-    def get_policy_for_device(self, device):
-        from infi.wmpio.mpclaim import FAIL_OVER_ONLY, ROUND_ROBIN, ROUND_ROBIN_WITH_SUBSET, \
-                                       WEIGHTED_PATHS, LEAST_BLOCKS, LEAST_QUEUE_DEPTH
-        wmpio_policy = self._policies_dict[device.instance_id]
-        policy_number = wmpio_policy.LoadBalancePolicy
-        if policy_number == FAIL_OVER_ONLY:
-            return WindowsFailoverOnly()
-        if policy_number == ROUND_ROBIN:
-            return WindowsRoundRobin()
-        if policy_number == ROUND_ROBIN_WITH_SUBSET:
-            return WindowsRoundRobinWithSubset(device)
-        if policy_number == WEIGHTED_PATHS:
-            return WindowsWeightedPaths(wmpio_policy)
-        if policy_number == LEAST_BLOCKS:
-            return WindowsLeastBlocks()
-        if policy_number == LEAST_QUEUE_DEPTH:
-            return WindowsLeastQueueDepth()
-
 class WindowsFailoverOnly(multipath.FailoverOnly):
     pass
 
@@ -208,9 +182,23 @@ class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, M
     def paths(self):
         return [WindowsPath(item) for item in self._multipath_object.PdoInformation]
 
-    @cached_property
-    def _platform_specific_policy_context(self):
-        return WindowsNativeMultipathLoadBalancingContext(self._policies_dict)
+    def _get_policy_for_device(self):
+        from infi.wmpio.mpclaim import FAIL_OVER_ONLY, ROUND_ROBIN, ROUND_ROBIN_WITH_SUBSET, \
+                                       WEIGHTED_PATHS, LEAST_BLOCKS, LEAST_QUEUE_DEPTH
+        wmpio_policy = self._policies_dict["%s_0" % self.instance_id]
+        policy_number = wmpio_policy.LoadBalancePolicy
+        if policy_number == FAIL_OVER_ONLY:
+            return WindowsFailoverOnly()
+        if policy_number == ROUND_ROBIN:
+            return WindowsRoundRobin()
+        if policy_number == ROUND_ROBIN_WITH_SUBSET:
+            return WindowsRoundRobinWithSubset(self)
+        if policy_number == WEIGHTED_PATHS:
+            return WindowsWeightedPaths(wmpio_policy)
+        if policy_number == LEAST_BLOCKS:
+            return WindowsLeastBlocks()
+        if policy_number == LEAST_QUEUE_DEPTH:
+            return WindowsLeastQueueDepth()
 
 class WindowsPath(Path):
     def __init__(self, pdo_information):

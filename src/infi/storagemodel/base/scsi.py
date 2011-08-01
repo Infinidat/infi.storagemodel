@@ -115,16 +115,3 @@ class SCSIModel(object):
         """
         # platform implementation
         raise NotImplementedError
-
-    def rescan_and_wait_for(self, hctl_map, timeout_in_seconds=None):
-        # TODO: I discussed this with rotem, he wants a different thing:
-        # In this use-cas he's mapping a volume to volume onto a lun to an initiator port, and he wants to wait for
-        # the mapping to wait. He wants to pass a list of (initiator_port, target_port, lun) and have us wait on these.
-        # if initiator_port is None, we shall wait on each initiator_port we are aware of.
-        # this is true for fiberchannel.
-        # for iscsi the tuple is made of (initiator_iqn, initiator_ip, target_iqn, target_ip, lun).
-        """ Rescan devices and wait for user-defined changes. Each key is an HCTL object and each value is True/False.
-        True means the device should be mapped, False means that it should be unmapped.
-        """
-        # platform implementation
-        raise NotImplementedError
