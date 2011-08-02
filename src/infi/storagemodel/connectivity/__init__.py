@@ -15,6 +15,10 @@ class FCConnectivity(object):
     def get_target_wwn(self):
         return self._remote_port.port_wwn
 
+    def __eq__(self, obj):
+        return self.get_initiator_wwn() == obj.get_initiator_wwn() and \
+            self.get_target_wwn() == obj.get_target_wwn()
+
 class ISCSIConnectivity(object):
     def __init__(self, device):
         super(ISCSIConnectivity, self).__init__()

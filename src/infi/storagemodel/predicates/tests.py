@@ -42,12 +42,18 @@ class Disk(object):
         self.scsi_serial_number = scsi_serial_number
         self.called = False
         self.connectivity = False
-        self.get_hctl = None
+        self.hctl = None
 
     @property
     def test(self):
         if not self.called:
             self.called = True
+
+    def get_hctl(self):
+        return self.hctl
+
+    def get_connectivity(self):
+        return self.connectivity
 
 class FCConectivityMock(connectivity.FCConnectivity):
     def __init__(self, i_wwn, t_wwn):
@@ -111,30 +117,30 @@ class PredicateTestCase(unittest.TestCase):
         MultipathModel._devices = [Disk("12345678")]
         self.assertFalse(DiskNotExists("12345678")())
         MultipathModel._devices = []
-        raise unittest.SkipTest
 
     @mock.patch("infi.storagemodel.get_storage_model")
     def test__fc_mapping_appeared(self, get_storage_model):
-        from . import LunExists
+        from . import FiberChannelMappingExists
         i_wwn = ":".join(["01"] * 8)
         t_wwn = ":".join(["02"] * 8)
         get_storage_model.return_value = MockModel()
-        self.assertFalse(LunExists.by_fc(i_wwn, t_wwn, 1)())
+        self.assertFalse(FiberChannelMappingExists(i_wwn, t_wwn, 1)())
         SCSIModel._devices = [Disk("1")]
         SCSIModel._devices[0].connectivity = FCConectivityMock(i_wwn, t_wwn)
-        SCSIModel._devices[0].get_hctl = HCTL(*(1, 0, 0, 1))
-        self.assertTrue(LunExists.by_fc(i_wwn, t_wwn, 1)())
+        SCSIModel._devices[0].hctl = HCTL(*(1, 0, 0, 1))
+        self.assertTrue(FiberChannelMappingExists(i_wwn, t_wwn, 1)())
         SCSIModel._devices = []
 
     @mock.patch("infi.storagemodel.get_storage_model")
     def test_fc_mapping_gone(self, get_storage_model):
-        from . import LunNotExists
+        from . import FiberChannelMappingNotExists
         i_wwn = ":".join(["01"] * 8)
         t_wwn = ":".join(["02"] * 8)
         get_storage_model.return_value = MockModel()
         SCSIModel._devices = [Disk("1")]
         SCSIModel._devices[0].connectivity = FCConectivityMock(i_wwn, t_wwn)
-        SCSIModel._devices[0].get_hctl = HCTL(*(1, 0, 0, 1))
-        self.assertFalse(LunNotExists.by_fc(i_wwn, t_wwn, 1)())
+        SCSIModel._devices[0].hctl = HCTL(*(1, 0, 0, 1))
+        self.assertFalse(FiberChannelMappingNotExists(i_wwn, t_wwn, 1)())
         SCSIModel._devices = []
-        self.assertTrue(LunNotExists.by_fc(i_wwn, t_wwn, 1)())
+        self.assertTrue(FiberChannelMappingNotExists(i_wwn, t_wwn, 1)())
+
