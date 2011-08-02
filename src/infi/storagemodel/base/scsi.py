@@ -85,7 +85,8 @@ class SCSIModel(object):
         return devices_dict[path]
 
     def find_scsi_block_device_by_hctl(self, get_hctl):
-        """return a SCSIBlockDevice object that matches the given get_hctl. raises KeyError if no such device is found"""
+        """return a SCSIBlockDevice object that matches the given get_hctl.
+        raises KeyError if no such device is found"""
         devices_dict = dict([(device.get_hctl(), device) for device in self.get_all_scsi_block_devices()])
         return devices_dict[get_hctl]
 

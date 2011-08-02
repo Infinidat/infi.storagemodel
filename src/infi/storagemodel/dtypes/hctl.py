@@ -4,7 +4,7 @@ class NamedTupleAddress(object):
     _TUPLE = None
     def __init__(self, *args, **kwargs):
         super(NamedTupleAddress, self).__init__()
-        self._value = self._TUPLE(*args, **kwargs)
+        self._value = self._TUPLE(*args, **kwargs) #pylint: disable-msg=E1102
     def __eq__(self, other):
         if isinstance(other, HCTL):
             return self._value == other._value

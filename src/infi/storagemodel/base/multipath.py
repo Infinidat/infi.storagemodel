@@ -33,7 +33,7 @@ class MultipathDevice(InquiryInformationMixin, object):
     def get_vendor(self):
         """Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor  import VendorFactory
-        return VendorFactory.create_multipath_by_vid_pid(self.scsi_vid_pid, self)
+        return VendorFactory.create_multipath_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     #############################
     # Platform Specific Methods #

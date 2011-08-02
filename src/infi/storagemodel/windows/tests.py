@@ -1,5 +1,5 @@
 
-from infi import unittest
+import unittest
 import mock
 from contextlib import contextmanager, nested
 
