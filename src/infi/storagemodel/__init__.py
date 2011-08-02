@@ -29,11 +29,13 @@ def infinidat_devlist_example():
     print "================="
 
     def print_multipath_device(device):
-        print "\t".join([device.display_name, str(device.size_in_bytes), device.scsi_vendor_id, device.scsi_product_id,
-                         device.policy.name, str(len(device.paths))])
-        for path in device.paths:
-            print "\t" + "\t".join([path.path_id, path.state, str(path.hctl)])
-            print "\t\t" + "\t".join([path.connectivity.initiator_wwn, path.connectivity.target_wwn])
+        print "\t".join([device.get_display_name(), str(device.get_size_in_bytes()), device.get_scsi_vendor_id(),
+                         device.get_scsi_product_id(),
+                         device.get_policy().get_name(), str(len(device.get_paths()))])
+        for path in device.get_paths:
+            print "\t" + "\t".join([path.get_path_id(), path.get_state(), str(path.get_hctl())])
+            print "\t\t" + "\t".join([path.get_connectivity().get_initiator_wwn(),
+                                      path.connectivity.get_target_wwn()])
 
     for device in model.native_multipath.filter_vendor_specific_devices(mp_devices, infinibox_vid_pid):
         print_multipath_device(device)
@@ -44,10 +46,11 @@ def infinidat_devlist_example():
 
     def print_non_multipath_device(device):
         from .connectivity import FCConnectivity
-        print "\t".join([device.display_name, str(device.size_in_bytes), device.scsi_vendor_id, device.scsi_product_id,
-                         str(device.hctl)])
+        print "\t".join([device.get_display_name(), str(device.get_size_in_bytes()), device.get_scsi_vendor_id(),
+                         device.get_scsi_product_id(),
+                         str(device.get_hctl())])
         if isinstance(device.connectivity, FCConnectivity):
-            print "\t" + "\t".join([device.connectivity.initiator_wwn, device.connectivity.target_wwn])
+            print "\t" + "\t".join([device.connectivity().get_initiator_wwn(), device.connectivity().get_target_wwn()])
 
     print "Non-Multipath Devices"
     print "====================="

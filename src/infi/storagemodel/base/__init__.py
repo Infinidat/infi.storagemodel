@@ -1,5 +1,5 @@
 
-from ..utils import cached_property, cached_method, clear_cache, LazyImmutableDict
+from ..utils import cached_method, cached_method, clear_cache, LazyImmutableDict
 from contextlib import contextmanager
 from infi.exceptools import InfiException
 
@@ -10,12 +10,12 @@ class StorageModel(object):
     def __init__(self):
         super(StorageModel, self).__init__()
 
-    @cached_property
-    def scsi(self):
+    @cached_method
+    def get_scsi(self):
         return self._create_scsi_model()
 
-    @cached_property
-    def native_multipath(self):
+    @cached_method
+    def get_native_multipath(self):
         # TODO what to do in case native multipath is not installed?
         return self._create_native_multipath_model()
 

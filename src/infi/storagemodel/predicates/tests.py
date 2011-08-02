@@ -42,7 +42,7 @@ class Disk(object):
         self.scsi_serial_number = scsi_serial_number
         self.called = False
         self.connectivity = False
-        self.hctl = None
+        self.get_hctl = None
 
     @property
     def test(self):
@@ -122,7 +122,7 @@ class PredicateTestCase(unittest.TestCase):
         self.assertFalse(LunExists.by_fc(i_wwn, t_wwn, 1)())
         SCSIModel._devices = [Disk("1")]
         SCSIModel._devices[0].connectivity = FCConectivityMock(i_wwn, t_wwn)
-        SCSIModel._devices[0].hctl = HCTL(*(1, 0, 0, 1))
+        SCSIModel._devices[0].get_hctl = HCTL(*(1, 0, 0, 1))
         self.assertTrue(LunExists.by_fc(i_wwn, t_wwn, 1)())
         SCSIModel._devices = []
 
@@ -134,7 +134,7 @@ class PredicateTestCase(unittest.TestCase):
         get_storage_model.return_value = MockModel()
         SCSIModel._devices = [Disk("1")]
         SCSIModel._devices[0].connectivity = FCConectivityMock(i_wwn, t_wwn)
-        SCSIModel._devices[0].hctl = HCTL(*(1, 0, 0, 1))
+        SCSIModel._devices[0].get_hctl = HCTL(*(1, 0, 0, 1))
         self.assertFalse(LunNotExists.by_fc(i_wwn, t_wwn, 1)())
         SCSIModel._devices = []
         self.assertTrue(LunNotExists.by_fc(i_wwn, t_wwn, 1)())

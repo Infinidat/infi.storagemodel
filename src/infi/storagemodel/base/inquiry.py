@@ -1,4 +1,4 @@
-from ..utils import cached_property, LazyImmutableDict
+from ..utils import cached_method, LazyImmutableDict
 
 class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):
@@ -8,28 +8,25 @@ class SupportedVPDPagesDict(LazyImmutableDict):
     def _create_value(self, page_code):
         from infi.asi.cdb.inquiry import SUPPORTED_VPD_PAGES_COMMANDS
         from infi.asi.coroutines.sync_adapter import sync_wait
-        print 'blablabla'
-        print page_code
-        print SUPPORTED_VPD_PAGES_COMMANDS.keys()
         inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
         with self.device.asi_context() as asi:
             return sync_wait(inquiry_command.execute(asi))
 
 class InquiryInformationMixin(object):
-    @cached_property
-    def scsi_vendor_id(self):
+    @cached_method
+    def get_scsi_vendor_id(self):
         return self.scsi_standard_inquiry.t10_vendor_identification.strip()
 
-    @cached_property
-    def scsi_product_id(self):
+    @cached_method
+    def get_scsi_product_id(self):
         return self.scsi_standard_inquiry.product_identification.strip()
 
-    @cached_property
-    def scsi_vid_pid(self):
-        return (self.scsi_vendor_id, self.scsi_product_id)
+    @cached_method
+    def get_scsi_vid_pid(self):
+        return (self.get_scsi_vendor_id(), self.get_scsi_product_id())
 
-    @cached_property
-    def scsi_inquiry_pages(self):
+    @cached_method
+    def get_scsi_inquiry_pages(self):
         """Returns an immutable dict-like object of available inquiry pages from this device.
         For example:
         >>> dev.scsi_inquiry_pages[0x80].product_serial_number
@@ -56,17 +53,17 @@ class InquiryInformationMixin(object):
                 raise
         return SupportedVPDPagesDict(page_dict, self)
 
-    @cached_property
-    def scsi_serial_number(self):
+    @cached_method
+    def get_scsi_serial_number(self):
         """Returns the SCSI serial of the device or an empty string ("") if not available"""
         from infi.asi.cdb.inquiry import INQUIRY_PAGE_UNIT_SERIAL_NUMBER
         serial = ''
-        if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.scsi_inquiry_pages:
-            serial = self.scsi_inquiry_pages[INQUIRY_PAGE_UNIT_SERIAL_NUMBER].product_serial_number
+        if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.get_scsi_inquiry_pages():
+            serial = self.get_scsi_inquiry_pages()[INQUIRY_PAGE_UNIT_SERIAL_NUMBER].product_serial_number
         return serial
 
-    @cached_property
-    def scsi_standard_inquiry(self):
+    @cached_method
+    def get_scsi_standard_inquiry(self):
         from infi.asi.cdb.inquiry import StandardInquiryCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
         with self.asi_context() as asi:

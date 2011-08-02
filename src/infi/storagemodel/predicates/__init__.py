@@ -1,5 +1,5 @@
 
-from ..utils import cached_property, clear_cache
+from ..utils import cached_method, clear_cache
 
 class PredicateList(object):
     """returns True if all predicates in a given list return True"""
@@ -21,10 +21,10 @@ class DiskExists(object):
         from .. import get_storage_model
         model = get_storage_model()
         # TODO check vmalloc/functors
-        block_devices = model.scsi.get_all_scsi_block_devices()
-        mp_devices = model.native_multipath.get_all_multipath_devices()
+        block_devices = model.get_scsi().get_all_scsi_block_devices()
+        mp_devices = model.get_native_multipath().get_all_multipath_devices()
         # TODO create get all non-multipath-devices 
-        non_mp_devices = model.native_multipath.filter_non_multipath_scsi_block_devices(block_devices)
+        non_mp_devices = model.get_native_multipath().filter_non_multipath_scsi_block_devices(block_devices)
         return any([device.scsi_serial_number == device.scsi_serial_number for device in mp_devices + non_mp_devices])
 
 class DiskNotExists(DiskExists):
@@ -62,21 +62,21 @@ class LunExists(object):
     def _is_fc_connectivity_a_match(self, device):
         from ..connectivity import FCConnectivity, ISCSIConnectivity
         if isinstance(device.connectivity, FCConnectivity) and isinstance(self.connectivity, FCConnectivity):
-            if device.connectivity.initiator_wwn == self.connectivity.initiator_wwn:
-                if device.connectivity.target_wwn == self.connectivity.target_wwn:
-                    if device.hctl.get_lun() == self.lun_number:
+            if device.connectivity.get_initiator_wwn == self.connectivity.get_initiator_wwn:
+                if device.connectivity.get_target_wwn == self.connectivity.get_target_wwn:
+                    if device.get_hctl.get_lun() == self.lun_number:
                         return True
         return False
 
     def __call__(self):
         from .. import get_storage_model
         model = get_storage_model()
-        for device in model.scsi.get_all_scsi_block_devices():
+        for device in model.get_scsi().get_all_scsi_block_devices():
             if self._is_fc_connectivity_a_match(device):
                 return True
             # TODO add iSCSI support
-        for device in model.native_multipath.get_all_multipath_devices():
-            for path in device.paths:
+        for device in model.get_native_multipath().get_all_multipath_devices():
+            for path in device.get_paths:
                 if self._is_fc_connectivity_a_match(path):
                     return True
                 # TODO add iSCSI support

@@ -1,6 +1,6 @@
 # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary#Cached_Properties
 
-class cached_property(object):
+class cached_method(object):
     """Decorator for read-only properties evaluated only once.
 
     It can be used to created a cached property like this::
@@ -10,7 +10,7 @@ class cached_property(object):
         # the class containing the property must be a new-style class
         class MyClass(object):
             # create property whose value is cached for ten minutes
-            @cached_property
+            @cached_method
             def randint(self):
                 # will only be evaluated every 10 min. at maximum.
                 return random.randint(0, 100)
@@ -28,7 +28,7 @@ class cached_property(object):
         del inst._cache[<property name>]
     """
     def __init__(self, fget, doc=None):
-        super(cached_property, self).__init__()
+        super(cached_method, self).__init__()
         self.fget = fget
         self.__doc__ = doc or fget.__doc__
         self.__name__ = fget.__name__
@@ -60,14 +60,14 @@ class cached_method(object):
 
     def __call__(self, *args, **kwargs):
         try:
-           value = self.inst._cache[self.__name__]
+            value = self.inst._cache[self.__name__]
         except (KeyError, AttributeError):
-           value = self.func(self.inst, *args, **kwargs)
-           try:
-               self.inst._cache[self.__name__] = value
-           except AttributeError:
-               cache = self.inst._cache = {}
-           self.inst._cache[self.__name__] = value
+            value = self.func(self.inst, *args, **kwargs)
+            try:
+                self.inst._cache[self.__name__] = value
+            except AttributeError:
+                self.inst._cache = {}
+                self.inst._cache[self.__name__] = value
         return value
 
     def __get__(self, obj, objtype):
@@ -80,25 +80,25 @@ def clear_cache(self):
 
 class LazyImmutableDict(object):
     def __init__(self, dict):
-        self._dict = dict
+        self.get_dict = dict
 
     def __getitem__(self, key):
-        value = self._dict[key]
+        value = self.get_dict[key]
         if value is None:
-            value = self._dict[key] = self._create_value(key)
+            value = self.get_dict[key] = self._create_value(key)
         return value
 
     def keys(self):
-        return self._dict.keys()
+        return self.get_dict.keys()
 
     def __contains__(self, key):
-        return self._dict.__contains__(key)
+        return self.get_dict.__contains__(key)
 
     def has_key(self, key):
-        return self._dict.has_key(key)
+        return self.get_dict.has_key(key)
 
     def __len__(self):
-        return len(self._dict)
+        return len(self.get_dict)
 
     def _create_value(self, key):
         raise NotImplementedError()

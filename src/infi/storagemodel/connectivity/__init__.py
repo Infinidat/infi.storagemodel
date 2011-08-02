@@ -1,4 +1,4 @@
-from ..utils import cached_method, cached_property, clear_cache
+from ..utils import cached_method, clear_cache
 
 class FCConnectivity(object):
     def __init__(self, device, local_port, remote_port):
@@ -7,12 +7,12 @@ class FCConnectivity(object):
         self._local_port = local_port
         self._remote_port = remote_port
 
-    @cached_property
-    def initiator_wwn(self):
+    @cached_method
+    def get_initiator_wwn(self):
         return self._local_port.port_wwn
 
-    @cached_property
-    def target_wwn(self):
+    @cached_method
+    def get_target_wwn(self):
         return self._remote_port.port_wwn
 
 class ISCSIConnectivity(object):
@@ -24,8 +24,8 @@ class LocalConnectivity(object):
     pass
 
 class ConnectivityFactoryImpl(object):
-    @cached_property
-    def fc_hctl_mappings(self):
+    @cached_method
+    def get_fc_hctl_mappings(self):
         from infi.hbaapi import get_ports_generator
         result = {}
         for local_port in get_ports_generator().iter_ports():
@@ -34,8 +34,10 @@ class ConnectivityFactoryImpl(object):
         return result
 
     def get_by_device_with_hctl(self, device):
-        hct = (device.hctl.get_host(), device.hctl.get_channel(), device.hctl.get_target())
-        fc_mapping = self.fc_hctl_mappings.get(hct, None)
+        hct = (device.get_hctl().get_host(),
+               device.get_hctl().get_channel(),
+               device.get_hctl().get_target())
+        fc_mapping = self.get_fc_hctl_mappings().get(hct, None)
         if fc_mapping is not None:
             local_port, remote_port = fc_mapping
             return FCConnectivity(device, local_port, remote_port)

@@ -1,5 +1,5 @@
 
-from ..utils import cached_property, cached_method
+from ..utils import cached_method
 from contextlib import contextmanager
 
 from .inquiry import InquiryInformationMixin
@@ -7,8 +7,8 @@ from .inquiry import InquiryInformationMixin
 class MultipathFrameworkModel(object):
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """ returns items from the list that are not part of multipath devices claimed by this framework"""
-        hctl_list = [path.hctl for path in [multipath.paths for multipath in self.get_all_multipath_devices()]]
-        filter (lambda device: device.hctl in hctl_list, scsi_block_devices)
+        hctl_list = [path.get_hctl for path in [multipath.get_paths for multipath in self.get_all_multipath_devices()]]
+        filter (lambda device: device.get_hctl in hctl_list, scsi_block_devices)
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """returns only the items from the devices list that are of the specific type"""
@@ -28,10 +28,10 @@ class NativeMultipathModel(MultipathFrameworkModel):
     pass
 
 class MultipathDevice(InquiryInformationMixin, object):
-    @cached_property
-    def vendor(self):
-        """Returns a vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
-        from ..vendor import VendorFactory
+    @cached_method
+    def get_vendor(self):
+        """Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        from ..vendor  import VendorFactory
         return VendorFactory.create_multipath_by_vid_pid(self.scsi_vid_pid, self)
 
     #############################
@@ -43,28 +43,28 @@ class MultipathDevice(InquiryInformationMixin, object):
         # platform implementation
         raise NotImplementedError
 
-    @cached_property
-    def device_access_path(self):
+    @cached_method
+    def get_device_access_path(self):
         # platform implementation
         raise NotImplementedError
 
-    @cached_property
-    def display_name(self):
+    @cached_method
+    def get_display_name(self):
         # platform implementation
         raise NotImplementedError
 
-    @cached_property
-    def size_in_bytes(self):
+    @cached_method
+    def get_size_in_bytes(self):
         # platform implementation
         raise NotImplementedError
 
-    @cached_property
-    def paths(self):
+    @cached_method
+    def get_paths(self):
         # platform implementation
         raise NotImplementedError
 
-    @cached_property
-    def policy(self):
+    @cached_method
+    def get_policy(self):
         # platform implementation
         raise NotImplementedError
 
@@ -73,8 +73,8 @@ class LoadBalancePolicy(object):
     def __init__(self):
         self._cache = dict()
 
-    @cached_property
-    def display_name(self):
+    @cached_method
+    def get_display_name(self):
         return self.name
 
     def apply_on_device(self, device):
@@ -117,8 +117,8 @@ class LeastQueueDepth(LoadBalancePolicy):
     name = "Least Queue Depth"
 
 class Path(object):
-    @cached_property
-    def connectivity(self):
+    @cached_method
+    def get_connectivity(self):
         """returns either an FCConnnectivity object or ISCSIConnectivity object"""
         from ..connectivity import ConnectivityFactory
         return ConnectivityFactory.get_by_device_with_hctl(self)
@@ -127,19 +127,19 @@ class Path(object):
     # Platform Specific Methods #
     #############################
 
-    @cached_property
-    def path_id(self):
+    @cached_method
+    def get_path_id(self):
         """sdX on linux, PathId on Windows"""
         # platform implementation
         raise NotImplementedError
 
-    @cached_property
-    def hctl(self):
+    @cached_method
+    def get_hctl(self):
         # platform implementation
         raise NotImplementedError
 
-    @cached_property
-    def state(self):
+    @cached_method
+    def get_state(self):
         """up/down"""
         # platform implementation
         raise NotImplementedError
