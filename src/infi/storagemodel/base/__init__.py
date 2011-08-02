@@ -52,7 +52,6 @@ class StorageModel(object):
         # platform implementation        
         raise NotImplementedError()
 
-    def _create_native_multipath(self):
+    def _create_native_multipath_model(self):
         # platform implementation
         raise NotImplementedError()
-
