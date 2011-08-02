@@ -16,7 +16,7 @@ def _sysfs_read_field(device_path, field):
         return f.read()
     
 def _sysfs_read_devno(device_path):
-    return _sysfs_read_field(device_path, "dev").split(":")
+    return tuple([ int(n) for n in _sysfs_read_field(device_path, "dev").strip().split(":") ])
 
 class SysfsSCSIDevice(object):
     def __init__(self, sysfs_dev_path, hctl):

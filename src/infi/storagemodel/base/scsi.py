@@ -76,17 +76,17 @@ class SCSIStorageController(SCSIDevice):
 class SCSIModel(object):
     def find_scsi_block_device_by_block_access_path(self, path):
         """return a SCSIBlockDevice object that matches the given path. raises KeyError if no such device is found"""
-        devices_dict = dict([(device.get_block_access_path, device) for device in self.get_all_scsi_block_devices()])
+        devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_scsi_block_devices()])
         return devices_dict[path]
 
     def find_scsi_block_device_by_scsi_access_path(self, path):
         """return a SCSIBlockDevice object that matches the given path. raises KeyError if no such device is found"""
-        devices_dict = dict([(device.get_scsi_access_path, device) for device in self.get_all_scsi_block_devices()])
+        devices_dict = dict([(device.get_scsi_access_path(), device) for device in self.get_all_scsi_block_devices()])
         return devices_dict[path]
 
     def find_scsi_block_device_by_hctl(self, get_hctl):
         """return a SCSIBlockDevice object that matches the given get_hctl. raises KeyError if no such device is found"""
-        devices_dict = dict([(device.get_hctl, device) for device in self.get_all_scsi_block_devices()])
+        devices_dict = dict([(device.get_hctl(), device) for device in self.get_all_scsi_block_devices()])
         return devices_dict[get_hctl]
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):

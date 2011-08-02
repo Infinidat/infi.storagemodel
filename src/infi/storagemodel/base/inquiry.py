@@ -15,11 +15,11 @@ class SupportedVPDPagesDict(LazyImmutableDict):
 class InquiryInformationMixin(object):
     @cached_method
     def get_scsi_vendor_id(self):
-        return self.scsi_standard_inquiry.t10_vendor_identification.strip()
+        return self.get_scsi_standard_inquiry().t10_vendor_identification.strip()
 
     @cached_method
     def get_scsi_product_id(self):
-        return self.scsi_standard_inquiry.product_identification.strip()
+        return self.get_scsi_standard_inquiry().product_identification.strip()
 
     @cached_method
     def get_scsi_vid_pid(self):
