@@ -25,7 +25,7 @@ class LinuxSCSIDeviceMixin(object):
         return self.sysfs_device.get_hctl()
 
     @cached_method
-    def get_name(self):
+    def get_display_name(self):
         return self.sysfs_device.get_block_device_name()
 
     @cached_method

@@ -52,6 +52,9 @@ class Disk(object):
     def get_hctl(self):
         return self.hctl
 
+    def get_scsi_serial_number(self):
+        return self.scsi_serial_number
+
     def get_connectivity(self):
         return self.connectivity
 

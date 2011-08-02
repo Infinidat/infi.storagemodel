@@ -50,12 +50,12 @@ class StorageModel(object):
 
     def initiate_rescan(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     def _create_scsi_model(self):
         # platform implementation        
-        raise NotImplementedError()
+        raise NotImplementedError # pragma: no cover
 
     def _create_native_multipath_model(self):
         # platform implementation
-        raise NotImplementedError()
+        raise NotImplementedError # pragma: no cover

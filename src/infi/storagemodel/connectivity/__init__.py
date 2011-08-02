@@ -19,11 +19,6 @@ class FCConnectivity(object):
         return self.get_initiator_wwn() == obj.get_initiator_wwn() and \
             self.get_target_wwn() == obj.get_target_wwn()
 
-class ISCSIConnectivity(object):
-    def __init__(self, device):
-        super(ISCSIConnectivity, self).__init__()
-        self.device = device
-
 class LocalConnectivity(object):
     pass
 

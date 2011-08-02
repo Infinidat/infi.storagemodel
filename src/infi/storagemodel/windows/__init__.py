@@ -1,5 +1,5 @@
 
-from ..utils import cached_method, clear_cache, LazyImmutableDict
+from ..utils import cached_method, cached_property, clear_cache, LazyImmutableDict
 from ..base import StorageModel, scsi, multipath
 from contextlib import contextmanager
 
@@ -62,7 +62,7 @@ class WindowsSCSIDevice(WindowsDeviceMixin, scsi.SCSIDevice):
 
     @cached_method
     def get_display_name(self):
-        return self.get_scsi_access_path.split('\\')[-1]
+        return self.get_scsi_access_path().split('\\')[-1]
 
 class WindowsDiskDeviceMixin(object):
     @cached_method
@@ -79,7 +79,7 @@ class WindowsDiskDeviceMixin(object):
 
     @cached_method
     def get_display_name(self):
-        return "PHYSICALDRIVE%s" % self.get_physical_drive_number
+        return "PHYSICALDRIVE%s" % self.get_physical_drive_number()
 
 class WindowsSCSIBlockDevice(WindowsDiskDeviceMixin, WindowsSCSIDevice, scsi.SCSIBlockDevice):
     pass
@@ -117,8 +117,8 @@ class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
         super(LazyImmutableDict, self).__init__()
         self.wmi_client = wmi_client
 
-    @cached_method
-    def get_dict(self):
+    @cached_property
+    def _dict(self):
         from infi.wmpio import get_load_balace_policies
         return get_load_balace_policies(self.wmi_client)
 
@@ -146,20 +146,26 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
                          scsi_block_devices)
 
 class WindowsFailoverOnly(multipath.FailoverOnly):
-    pass
+    def __init__(self, device):
+        active_path_id = None
+        for path in device.get_paths():
+            if path.get_state() == 'up':
+                active_path_id = path.get_path_id()
+            print path.get_state()
+        super(WindowsFailoverOnly, self).__init__(active_path_id)
 
 class WindowsRoundRobin(multipath.RoundRobin):
     pass
 
 class WindowsRoundRobinWithSubset(multipath.RoundRobinWithSubset):
     def __init__(self, device):
-        active_paths = filter(lambda path: path.device_state == 1, device.get_paths)
-        active_path_ids = [path.PathIdentifier for path in active_paths]
+        active_paths = filter(lambda path: path.get_state() == 'up', device.get_paths())
+        active_path_ids = [path.get_path_id() for path in active_paths]
         super(WindowsRoundRobinWithSubset, self).__init__(active_path_ids)
 
 class WindowsWeightedPaths(multipath.WeightedPaths):
     def __init__(self, wmpio_policy):
-        weights = dict([(path.DsmPathId, path.PathWeight) for path in wmpio_policy.Dsm_Paths])
+        weights = dict([(path.DsmPathId, path.PathWeight) for path in wmpio_policy.DSM_Paths])
         super(WindowsWeightedPaths, self).__init__(weights)
 
 class WindowsLeastBlocks(multipath.LeastBlocks):
@@ -187,10 +193,10 @@ class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, m
     def get_policy(self):
         from infi.wmpio.mpclaim import FAIL_OVER_ONLY, ROUND_ROBIN, ROUND_ROBIN_WITH_SUBSET, \
                                        WEIGHTED_PATHS, LEAST_BLOCKS, LEAST_QUEUE_DEPTH
-        wmpio_policy = self._policies_dict["%s_0" % self.get_instance_id]
+        wmpio_policy = self._policies_dict["%s_0" % self.get_instance_id()]
         policy_number = wmpio_policy.LoadBalancePolicy
         if policy_number == FAIL_OVER_ONLY:
-            return WindowsFailoverOnly()
+            return WindowsFailoverOnly(self)
         if policy_number == ROUND_ROBIN:
             return WindowsRoundRobin()
         if policy_number == ROUND_ROBIN_WITH_SUBSET:

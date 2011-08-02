@@ -10,3 +10,13 @@ class TestModel(unittest.TestCase):
         from infi.storagemodel.base import TimeoutError
         from infi.storagemodel.predicates import DiskExists
         self.assertRaises(TimeoutError, get_storage_model().rescan_and_wait_for, *(DiskExists("fooBar"), 1))
+
+    def test_cached_methods(self):
+        from infi.storagemodel.utils import populate_cache
+        from infi.storagemodel import get_storage_model
+        model = get_storage_model()
+        scsi = model.get_scsi()
+        native_multipath = model.get_native_multipath()
+        devices = scsi.get_all_scsi_block_devices() + native_multipath.get_all_multipath_devices()
+        for device in devices:
+            populate_cache(device)

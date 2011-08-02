@@ -78,27 +78,35 @@ def clear_cache(self):
     if hasattr(self, '_cache'):
         getattr(self, '_cache').clear()
 
+def populate_cache(self):
+    from inspect import getmembers
+    from logging import debug
+    for key, value in getmembers(self):
+        if isinstance(value, cached_method):
+            debug("getting attribute %s from %s", repr(key), repr(self))
+            _ = value()
+
 class LazyImmutableDict(object):
     def __init__(self, dict):
-        self.get_dict = dict
+        self._dict = dict
 
     def __getitem__(self, key):
-        value = self.get_dict[key]
+        value = self._dict[key]
         if value is None:
-            value = self.get_dict[key] = self._create_value(key)
+            value = self._dict[key] = self._create_value(key)
         return value
 
     def keys(self):
-        return self.get_dict.keys()
+        return self._dict.keys()
 
     def __contains__(self, key):
-        return self.get_dict.__contains__(key)
+        return self._dict.__contains__(key)
 
     def has_key(self, key):
-        return self.get_dict.has_key(key)
+        return self._dict.has_key(key)
 
     def __len__(self):
-        return len(self.get_dict)
+        return len(self._dict)
 
     def _create_value(self, key):
         raise NotImplementedError()

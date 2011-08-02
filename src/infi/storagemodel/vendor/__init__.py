@@ -1,3 +1,4 @@
+
 class VendorSCSIBlockDevice(object):
     def __init__(self, device):
         super(VendorSCSIBlockDevice, self).__init__()
@@ -17,6 +18,7 @@ class VendorFactoryImpl(object):
     def __init__(self):
         super(VendorFactoryImpl, self).__init__()
         self.vendor_mapping = {} # (vid, pid) -> dict(block=class, controller=class, multipath=class)
+        self._register_builtin_factories()
 
     def register(self, vid_pid, block_class, controller_class, multipath_class):
         assert vid_pid not in self.vendor_mapping
@@ -36,5 +38,9 @@ class VendorFactoryImpl(object):
     def create_multipath_by_vid_pid(self, vid_pid, device):
         assert vid_pid in self.vendor_mapping
         return self.vendor_mapping[vid_pid]['multipath'](device)
+
+    def _register_builtin_factories(self):
+        from . import infinibox
+        self.register(infinibox.vid_pid, infinibox.block_class, infinibox.controller_class, infinibox.multipath_class)
 
 VendorFactory = VendorFactoryImpl()

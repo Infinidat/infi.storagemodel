@@ -18,21 +18,21 @@ class SCSIDevice(InquiryInformationMixin, object):
     @contextmanager
     def asi_context(self):
         # platform implementation
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     @cached_method
     def get_hctl(self):
         """returns a HCTL object"""
         # platform implementation
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
     @cached_method
-    def get_name(self):
+    def get_display_name(self):
         """returns a friendly device name.
         In Windows, its PHYSICALDRIVE%d, in linux, its sdX.
         """
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_block_access_path(self):
@@ -40,7 +40,7 @@ class SCSIDevice(InquiryInformationMixin, object):
         In Windows, its something under globalroot
         In linux, its /dev/sdX"""
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_scsi_access_path(self):
@@ -48,14 +48,14 @@ class SCSIDevice(InquiryInformationMixin, object):
         In Windows, its something under globalroot like block_device_path
         In linux, its /dev/sgX"""
         # platform implementation        
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
 class SCSIBlockDevice(SCSIDevice):
     @cached_method
     def get_vendor(self):
         """ Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
-        return VendorFactory.create_block_by_vid_pid(self.scsi_vid_pid, self)
+        return VendorFactory.create_block_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     #############################
     # Platform Specific Methods #
@@ -64,14 +64,14 @@ class SCSIBlockDevice(SCSIDevice):
     @cached_method
     def get_size_in_bytes(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
 class SCSIStorageController(SCSIDevice):
     @cached_method
     def get_vendor(self):
         """ Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
-        return VendorFactory.create_controller_by_vid_pid(self.scsi_vid_pid, self)
+        return VendorFactory.create_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
 
 class SCSIModel(object):
     def find_scsi_block_device_by_block_access_path(self, path):
@@ -91,7 +91,7 @@ class SCSIModel(object):
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """returns only the items from the devices list that are of the specific type"""
-        return filter(lambda x: x.scsi_vid_pid == vid_pid_tuple, devices)
+        return filter(lambda device: device.get_scsi_vid_pid() == vid_pid_tuple, devices)
 
     #############################
     # Platform Specific Methods #
@@ -107,11 +107,11 @@ class SCSIModel(object):
            - 
         """
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_all_storage_controller_devices(self):
         """ Returns a list of SCSIStorageController objects.
         """
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover

@@ -7,12 +7,13 @@ from .inquiry import InquiryInformationMixin
 class MultipathFrameworkModel(object):
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """ returns items from the list that are not part of multipath devices claimed by this framework"""
-        hctl_list = [path.get_hctl for path in [multipath.get_paths for multipath in self.get_all_multipath_devices()]]
-        filter (lambda device: device.get_hctl in hctl_list, scsi_block_devices)
+        hctl_list = [path.get_hctl() for path in [multipath.get_paths()  \
+                                                  for multipath in self.get_all_multipath_devices()]]
+        filter (lambda device: device.get_hctl() in hctl_list, scsi_block_devices)
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """returns only the items from the devices list that are of the specific type"""
-        return filter(lambda x: x.scsi_vid_pid == vid_pid_tuple, devices)
+        return filter(lambda device: device.get_scsi_vid_pid() == vid_pid_tuple, devices)
 
     #############################
     # Platform Specific Methods #
@@ -22,7 +23,7 @@ class MultipathFrameworkModel(object):
     def get_all_multipath_devices(self):
         """ returns all multipath devices claimed by this framework"""
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
 class NativeMultipathModel(MultipathFrameworkModel):
     pass
@@ -41,32 +42,32 @@ class MultipathDevice(InquiryInformationMixin, object):
     @contextmanager
     def asi_context(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_device_access_path(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_display_name(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_size_in_bytes(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_paths(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_policy(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
 class LoadBalancePolicy(object):
     name = None
@@ -78,10 +79,10 @@ class LoadBalancePolicy(object):
         return self.name
 
     def apply_on_device(self, device):
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
 class FailoverOnly(LoadBalancePolicy):
-    name = "FailOverOnly"
+    name = "Fail Over Only"
 
     def __init__(self, active_path_id):
         super(FailoverOnly, self).__init__()
@@ -131,15 +132,15 @@ class Path(object):
     def get_path_id(self):
         """sdX on linux, PathId on Windows"""
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_hctl(self):
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_state(self):
         """up/down"""
         # platform implementation
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
