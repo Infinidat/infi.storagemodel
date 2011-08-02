@@ -127,7 +127,7 @@ class PredicateTestCase(unittest.TestCase):
         self.assertFalse(FiberChannelMappingExists(i_wwn, t_wwn, 1)())
         SCSIModel._devices = [Disk("1")]
         SCSIModel._devices[0].connectivity = FCConectivityMock(i_wwn, t_wwn)
-        SCSIModel._devices[0].hctl = HCTL(*(1, 0, 0, 1))
+        SCSIModel._devices[0].hctl = HCTL(1, 0, 0, 1)
         self.assertTrue(FiberChannelMappingExists(i_wwn, t_wwn, 1)())
         SCSIModel._devices = []
 
@@ -139,8 +139,9 @@ class PredicateTestCase(unittest.TestCase):
         get_storage_model.return_value = MockModel()
         SCSIModel._devices = [Disk("1")]
         SCSIModel._devices[0].connectivity = FCConectivityMock(i_wwn, t_wwn)
-        SCSIModel._devices[0].hctl = HCTL(*(1, 0, 0, 1))
+        SCSIModel._devices[0].hctl = HCTL(1, 0, 0, 1)
         self.assertFalse(FiberChannelMappingNotExists(i_wwn, t_wwn, 1)())
         SCSIModel._devices = []
         self.assertTrue(FiberChannelMappingNotExists(i_wwn, t_wwn, 1)())
 
+# TODO add rescan tests on real host with the predicates
