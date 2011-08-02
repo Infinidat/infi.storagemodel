@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from infi.exceptools import InfiException
 
 from .. import StorageModelError
-from ..utils import cached_method, cached_method, clear_cache, LazyImmutableDict
+from ..utils import cached_method, clear_cache, LazyImmutableDict
 
 class TimeoutError(StorageModelError):
     pass
@@ -25,13 +25,16 @@ class StorageModel(object):
         clear_cache(self)
         clear_cache(ConnectivityFactory)
 
-    def rescan_and_wait_for(self, predicate, timeout_in_seconds=None):
+    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=None):
         """Rescan devices and wait for user-defined predicate.
         There is no need to refresh() after calling this method."""
         from time import time, sleep
         from sys import maxint
         if timeout_in_seconds is None:
             timeout_in_seconds = maxint
+        if predicate is None:
+            from ..predicates import WaitForNothing
+            predicate = WaitForNothing()
         self.initiate_rescan()
         self.refresh()
         start_time = time()

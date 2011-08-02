@@ -45,7 +45,7 @@ class WindowsDeviceMixin(object):
 
     @cached_method
     def get_parent(self):
-        return self._device_object.get_parent
+        return self._device_object.parent
 
 class WindowsSCSIDevice(WindowsDeviceMixin, scsi.SCSIDevice):
     def __init__(self, device_object):
@@ -142,7 +142,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
                                        policies_dict) for device_object in devices]
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
-        return filter(lambda device: device.get_parent._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
+        return filter(lambda device: device.get_parent()._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
                          scsi_block_devices)
 
 class WindowsFailoverOnly(multipath.FailoverOnly):
@@ -227,3 +227,11 @@ class WindowsStorageModel(StorageModel):
 
     def _create_native_multipath_model(self):
         return WindowsNativeMultipathModel()
+
+    def initiate_rescan(self):
+        from infi.devicemanager import DeviceManager
+        dm = DeviceManager()
+        for controller in dm.storage_controllers:
+            if not controller.is_real_device():
+                continue
+            controller.rescan()

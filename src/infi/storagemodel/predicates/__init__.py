@@ -23,7 +23,8 @@ class DiskExists(object):
         block_devices = model.get_scsi().get_all_scsi_block_devices()
         mp_devices = model.get_native_multipath().get_all_multipath_devices()
         non_mp_devices = model.get_native_multipath().filter_non_multipath_scsi_block_devices(block_devices)
-        return any([device.scsi_serial_number == device.scsi_serial_number for device in mp_devices + non_mp_devices])
+        return any([device.get_scsi_serial_number() == self.scsi_serial_number \
+                    for device in mp_devices + non_mp_devices])
 
 class DiskNotExists(DiskExists):
     """returns True if a disk with scsi_serial_number has gone away"""
@@ -69,3 +70,7 @@ class FiberChannelMappingNotExists(FiberChannelMappingExists):
     """returns True if a lun un-mapping was discovered"""
     def __call__(self):
         return not super(FiberChannelMappingNotExists, self).__call__()
+
+class WaitForNothing(object):
+    def __call__(self):
+        return True

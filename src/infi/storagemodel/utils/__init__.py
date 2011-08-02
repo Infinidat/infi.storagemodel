@@ -1,6 +1,6 @@
 # Adapted from http://wiki.python.org/moin/PythonDecoratorLibrary#Cached_Properties
 
-class cached_method(object):
+class cached_property(object):
     """Decorator for read-only properties evaluated only once.
 
     It can be used to created a cached property like this::
@@ -28,7 +28,7 @@ class cached_method(object):
         del inst._cache[<property name>]
     """
     def __init__(self, fget, doc=None):
-        super(cached_method, self).__init__()
+        super(cached_property, self).__init__()
         self.fget = fget
         self.__doc__ = doc or fget.__doc__
         self.__name__ = fget.__name__
