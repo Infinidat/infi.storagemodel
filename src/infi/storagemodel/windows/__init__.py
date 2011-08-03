@@ -1,5 +1,5 @@
 
-from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
+from infi.pyutils.lazy import cached_method, cached_property, clear_cache, LazyImmutableDict
 from ..base import StorageModel, scsi, multipath
 from contextlib import contextmanager
 
