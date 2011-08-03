@@ -3,6 +3,7 @@ from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
 from infi.dtypes.wwn import WWN
 
 class FCConnectivity(object):
+    """ """
     def __init__(self, device, local_port, remote_port):
         super(FCConnectivity, self).__init__()
         self._device = device

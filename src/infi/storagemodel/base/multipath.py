@@ -6,13 +6,13 @@ from .inquiry import InquiryInformationMixin
 
 class MultipathFrameworkModel(object):
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
-        """ returns items from the list that are not part of multipath devices claimed by this framework"""
+        """:returns: items from the list that are not part of multipath devices claimed by this framework"""
         hctl_list = [path.get_hctl() for path in [multipath.get_paths()  \
                                                   for multipath in self.get_all_multipath_devices()]]
         filter (lambda device: device.get_hctl() in hctl_list, scsi_block_devices)
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
-        """returns only the items from the devices list that are of the specific type"""
+        """:returns: only the items from the devices list that are of the specific type"""
         return filter(lambda device: device.get_scsi_vid_pid() == vid_pid_tuple, devices)
 
     #############################
@@ -21,7 +21,7 @@ class MultipathFrameworkModel(object):
 
     @cached_method
     def get_all_multipath_devices(self):
-        """ returns all multipath devices claimed by this framework"""
+        """:returns: all multipath devices claimed by this framework"""
         # platform implementation
         raise NotImplementedError # pragma: no cover
 
@@ -31,7 +31,7 @@ class NativeMultipathModel(MultipathFrameworkModel):
 class MultipathDevice(InquiryInformationMixin, object):
     @cached_method
     def get_vendor(self):
-        """Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor  import VendorFactory
         return VendorFactory.create_multipath_by_vid_pid(self.get_scsi_vid_pid(), self)
 
@@ -61,11 +61,13 @@ class MultipathDevice(InquiryInformationMixin, object):
 
     @cached_method
     def get_paths(self):
+        """:rtype: list of :class:`.Path` instances"""
         # platform implementation
         raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_policy(self):
+        """:rtype: an instance of :class:`.LoadBalancePolicy`"""
         # platform implementation
         raise NotImplementedError # pragma: no cover
 
@@ -105,6 +107,8 @@ class RoundRobinWithExplicitSubset(RoundRobinWithSubset):
     pass
 
 class WeightedPaths(LoadBalancePolicy):
+    """weights is dictionary mapping between Path IDs to their intger weight"""
+
     name = "Weighted Paths"
     def __init__(self, weights):
         super(WeightedPaths, self).__init__()
@@ -134,17 +138,21 @@ class Path(object):
 
     @cached_method
     def get_path_id(self):
-        """sdX on linux, PathId on Windows"""
+        """:returns: depending on the operating system:
+        
+                    - sdX on linux
+                    - PathId on Windows"""
         # platform implementation
         raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_hctl(self):
+        """:returns: a :class:`infi.dtypes.hctl.HCTL` object"""
         # platform implementation
         raise NotImplementedError # pragma: no cover
 
     @cached_method
     def get_state(self):
-        """up/down"""
+        """:returns: either "up" or "down"."""
         # platform implementation
         raise NotImplementedError # pragma: no cover

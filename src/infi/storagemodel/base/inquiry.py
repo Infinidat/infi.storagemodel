@@ -15,21 +15,28 @@ class SupportedVPDPagesDict(LazyImmutableDict):
 class InquiryInformationMixin(object):
     @cached_method
     def get_scsi_vendor_id(self):
+        """:returns: the T10 vendor identifier string, as give in SCSI Standard Inquiry
+        :rtype: string"""
         return self.get_scsi_standard_inquiry().t10_vendor_identification.strip()
 
     @cached_method
     def get_scsi_product_id(self):
+        """:returns: the T10 product identifier string, as give in SCSI Standard Inquiry
+        :rtype: string"""
         return self.get_scsi_standard_inquiry().product_identification.strip()
 
     @cached_method
     def get_scsi_vid_pid(self):
+        """returns a tuple of the vendor_id and product_id
+        :rtype: type"""
         return (self.get_scsi_vendor_id(), self.get_scsi_product_id())
 
     @cached_method
     def get_scsi_inquiry_pages(self):
         """Returns an immutable dict-like object of available inquiry pages from this device.
         For example:
-        >>> dev.scsi_inquiry_pages[0x80].product_serial_number
+        
+            >>> dev.scsi_inquiry_pages[0x80].product_serial_number
         """
         from infi.asi.cdb.inquiry import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
         from infi.asi.cdb.inquiry import SupportedVPDPagesCommand
@@ -55,7 +62,8 @@ class InquiryInformationMixin(object):
 
     @cached_method
     def get_scsi_serial_number(self):
-        """Returns the SCSI serial of the device or an empty string ("") if not available"""
+        """:returns: the SCSI serial of the device or an empty string ("") if not available
+        :rtype: string"""
         from infi.asi.cdb.inquiry import INQUIRY_PAGE_UNIT_SERIAL_NUMBER
         serial = ''
         if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.get_scsi_inquiry_pages():

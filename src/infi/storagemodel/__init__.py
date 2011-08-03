@@ -1,13 +1,6 @@
 __import__("pkg_resources").declare_namespace(__name__)
-from infi.exceptools import InfiException
 
 __all__ = [ 'get_storage_model' ]
-
-class StorageModelError(InfiException):
-    pass
-
-class StorageModelFindError(StorageModelError):
-    pass
 
 __storage_model = None
 

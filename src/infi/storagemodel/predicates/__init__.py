@@ -2,22 +2,22 @@
 from infi.pyutils.lazy import cached_method, clear_cache
 
 class PredicateList(object):
-    """returns True if all predicates in a given list return True"""
+    """:returns: True if all predicates in a given list return True"""
     def __init__(self, list_of_predicates):
         super(PredicateList, self).__init__()
         self._list_of_predicates = list_of_predicates
 
-    def __call__(self):
+    def callee(self):
         return all([predicate() for predicate in self._list_of_predicates])
 
 class DiskExists(object):
-    """returns True if a disk was discovered with scsi_serial_number"""
+    """:returns: True if a disk was discovered with scsi_serial_number"""
 
     def __init__(self, scsi_serial_number):
         super(DiskExists, self).__init__()
         self.scsi_serial_number = scsi_serial_number
 
-    def __call__(self):
+    def callee(self):
         from .. import get_storage_model
         model = get_storage_model()
         block_devices = model.get_scsi().get_all_scsi_block_devices()
@@ -27,13 +27,13 @@ class DiskExists(object):
                     for device in mp_devices + non_mp_devices])
 
 class DiskNotExists(DiskExists):
-    """returns True if a disk with scsi_serial_number has gone away"""
+    """:returns: True if a disk with scsi_serial_number has gone away"""
 
-    def __call__(self):
-        return not super(DiskNotExists, self).__call__()
+    def callee(self):
+        return not super(DiskNotExists, self).callee()
 
 class FiberChannelMappingExists(object):
-    """returns True if a lun mapping was discovered"""
+    """:returns: True if a lun mapping was discovered"""
 
     def __init__(self, initiator_wwn, target_wwn, lun_number):
         super(FiberChannelMappingExists, self).__init__()
@@ -54,7 +54,7 @@ class FiberChannelMappingExists(object):
             return True
         return False
 
-    def __call__(self):
+    def callee(self):
         from .. import get_storage_model
         model = get_storage_model()
         for device in model.get_scsi().get_all_scsi_block_devices():
@@ -67,10 +67,10 @@ class FiberChannelMappingExists(object):
         return False
 
 class FiberChannelMappingNotExists(FiberChannelMappingExists):
-    """returns True if a lun un-mapping was discovered"""
-    def __call__(self):
-        return not super(FiberChannelMappingNotExists, self).__call__()
+    """:returns: True if a lun un-mapping was discovered"""
+    def callee(self):
+        return not super(FiberChannelMappingNotExists, self).callee()
 
 class WaitForNothing(object):
-    def __call__(self):
+    def callee(self):
         return True
