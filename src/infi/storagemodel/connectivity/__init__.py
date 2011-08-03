@@ -1,5 +1,6 @@
 
 from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
+from infi.dtypes.wwn import WWN
 
 class FCConnectivity(object):
     def __init__(self, device, local_port, remote_port):
@@ -10,11 +11,11 @@ class FCConnectivity(object):
 
     @cached_method
     def get_initiator_wwn(self):
-        return self._local_port.port_wwn
+        return WWN(self._local_port.port_wwn)
 
     @cached_method
     def get_target_wwn(self):
-        return self._remote_port.port_wwn
+        return WWN(self._remote_port.port_wwn)
 
     def __eq__(self, obj):
         return self.get_initiator_wwn() == obj.get_initiator_wwn() and \
