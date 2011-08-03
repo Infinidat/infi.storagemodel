@@ -147,21 +147,20 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
                          scsi_block_devices)
 
 class WindowsFailoverOnly(multipath.FailoverOnly):
-    def __init__(self, device):
+    def __init__(self, policy):
         active_path_id = None
-        for path in device.get_paths():
-            if path.get_state() == 'up':
-                active_path_id = path.get_path_id()
-            print path.get_state()
+        for path in policy.DSM_Paths:
+            if path.PrimaryPath == 1:
+                active_path_id = path.DsmPathId
         super(WindowsFailoverOnly, self).__init__(active_path_id)
 
 class WindowsRoundRobin(multipath.RoundRobin):
     pass
 
 class WindowsRoundRobinWithSubset(multipath.RoundRobinWithSubset):
-    def __init__(self, device):
-        active_paths = filter(lambda path: path.get_state() == 'up', device.get_paths())
-        active_path_ids = [path.get_path_id() for path in active_paths]
+    def __init__(self, policy):
+        active_paths = filter(lambda path: path.PrimaryPath == 1, policy.DSM_Paths)
+        active_path_ids = [path.DsmPathId for path in active_paths]
         super(WindowsRoundRobinWithSubset, self).__init__(active_path_ids)
 
 class WindowsWeightedPaths(multipath.WeightedPaths):
@@ -197,11 +196,11 @@ class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, m
         wmpio_policy = self._policies_dict["%s_0" % self.get_instance_id()]
         policy_number = wmpio_policy.LoadBalancePolicy
         if policy_number == FAIL_OVER_ONLY:
-            return WindowsFailoverOnly(self)
+            return WindowsFailoverOnly(wmpio_policy)
         if policy_number == ROUND_ROBIN:
             return WindowsRoundRobin()
         if policy_number == ROUND_ROBIN_WITH_SUBSET:
-            return WindowsRoundRobinWithSubset(self)
+            return WindowsRoundRobinWithSubset(wmpio_policy)
         if policy_number == WEIGHTED_PATHS:
             return WindowsWeightedPaths(wmpio_policy)
         if policy_number == LEAST_BLOCKS:

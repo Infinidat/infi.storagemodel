@@ -14,6 +14,7 @@ def devlist():
     print "================="
 
     def print_multipath_device(device):
+        from infi.storagemodel.base.multipath import FailoverOnly, WeightedPaths, RoundRobinWithSubset
         print "\t".join([device.get_display_name(), str(device.get_size_in_bytes()), device.get_scsi_vendor_id(),
                          device.get_scsi_product_id(),
                          device.get_policy().get_display_name(), str(len(device.get_paths()))])
@@ -21,6 +22,12 @@ def devlist():
             print "\t" + "\t".join([path.get_path_id(), path.get_state(), str(path.get_hctl())])
             print "\t\t" + "\t".join([path.get_connectivity().get_initiator_wwn(),
                                       path.get_connectivity().get_target_wwn()])
+            if isinstance(device.get_policy(), FailoverOnly):
+                print "\t\t" + ("Active" if path.get_path_id() in device.get_policy().active_path_id else "Standby")
+            if isinstance(device.get_policy(), RoundRobinWithSubset):
+                print "\t\t" + ("Active" if path.get_path_id() in device.get_policy().active_path_ids else "Standby")
+            if isinstance(device.get_policy(), WeightedPaths):
+                print "\t\t" + "Weight " + str(device.get_policy().weights[path.get_path_id()])
 
     for device in model.get_native_multipath().filter_vendor_specific_devices(mp_devices, infinibox_vid_pid):
         print_multipath_device(device)
