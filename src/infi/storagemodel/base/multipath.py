@@ -124,6 +124,10 @@ class Path(object):
         from ..connectivity import ConnectivityFactory
         return ConnectivityFactory.get_by_device_with_hctl(self)
 
+    @cached_method
+    def get_display_name(self):
+        return self.get_path_id()
+
     #############################
     # Platform Specific Methods #
     #############################

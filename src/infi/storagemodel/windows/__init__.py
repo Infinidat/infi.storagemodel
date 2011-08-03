@@ -151,7 +151,7 @@ class WindowsFailoverOnly(multipath.FailoverOnly):
         active_path_id = None
         for path in policy.DSM_Paths:
             if path.PrimaryPath == 1:
-                active_path_id = path.DsmPathId
+                active_path_id = int(path.DsmPathId)
         super(WindowsFailoverOnly, self).__init__(active_path_id)
 
 class WindowsRoundRobin(multipath.RoundRobin):
@@ -165,7 +165,7 @@ class WindowsRoundRobinWithSubset(multipath.RoundRobinWithSubset):
 
 class WindowsWeightedPaths(multipath.WeightedPaths):
     def __init__(self, wmpio_policy):
-        weights = dict([(path.DsmPathId, path.PathWeight) for path in wmpio_policy.DSM_Paths])
+        weights = dict([(int(path.DsmPathId), int(path.PathWeight)) for path in wmpio_policy.DSM_Paths])
         super(WindowsWeightedPaths, self).__init__(weights)
 
 class WindowsLeastBlocks(multipath.LeastBlocks):
@@ -215,7 +215,7 @@ class WindowsPath(multipath.Path):
 
     @cached_method
     def get_path_id(self):
-        return self._pdo_information.PathIdentifier
+        return int(self._pdo_information.PathIdentifier)
 
     @cached_method
     def get_hctl(self):
@@ -226,6 +226,10 @@ class WindowsPath(multipath.Path):
     @cached_method
     def get_state(self):
         return "up"
+
+    @cached_method
+    def get_display_name(self):
+        return "%x" % self.get_path_id()
 
 class WindowsStorageModel(StorageModel):
     def _create_scsi_model(self):
