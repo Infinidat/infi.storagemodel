@@ -78,15 +78,29 @@ def clear_cache(self):
     if hasattr(self, '_cache'):
         getattr(self, '_cache').clear()
 
-def populate_cache(self):
+def populate_cache(self, attributes_to_skip=["get_vendor"]):
+    """ this method attempts to get all the lazy cached properties and methods
+    There are two special cases:
+    * Some attributes may not be available and raises exceptions.
+      If you wish to skip these, pass them in the attributes_to_skip list
+    * The calling of cached methods is done without any arguments, and catches TypeError exceptions
+      for the case a cached method requires arguments. The exception is logged.
+    """
     from inspect import getmembers
-    from logging import debug
+    from logging import debug, exception
     for key, value in getmembers(self):
+        if key in attributes_to_skip:
+            continue
         if isinstance(value, cached_method):
             debug("getting attribute %s from %s", repr(key), repr(self))
-            _ = value()
+            try:
+                _ = value()
+            except TypeError, e:
+                exception(e)
 
 class LazyImmutableDict(object):
+    """ Use this object when you have a list of keys but fetching the values is expensive,
+    and you want to do it in a lazy fasion"""
     def __init__(self, dict):
         self._dict = dict
 

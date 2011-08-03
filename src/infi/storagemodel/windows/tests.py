@@ -73,6 +73,17 @@ class ModelTestCase(unittest.TestCase):
             _ = path.get_state()
         _ = device.get_policy
 
+    def test_find_devices(self):
+        model = self._get_model()
+        scsi = model.get_scsi()
+        devices = scsi.get_all_scsi_block_devices()
+        self.assertRaises(KeyError, scsi.find_scsi_block_device_by_block_access_path, "foo")
+        _ = scsi.find_scsi_block_device_by_block_access_path(devices[0].get_block_access_path())
+        self.assertRaises(KeyError, scsi.find_scsi_block_device_by_scsi_access_path, "foo")
+        _ = scsi.find_scsi_block_device_by_scsi_access_path(devices[0].get_scsi_access_path())
+        self.assertRaises(KeyError, scsi.find_scsi_block_device_by_hctl, "foo")
+        _ = scsi.find_scsi_block_device_by_hctl(devices[0].get_hctl())
+
 class MockModelTestCase(ModelTestCase):
     def setUp(self):
         pass
@@ -104,4 +115,7 @@ class MockModelTestCase(ModelTestCase):
             self.assertEqual(len(multipath_devices), 0)
 
     def _assert_block_device(self, device):
+        pass
+
+    def test_find_devices(self):
         pass

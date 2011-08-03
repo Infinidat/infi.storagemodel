@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from infi.storagemodel.utils import cached_property, cached_method, clear_cache
+from infi.storagemodel.utils import cached_property, cached_method, clear_cache, populate_cache
 
 class TestSubject(object):
     def __init__(self):
@@ -33,6 +33,11 @@ class CachedPropertyTestCase(TestCase):
         self.assertEqual(self.subject.counter, 1)
         clear_cache(self.subject)
         self.assertEqual(self.subject.counter, 2)
+
+    def test_populate_cache(self):
+        self.assertEqual(self.subject._counter, 0)
+        populate_cache(self.subject)
+        self.assertEqual(self.subject._counter, 2)
 
 class CachedMethodTestCase(TestCase):
     def setUp(self):
