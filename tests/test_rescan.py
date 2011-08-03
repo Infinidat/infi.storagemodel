@@ -12,7 +12,7 @@ class TestModel(unittest.TestCase):
         self.assertRaises(TimeoutError, get_storage_model().rescan_and_wait_for, *(DiskExists("fooBar"), 1))
 
     def test_cached_methods(self):
-        from infi.storagemodel.utils import populate_cache
+        from infi.pyutils.lazy import populate_cache
         from infi.storagemodel import get_storage_model
         model = get_storage_model()
         scsi = model.get_scsi()

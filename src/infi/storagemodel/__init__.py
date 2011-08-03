@@ -12,6 +12,7 @@ class StorageModelFindError(StorageModelError):
 __storage_model = None
 
 def get_storage_model():
+    """returns a global instance of a StorageModel"""
     global __storage_model
     if __storage_model is None:
         # do platform-specific magic here.

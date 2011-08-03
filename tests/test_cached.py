@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from infi.storagemodel.utils import cached_property, cached_method, clear_cache, populate_cache
+from infi.pyutils.lazy import cached_property, cached_method, clear_cache, populate_cache
 
 class TestSubject(object):
     def __init__(self):

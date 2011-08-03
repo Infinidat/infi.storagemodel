@@ -1,8 +1,6 @@
-from contextlib import contextmanager
-from infi.exceptools import InfiException
 
 from .. import StorageModelError
-from ..utils import cached_method, clear_cache, LazyImmutableDict
+from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
 
 class TimeoutError(StorageModelError):
     pass

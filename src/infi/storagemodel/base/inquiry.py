@@ -1,4 +1,4 @@
-from ..utils import cached_method, LazyImmutableDict
+from infi.pyutils.lazy import cached_method, LazyImmutableDict
 
 class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):

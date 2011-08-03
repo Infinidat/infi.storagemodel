@@ -1,11 +1,11 @@
 import os
 from ..dtypes.hctl import HCTL
-from ..utils import cached_method
+from infi.pyutils.lazy import cached_method
 from .. import StorageModelError
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
 
-SCSI_TYPE_DISK               = 0x00
+SCSI_TYPE_DISK = 0x00
 SCSI_TYPE_STORAGE_CONTROLLER = 0x0C
 
 class SysfsError(StorageModelError):
@@ -14,7 +14,7 @@ class SysfsError(StorageModelError):
 def _sysfs_read_field(device_path, field):
     with open(os.path.join(device_path, field), "rb") as f:
         return f.read()
-    
+
 def _sysfs_read_devno(device_path):
     return tuple([ int(n) for n in _sysfs_read_field(device_path, "dev").strip().split(":") ])
 
@@ -23,7 +23,7 @@ class SysfsSCSIDevice(object):
         super(SysfsSCSIDevice, self).__init__()
         self.sysfs_dev_path = sysfs_dev_path
         self.hctl = hctl
-        
+
         sg_dev_names = os.listdir(os.path.join(self.sysfs_dev_path, "scsi_generic"))
         if len(sg_dev_names) != 1:
             raise SysfsError("%s doesn't have a single device/scsi_generic/sg* path (%s)" % (self.sysfs_dev_path,
@@ -31,26 +31,26 @@ class SysfsSCSIDevice(object):
         self.scsi_generic_device_name = sg_dev_names[0]
         self.sysfs_scsi_generic_device_path = os.path.join(self.sysfs_dev_path, "scsi_generic",
                                                            self.scsi_generic_device_name)
-    
+
     def get_hctl(self):
         return self.hctl
 
     def get_scsi_generic_device_name(self):
         return self.scsi_generic_device_name
-    
+
     def get_queue_depth(self):
         return int(_sysfs_read_field(self.sysfs_dev_path, "queue_depth"))
-    
+
     def get_vendor(self):
         return _sysfs_read_field(self.sysfs_dev_path, "vendor")
-    
+
     def get_scsi_generic_devno(self):
         return _sysfs_read_devno(self.sysfs_scsi_generic_device_path)
 
 class SysfsSCSIDisk(SysfsSCSIDevice):
     def __init__(self, sysfs_dev_path, hctl):
         super(SysfsSCSIDisk, self).__init__(sysfs_dev_path, hctl)
-        
+
         block_dev_names = os.listdir(os.path.join(self.sysfs_dev_path, "block"))
         if len(block_dev_names) != 1:
             raise SysfsError("%s doesn't have a single device/block/sd* path (%s)" % (self.sysfs_dev_path,
@@ -71,7 +71,7 @@ class Sysfs(object):
     def __init__(self):
         self.disks = []
         self.controllers = []
-        
+
         for hctl_str in os.listdir(SYSFS_CLASS_SCSI_DEVICE_PATH):
             dev_path = os.path.join(SYSFS_CLASS_SCSI_DEVICE_PATH, hctl_str, "device")
             scsi_type = int(_sysfs_read_field(dev_path, "type"))

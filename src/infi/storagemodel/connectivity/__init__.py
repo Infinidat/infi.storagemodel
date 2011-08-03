@@ -1,4 +1,5 @@
-from ..utils import cached_method, clear_cache
+
+from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
 
 class FCConnectivity(object):
     def __init__(self, device, local_port, remote_port):

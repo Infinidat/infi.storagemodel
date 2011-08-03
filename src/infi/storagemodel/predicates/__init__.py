@@ -1,5 +1,5 @@
 
-from ..utils import cached_method, clear_cache
+from infi.pyutils.lazy import cached_method, clear_cache
 
 class PredicateList(object):
     """returns True if all predicates in a given list return True"""

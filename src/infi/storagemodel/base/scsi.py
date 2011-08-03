@@ -1,5 +1,5 @@
 
-from ..utils import cached_method
+from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
 
 from .inquiry import InquiryInformationMixin
