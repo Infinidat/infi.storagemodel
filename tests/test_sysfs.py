@@ -1,7 +1,7 @@
 from unittest import TestCase, SkipTest
 from mock import Mock, patch
 from os import name
-from infi.storagemodel.dtypes.hctl import HCTL
+from infi.dtypes.hctl import HCTL
 from infi.storagemodel.linux.sysfs import Sysfs
 
 class SysfsTestCase(TestCase):

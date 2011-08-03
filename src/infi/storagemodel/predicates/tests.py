@@ -3,7 +3,7 @@ import mock
 
 from ..base import StorageModel, scsi, multipath
 from .. import connectivity
-from ..dtypes import HCTL
+from infi.dtypes.hctl import HCTL
 
 class MultipathModelImpl(multipath.MultipathFrameworkModel):
     def __init__(self, *args, **kwargs):

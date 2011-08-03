@@ -1,5 +1,5 @@
 import os
-from ..dtypes.hctl import HCTL
+from infi.dtypes.hctl import HCTL
 from infi.pyutils.lazy import cached_method
 from .. import StorageModelError
 

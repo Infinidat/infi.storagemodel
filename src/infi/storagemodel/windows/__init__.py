@@ -30,7 +30,7 @@ class WindowsDeviceMixin(object):
 
     @cached_method
     def get_hctl(self):
-        from ..dtypes import HCTL
+        from infi.dtypes.hctl import HCTL
         return HCTL(*self.get_ioctl_interface().scsi_get_address())
 
     @cached_method
@@ -219,7 +219,7 @@ class WindowsPath(multipath.Path):
 
     @cached_method
     def get_hctl(self):
-        from ..dtypes import HCTL
+        from infi.dtypes.hctl import HCTL
         scsi_address = self._pdo_information.ScsiAddress
         return HCTL(scsi_address.PortNumber, scsi_address.ScsiPathId, scsi_address.TargetId, scsi_address.Lun)
 

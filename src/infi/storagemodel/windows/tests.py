@@ -20,7 +20,7 @@ class ModelTestCase(unittest.TestCase):
         native_multipath = model.get_native_multipath()
 
     def _assert_block_device(self, device):
-        from ..dtypes import HCTL
+        from infi.dtypes.hctl import HCTL
         self.assertGreater(device.get_size_in_bytes(), 0)
         self.assertIsInstance(device.get_hctl(), HCTL)
         self.assertTrue(device.get_display_name().startswith("PHYSICALDRIVE"))
@@ -66,7 +66,7 @@ class ModelTestCase(unittest.TestCase):
         _ = device.get_scsi_inquiry_pages()
         self.assertIsInstance(device.get_scsi_serial_number(), str)
         _ = device.get_scsi_standard_inquiry()
-        from ..dtypes import HCTL
+        from infi.dtypes.hctl import HCTL
         for path in device.get_paths():
             self.assertIsInstance(path.get_hctl(), HCTL)
             self._assert_connectivity(path)
