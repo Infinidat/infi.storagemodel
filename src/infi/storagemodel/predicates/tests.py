@@ -86,7 +86,7 @@ class PredicateTestCase(unittest.TestCase):
         model.rescan_and_wait_for(self.true)
 
     def test_rescan_with_mock_predicate__raises_timeout(self):
-        from ..base import TimeoutError
+        from ..errors import TimeoutError
         model = MockModel()
         self.assertRaises(TimeoutError, model.rescan_and_wait_for, *(self.false, 1))
 

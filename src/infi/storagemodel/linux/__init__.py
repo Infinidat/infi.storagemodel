@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 
 from ..base import StorageModel, scsi, multipath
-from .. import StorageModelFindError
+from ..errors import StorageModelFindError
 from infi.pyutils.lazy import cached_method
 
 from .sysfs import Sysfs

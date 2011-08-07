@@ -7,7 +7,7 @@ class PredicateList(object):
         super(PredicateList, self).__init__()
         self._list_of_predicates = list_of_predicates
 
-    def callee(self):
+    def __call__(self):
         return all([predicate() for predicate in self._list_of_predicates])
 
 class DiskExists(object):
@@ -17,7 +17,7 @@ class DiskExists(object):
         super(DiskExists, self).__init__()
         self.scsi_serial_number = scsi_serial_number
 
-    def callee(self):
+    def __call__(self):
         from .. import get_storage_model
         model = get_storage_model()
         block_devices = model.get_scsi().get_all_scsi_block_devices()
@@ -29,8 +29,8 @@ class DiskExists(object):
 class DiskNotExists(DiskExists):
     """:returns: True if a disk with scsi_serial_number has gone away"""
 
-    def callee(self):
-        return not super(DiskNotExists, self).callee()
+    def __call__(self):
+        return not super(DiskNotExists, self).__call__()
 
 class FiberChannelMappingExists(object):
     """:returns: True if a lun mapping was discovered"""
@@ -54,7 +54,7 @@ class FiberChannelMappingExists(object):
             return True
         return False
 
-    def callee(self):
+    def __call__(self):
         from .. import get_storage_model
         model = get_storage_model()
         for device in model.get_scsi().get_all_scsi_block_devices():
@@ -68,9 +68,9 @@ class FiberChannelMappingExists(object):
 
 class FiberChannelMappingNotExists(FiberChannelMappingExists):
     """:returns: True if a lun un-mapping was discovered"""
-    def callee(self):
-        return not super(FiberChannelMappingNotExists, self).callee()
+    def __call__(self):
+        return not super(FiberChannelMappingNotExists, self).__call__()
 
 class WaitForNothing(object):
-    def callee(self):
+    def __call__(self):
         return True

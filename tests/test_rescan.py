@@ -1,6 +1,13 @@
 import unittest
 
 class TestModel(unittest.TestCase):
+    def setUp(self):
+        from infi.storagemodel import get_storage_model
+        try:
+            _ = get_storage_model()
+        except ImportError:
+            raise unittest.SkipTest
+
     def test_rescan__nothing(self):
         from infi.storagemodel import get_storage_model
         get_storage_model().rescan_and_wait_for()

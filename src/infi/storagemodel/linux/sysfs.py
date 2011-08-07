@@ -1,7 +1,7 @@
 import os
 from infi.dtypes.hctl import HCTL
 from infi.pyutils.lazy import cached_method
-from .. import StorageModelError
+from ..errors import StorageModelError
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
 
