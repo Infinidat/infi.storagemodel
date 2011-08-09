@@ -22,5 +22,8 @@ class InitiateRescan(unittest.TestCase):
             return original_call_function(dict())
 
         with mock.patch_object(LinuxStorageModel, "_call_rescan_script") as patch:
+            model = LinuxStorageModel()
             patch.side_effect = side_effect
+            self.assertIsInstance(model._call_rescan_script, mock.Mock)
             self.assertRaises(StorageModelError, model.initiate_rescan)
+            self.assertTrue(patch.called)

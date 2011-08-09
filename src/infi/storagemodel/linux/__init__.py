@@ -96,15 +96,15 @@ class LinuxStorageModel(StorageModel):
     def _create_native_multipath_model(self):
         return LinuxNativeMultipathModel()
 
-    def _call_rescan_script(self, augmented_env=None):
+    def _call_rescan_script(self, env=None):
         """for testability purposes, we want to call execute with no environment variables, to mock the effect
         that the script does not exist"""
         from infi.exceptools import chain
         from infi.execute import execute_async
         from ..errors import StorageModelError
         try:
-            _ = execute_async([RESCAN_SCRIPT_NAME, "--remove", "--issue-lip", "--forcerescan"])
-        except Exception, e:
+            _ = execute_async([RESCAN_SCRIPT_NAME, "--remove", "--issue-lip", "--forcerescan"], env=env)
+        except:
             raise chain(StorageModelError("failed to initiate rescan"))
 
     def initiate_rescan(self):
