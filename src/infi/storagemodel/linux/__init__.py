@@ -87,6 +87,8 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         # TODO: implement
         raise NotImplementedError()
 
+RESCAN_SCRIPT_NAME = "rescan-scsi-bus.sh"
+
 class LinuxStorageModel(StorageModel):
     def _create_scsi_model(self):
         return LinuxSCSIModel()
@@ -94,6 +96,26 @@ class LinuxStorageModel(StorageModel):
     def _create_native_multipath_model(self):
         return LinuxNativeMultipathModel()
 
+    def _call_rescan_script(self, augmented_env=None):
+        """for testability purposes, we want to call execute with no environment variables, to mock the effect
+        that the script does not exist"""
+        from infi.exceptools import chain
+        from infi.execute import execute_async
+        from ..errors import StorageModelError
+        try:
+            _ = execute_async([RESCAN_SCRIPT_NAME, "--remove", "--issue-lip", "--forcerescan"])
+        except Exception, e:
+            raise chain(StorageModelError("failed to initiate rescan"))
+
     def initiate_rescan(self):
-        # TODO: implement
-        raise NotImplementedError()
+        """the first attempt will be to use rescan-scsi-bus.sh, which comes out-of-the-box in redhat distributions,
+        and from the debian packager scsitools.
+        If and when we'll encounter a case in which this script doesn't work as expected, we will port it to Python
+        and modify it accordingly.
+        """
+        self._call_rescan_script()
+
+def is_rescan_script_exists():
+    from os import environ, pathsep
+    from os.path import exists, join
+    return any([exists(join(dirpath, RESCAN_SCRIPT_NAME)) for dirpath in environ["PATH"].split(pathsep)])
