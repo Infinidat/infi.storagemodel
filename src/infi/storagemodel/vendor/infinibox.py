@@ -31,4 +31,5 @@ class InfinidatVolumeExists(object):
         block_devices = scsi.filter_vendor_specific_devices(scsi.get_all_scsi_block_devices(), vid_pid)
         mp_devices = mpath.filter_vendor_specific_devices(mpath.get_all_multipath_devices(), vid_pid)
         non_mp_devices = mpath.filter_non_multipath_scsi_block_devices(block_devices)
-        return any([device.volume_name == self.infinipy_volume.get_name() for device in mp_devices + non_mp_devices])
+        return any([self.infinipy_volume.get_name() in device.get_scsi_inquiry_pages()[0x83] \
+                    for device in mp_devices + non_mp_devices])
