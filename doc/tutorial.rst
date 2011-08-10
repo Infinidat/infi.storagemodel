@@ -37,7 +37,7 @@ device, you'll get the same instance.
 Also, you can get a device by its SCSI address:
 
     >>> from infi.dtypes.hctl import HCTL
-    >>> device.find_scsi_block_device_by_hctl(HTCL(1,0,0,1))
+    >>> device.find_scsi_block_device_by_hctl(HCTL(1,0,0,1))
 
 These methods return either :class:`.SCSIStorageController` or :class:`.SCSIBlockDevice`, or lists of them.
 Check their documentation to see what information they hold.
@@ -56,11 +56,12 @@ Usually, you'd also want to differ between the multipath disks and the non-multi
 
 Also, if you want disks of a specific product:
 
-   >>> infinidat_mp_disks = mpio.filter_vendor_specific_devices(mp_disks, ("NFINIDAT", "InfiniBox")
-   >>> infinidat_non_mp_disks  = mpio.filter_vendor_specific_devices(block_devices, ("NFINIDAT", "InfiniBox")
+   >>> from infi.storagemodel.vendor.infinibox import vid_pid
+   >>> infinidat_mp_disks = mpio.filter_vendor_specific_devices(mp_disks, vid_pid)
+   >>> infinidat_non_mp_disks  = mpio.filter_vendor_specific_devices(block_devices, vid_pid)
 
-The :class:`MultipathDevice` provides cross-platform abstraction of :class:`.Path` and their
-:class:`.LoadBalancePolicies`. The platform-specific implementation translates the configurartion into the supported
+The :class:`.MultipathDevice` provides cross-platform abstraction of :class:`.Path` and their
+:class:`.LoadBalancePolicy`. The platform-specific implementation translates the configurartion into the supported
 :ref:`supported-policies`.
 
 

@@ -27,8 +27,8 @@ class InquiryInformationMixin(object):
 
     @cached_method
     def get_scsi_vid_pid(self):
-        """returns a tuple of the vendor_id and product_id
-        :rtype: type"""
+        """:returns: a tuple of the vendor_id and product_id
+        :rtype: tuple"""
         return (self.get_scsi_vendor_id(), self.get_scsi_product_id())
 
     @cached_method

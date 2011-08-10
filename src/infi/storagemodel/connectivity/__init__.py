@@ -12,10 +12,12 @@ class FCConnectivity(object):
 
     @cached_method
     def get_initiator_wwn(self):
+        """:returns: the wwpn of the initiator"""
         return WWN(self._local_port.port_wwn)
 
     @cached_method
     def get_target_wwn(self):
+        """:returns: the wwpn of the target"""
         return WWN(self._remote_port.port_wwn)
 
     def __eq__(self, obj):
