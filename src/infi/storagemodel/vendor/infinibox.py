@@ -20,8 +20,8 @@ vid_pid = ("NFINIDAT" , "Infinidat A01")
 
 class InfinidatVolumeExists(object):
     """A predicate that checks if an Infinidat volume exists"""
-    def __init__(self, infinipy_volume):
-        self.infinipy_volume = infinipy_volume
+    def __init__(self, volume_name):
+        self.volume_name = volume_name
 
     def __call__(self):
         from .. import get_storage_model
@@ -31,5 +31,5 @@ class InfinidatVolumeExists(object):
         block_devices = scsi.filter_vendor_specific_devices(scsi.get_all_scsi_block_devices(), vid_pid)
         mp_devices = mpath.filter_vendor_specific_devices(mpath.get_all_multipath_devices(), vid_pid)
         non_mp_devices = mpath.filter_non_multipath_scsi_block_devices(block_devices)
-        return any([self.infinipy_volume.get_name() in device.get_scsi_inquiry_pages()[0x83] \
+        return any([self.volume_name in device.get_scsi_inquiry_pages()[0x83].page_data \
                     for device in mp_devices + non_mp_devices])
