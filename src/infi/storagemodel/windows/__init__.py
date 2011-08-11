@@ -34,16 +34,6 @@ class WindowsDeviceMixin(object):
         return HCTL(*self.get_ioctl_interface().scsi_get_address())
 
     @cached_method
-    def get_scsi_vendor_id(self):
-        # a faster implemntation on windows
-        return str(self._device_object.hardware_ids[-2][0:8].replace('_', ''))
-
-    @cached_method
-    def get_scsi_product_id(self):
-        # a faster implementation on windows
-        return str(self._device_object.hardware_ids[-2][8:24].replace('_', ''))
-
-    @cached_method
     def get_parent(self):
         return self._device_object.parent
 
