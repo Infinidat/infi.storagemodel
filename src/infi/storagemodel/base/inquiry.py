@@ -6,7 +6,7 @@ class SupportedVPDPagesDict(LazyImmutableDict):
         self.device = device
 
     def _create_value(self, page_code):
-        from infi.asi.cdb.inquiry import SUPPORTED_VPD_PAGES_COMMANDS
+        from infi.asi.cdb.inquiry.vpd_pages import SUPPORTED_VPD_PAGES_COMMANDS
         from infi.asi.coroutines.sync_adapter import sync_wait
         inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
         with self.device.asi_context() as asi:
@@ -38,8 +38,8 @@ class InquiryInformationMixin(object):
         
             >>> dev.scsi_inquiry_pages[0x80].product_serial_number
         """
-        from infi.asi.cdb.inquiry import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
-        from infi.asi.cdb.inquiry import SupportedVPDPagesCommand
+        from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
+        from infi.asi.cdb.inquiry.vpd_pages import SupportedVPDPagesCommand
         from infi.asi import AsiCheckConditionError
         from infi.asi.coroutines.sync_adapter import sync_wait
         command = SupportedVPDPagesCommand()
@@ -64,7 +64,7 @@ class InquiryInformationMixin(object):
     def get_scsi_serial_number(self):
         """:returns: the SCSI serial of the device or an empty string ("") if not available
         :rtype: string"""
-        from infi.asi.cdb.inquiry import INQUIRY_PAGE_UNIT_SERIAL_NUMBER
+        from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_UNIT_SERIAL_NUMBER
         serial = ''
         if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.get_scsi_inquiry_pages():
             serial = self.get_scsi_inquiry_pages()[INQUIRY_PAGE_UNIT_SERIAL_NUMBER].product_serial_number
@@ -72,7 +72,7 @@ class InquiryInformationMixin(object):
 
     @cached_method
     def get_scsi_standard_inquiry(self):
-        from infi.asi.cdb.inquiry import StandardInquiryCommand
+        from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
         with self.asi_context() as asi:
             command = StandardInquiryCommand()
