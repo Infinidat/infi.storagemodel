@@ -35,7 +35,7 @@ class StorageModel(object):
         clear_cache(self)
         clear_cache(ConnectivityFactory)
 
-    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=None):
+    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60):
         """Rescan devices and polls the prediate until either it returns True or a timeout is reached.
         
         The model is refreshed automatically, there is no need to refresh() after calling this method or in the
@@ -62,6 +62,7 @@ class StorageModel(object):
             if time() - start_time >= timeout_in_seconds:
                 raise TimeoutError()
             sleep(1)
+            self.initiate_rescan()
             self.refresh()
 
     #############################
