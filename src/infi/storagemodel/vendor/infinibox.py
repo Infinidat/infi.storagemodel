@@ -5,16 +5,12 @@ from . import VendorMultipathDevice, VendorSCSIBlockDevice, VendorSCSIStorageCon
 class InfiniBoxMixin(object):
     @cached_method
     def get_box_ipv4_address(self):
-        return ''
-
-    @cached_method
-    def get_volume_name(self):
-        """:returns: the volume name within the InfiniBox
+        """:returns: the management IPv4 address of the InfiniBox
         :rtype: string"""
         from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
         device_identification_page = self.get_scsi_inquiry_pages()[0x83]
         for designator in device_identification_page.designators_list:
-            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("vol"):
+            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("ip"):
                 return designator.scsi_name_string.split("=")[1]
 
     @cached_method
@@ -27,13 +23,24 @@ class InfiniBoxMixin(object):
             if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("host"):
                 return designator.scsi_name_string.split("=")[1]
 
-class block_class(InfiniBoxMixin, VendorSCSIBlockDevice):
+class InfiniBoxVolumeMixin(object):
+    @cached_method
+    def get_volume_name(self):
+        """:returns: the volume name within the InfiniBox
+        :rtype: string"""
+        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
+        device_identification_page = self.get_scsi_inquiry_pages()[0x83]
+        for designator in device_identification_page.designators_list:
+            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("vol"):
+                return designator.scsi_name_string.split("=")[1]
+
+class block_class(InfiniBoxMixin, VendorSCSIBlockDevice, InfiniBoxVolumeMixin):
     pass
 
 class controller_class(InfiniBoxMixin, VendorSCSIStorageController):
     pass
 
-class multipath_class(InfiniBoxMixin, VendorMultipathDevice):
+class multipath_class(InfiniBoxMixin, VendorMultipathDevice, InfiniBoxVolumeMixin):
     pass
 
 vid_pid = ("NFINIDAT" , "Infinidat A01")
