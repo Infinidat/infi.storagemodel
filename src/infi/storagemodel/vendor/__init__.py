@@ -27,17 +27,19 @@ class VendorFactoryImpl(object):
         assert issubclass(multipath_class, VendorMultipathDevice)
         self.vendor_mapping[vid_pid] = dict(block=block_class, controller=controller_class, multipath=multipath_class)
 
+    def _create_device_by_vid_pid(self, vid_pid, device_type, device):
+        map = self.vendor_mapping.get(vid_pid)
+        return None if map is None else map.get(device_type)(device)
+
     def create_block_by_vid_pid(self, vid_pid, device):
-        assert vid_pid in self.vendor_mapping
-        return self.vendor_mapping[vid_pid]['block'](device)
+        return self._create_device_by_vid_pid(vid_pid, 'block', device)
+
 
     def create_controller_by_vid_pid(self, vid_pid, device):
-        assert vid_pid in self.vendor_mapping
-        return self.vendor_mapping[vid_pid]['controller'](device)
+        return self._create_device_by_vid_pid(vid_pid, 'controller', device)
 
     def create_multipath_by_vid_pid(self, vid_pid, device):
-        assert vid_pid in self.vendor_mapping
-        return self.vendor_mapping[vid_pid]['multipath'](device)
+        return self._create_device_by_vid_pid(vid_pid, 'multipath', device)
 
     def _register_builtin_factories(self):
         from . import infinibox
