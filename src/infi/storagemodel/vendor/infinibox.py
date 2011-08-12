@@ -7,6 +7,26 @@ class InfiniBoxMixin(object):
     def get_box_ipv4_address(self):
         return ''
 
+    @cached_method
+    def get_volume_name(self):
+        """:returns: the volume name within the InfiniBox
+        :rtype: string"""
+        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
+        device_identification_page = self.get_scsi_inquiry_pages()[0x83]
+        for designator in device_identification_page.designators_list:
+            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("vol"):
+                return designator.scsi_name_string.split("=")[1]
+
+    @cached_method
+    def get_host_name(self):
+        """:returns: the host name within the InfiniBox
+        :rtype: string"""
+        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
+        device_identification_page = self.get_scsi_inquiry_pages()[0x83]
+        for designator in device_identification_page.designators_list:
+            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("host"):
+                return designator.scsi_name_string.split("=")[1]
+
 class block_class(InfiniBoxMixin, VendorSCSIBlockDevice):
     pass
 
