@@ -60,3 +60,8 @@ class InfinidatVolumeExists(object):
         non_mp_devices = mpath.filter_non_multipath_scsi_block_devices(block_devices)
         return any([self.volume_name == device.get_vendor().get_volume_name() \
                     for device in mp_devices + non_mp_devices])
+
+class InfinidatVolumeDoesNotExist(InfinidatVolumeExists):
+    """A predicate that checks if an Infinidat volume does not exist"""
+    def __call__(self):
+        return not super(InfinidatVolumeDoesNotExist, self).__call__()
