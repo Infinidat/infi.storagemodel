@@ -34,7 +34,6 @@ class VendorFactoryImpl(object):
     def create_block_by_vid_pid(self, vid_pid, device):
         return self._create_device_by_vid_pid(vid_pid, 'block', device)
 
-
     def create_controller_by_vid_pid(self, vid_pid, device):
         return self._create_device_by_vid_pid(vid_pid, 'controller', device)
 

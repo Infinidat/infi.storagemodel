@@ -2,18 +2,22 @@
 
 def devlist():
     from infi.storagemodel import get_storage_model
+    from infi.storagemodel.vendor.infinibox import vid_pid as infinibox_vid_pid
     model = get_storage_model()
 
     scsi_block_devices = model.get_scsi().get_all_scsi_block_devices()
     mp_devices = model.get_native_multipath().get_all_multipath_devices()
     non_mp_devices = model.get_native_multipath().filter_non_multipath_scsi_block_devices(scsi_block_devices)
 
-    infinibox_vid_pid = ("NFINIDAT", "InfiniBox")
-
     def print_header(header):
         print "%s\n%s" % (header, '=' * len(header))
 
     print_header("Multipath Devices")
+
+    def print_infinidat_device(device):
+        print "\t" + "volume name: %s" % device.get_vendor().get_volume_name()
+        print "\t" + "host name: %s" % device.get_vendor().get_host_name()
+        print "\t" + "ip address: %s" % device.get_vendor().get_box_ipv4_address()
 
     def print_multipath_device(device):
         from infi.storagemodel.base.multipath import FailoverOnly, WeightedPaths, RoundRobinWithSubset
@@ -37,7 +41,8 @@ def devlist():
 
     for device in model.get_native_multipath().filter_vendor_specific_devices(mp_devices, infinibox_vid_pid):
         print_multipath_device(device)
-        mp_devices.pop(device)
+        print_infinidat_device(device)
+        mp_devices.remove(device)
 
     for device in mp_devices:
         print_multipath_device(device)
@@ -56,7 +61,8 @@ def devlist():
 
     for device in model.get_scsi().filter_vendor_specific_devices(non_mp_devices, infinibox_vid_pid):
         print_non_multipath_device(device)
-        non_mp_devices.pop(device)
+        print_infinidat_device(device)
+        non_mp_devices.remove(device)
 
     for device in non_mp_devices:
         print_non_multipath_device(device)

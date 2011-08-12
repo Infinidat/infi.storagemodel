@@ -8,20 +8,20 @@ class InfiniBoxMixin(object):
         """:returns: the management IPv4 address of the InfiniBox
         :rtype: string"""
         from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
-        device_identification_page = self.get_scsi_inquiry_pages()[0x83]
+        device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
         for designator in device_identification_page.designators_list:
             if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("ip"):
-                return designator.scsi_name_string.split("=")[1]
+                return designator.scsi_name_string.split("=")[1].strip()
 
     @cached_method
     def get_host_name(self):
         """:returns: the host name within the InfiniBox
         :rtype: string"""
         from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
-        device_identification_page = self.get_scsi_inquiry_pages()[0x83]
+        device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
         for designator in device_identification_page.designators_list:
             if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("host"):
-                return designator.scsi_name_string.split("=")[1]
+                return designator.scsi_name_string.split("=")[1].strip()
 
 class InfiniBoxVolumeMixin(object):
     @cached_method
@@ -29,18 +29,18 @@ class InfiniBoxVolumeMixin(object):
         """:returns: the volume name within the InfiniBox
         :rtype: string"""
         from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
-        device_identification_page = self.get_scsi_inquiry_pages()[0x83]
+        device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
         for designator in device_identification_page.designators_list:
             if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("vol"):
-                return designator.scsi_name_string.split("=")[1]
+                return designator.scsi_name_string.split("=")[1].strip()
 
-class block_class(InfiniBoxMixin, VendorSCSIBlockDevice, InfiniBoxVolumeMixin):
+class block_class(InfiniBoxMixin, InfiniBoxVolumeMixin, VendorSCSIBlockDevice):
     pass
 
 class controller_class(InfiniBoxMixin, VendorSCSIStorageController):
     pass
 
-class multipath_class(InfiniBoxMixin, VendorMultipathDevice, InfiniBoxVolumeMixin):
+class multipath_class(InfiniBoxMixin, InfiniBoxVolumeMixin, VendorMultipathDevice):
     pass
 
 vid_pid = ("NFINIDAT" , "Infinidat A01")
