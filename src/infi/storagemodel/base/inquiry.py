@@ -57,7 +57,8 @@ class InquiryInformationMixin(object):
                 if e.sense_obj.sense_key == 'ILLEGAL_REQUEST' \
                    and e.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB':
                     pass
-                raise
+                else:
+                    raise
         return SupportedVPDPagesDict(page_dict, self)
 
     @cached_method
