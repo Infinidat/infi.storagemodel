@@ -56,10 +56,12 @@ class InfinidatVolumeExists(object):
         scsi = model.get_scsi()
         mpath = model.get_native_multipath()
         block_devices = scsi.filter_vendor_specific_devices(scsi.get_all_scsi_block_devices(), vid_pid)
-        mp_devices = mpath.filter_vendor_specific_devices(mpath.get_all_multipath_devices(), vid_pid)
-        non_mp_devices = mpath.filter_non_multipath_scsi_block_devices(block_devices)
+        # TODO remove these comments after the linux implementation is complete
+        #mp_devices = mpath.filter_vendor_specific_devices(mpath.get_all_multipath_devices(), vid_pid)
+        #non_mp_devices = mpath.filter_non_multipath_scsi_block_devices(block_devices)
         return any([self.volume_name == device.get_vendor().get_volume_name() \
-                    for device in mp_devices + non_mp_devices])
+#                    for device in mp_devices + non_mp_devices])
+                     for device in block_devices])
 
 class InfinidatVolumeDoesNotExist(InfinidatVolumeExists):
     """A predicate that checks if an Infinidat volume does not exist"""
