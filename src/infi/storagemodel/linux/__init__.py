@@ -95,10 +95,10 @@ class LinuxStorageModel(StorageModel):
         """for testability purposes, we want to call execute with no environment variables, to mock the effect
         that the script does not exist"""
         from infi.exceptools import chain
-        from infi.execute import execute_async
+        from infi.execute import execute_sync
         from ..errors import StorageModelError
         try:
-            _ = execute_async([RESCAN_SCRIPT_NAME, "--remove", "--issue-lip", "--forcerescan"], env=env)
+            _ = execute_sync([RESCAN_SCRIPT_NAME, "--remove"], env=env)
         except:
             raise chain(StorageModelError("failed to initiate rescan"))
 
