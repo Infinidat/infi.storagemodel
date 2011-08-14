@@ -44,11 +44,6 @@ class LinuxSCSIDeviceMixin(object):
     def get_linux_scsi_generic_devno(self):
         return self.sysfs_device.get_scsi_generic_devno()
 
-    # This is either in SCSIBlockDevice or in SCSIStorageController, so we put this here anyhow.
-    @cached_method
-    def get_vendor(self):
-        return self.sysfs_device.get_vendor()
-
 class LinuxSCSIBlockDevice(LinuxSCSIDeviceMixin, scsi.SCSIBlockDevice):
     def __init__(self, sysfs_device):
         super(LinuxSCSIBlockDevice, self).__init__()
