@@ -1,4 +1,4 @@
-
+from itertools import chain
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
 
@@ -7,9 +7,9 @@ from .inquiry import InquiryInformationMixin
 class MultipathFrameworkModel(object):
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """:returns: items from the list that are not part of multipath devices claimed by this framework"""
-        hctl_list = [path.get_hctl() for path in [multipath.get_paths()  \
-                                                  for multipath in self.get_all_multipath_devices()]]
-        filter (lambda device: device.get_hctl() in hctl_list, scsi_block_devices)
+        hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()  \
+                                                                     for multipath in self.get_all_multipath_devices())]
+        return filter(lambda device: device.get_hctl() in hctl_list, scsi_block_devices)
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """:returns: only the items from the devices list that are of the specific type"""

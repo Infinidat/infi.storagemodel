@@ -31,6 +31,9 @@ class SysfsTestCase(TestCase):
             '/sys/class/scsi_device/4:0:1:2/device/scsi_generic': [ 'sg6' ],
             # SCSI Storage Controllers:
             '/sys/class/scsi_device/5:0:0:0/device/scsi_generic': [ 'sg3' ],
+            
+            # Block Devices:
+            '/sys/class/block': [],
         }
 
         file_map = {
