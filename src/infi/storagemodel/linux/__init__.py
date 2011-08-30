@@ -113,8 +113,10 @@ class LinuxNativeMultipathDevice(LinuxBlockDeviceMixin, multipath.MultipathDevic
     
     @cached_method
     def get_policy(self):
-        # TODO implement
-        pass
+        return LinuxRoundRobin()
+
+class LinuxRoundRobin(multipath.RoundRobin):
+    pass
 
 class LinuxPath(multipath.Path):
     def __init__(self, sysfs, multipath_object_path):
