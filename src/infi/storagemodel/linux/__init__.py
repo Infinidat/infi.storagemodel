@@ -185,8 +185,6 @@ def _locate_rescan_script():
     # no script found
     return None
 
-RESCAN_SCRIPT_NAME = _locate_rescan_script()
-
 def _call_rescan_script(env=None):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
     that the script does not exist"""
