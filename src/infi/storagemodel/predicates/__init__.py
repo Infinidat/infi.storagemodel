@@ -61,7 +61,7 @@ class FiberChannelMappingExists(object):
             if self._is_fc_connectivity_a_match(device):
                 return True
         for device in model.get_native_multipath().get_all_multipath_devices():
-            for path in device.get_paths:
+            for path in device.get_paths():
                 if self._is_fc_connectivity_a_match(path):
                     return True
         return False
