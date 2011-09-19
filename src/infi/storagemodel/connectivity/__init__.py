@@ -1,6 +1,7 @@
 
 from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
 from infi.dtypes.wwn import WWN
+from infi.hbaapi import Port
 
 class FCConnectivity(object):
     """ """
@@ -13,16 +14,28 @@ class FCConnectivity(object):
     @cached_method
     def get_initiator_wwn(self):
         """:returns: the wwpn of the initiator"""
-        return WWN(self._local_port.port_wwn)
+        if isinstance(self._local_port, WWN):
+            return self._local_port
+        if isinstance(self._local_port, Port):
+            return WWN(self._local_port.port_wwn)
+        return WWN(self._local_port)
 
     @cached_method
     def get_target_wwn(self):
         """:returns: the wwpn of the target"""
-        return WWN(self._remote_port.port_wwn)
+        if isinstance(self._remote_port, WWN):
+            return self._remote_port
+        if isinstance(self._remote_port, Port):
+            return WWN(self._remote_port.port_wwn)
+        return WWN(self._remote_port)
 
     def __eq__(self, obj):
-        return self.get_initiator_wwn() == obj.get_initiator_wwn() and \
-            self.get_target_wwn() == obj.get_target_wwn()
+        return isinstance(obj, FCConnectivity) and \
+             self.get_initiator_wwn() == obj.get_initiator_wwn() and \
+             self.get_target_wwn() == obj.get_target_wwn()
+
+    def __ne__(self, obj):
+        return not self.__eq__(obj)
 
 class LocalConnectivity(object):
     pass
