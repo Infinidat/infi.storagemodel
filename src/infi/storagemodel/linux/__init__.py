@@ -165,10 +165,27 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
             block_dev = self.sysfs.find_block_device_by_devno(mpath_device.major_minor)
             if block_dev is not None:
                 result.append(LinuxNativeMultipathDevice(self.sysfs, block_dev, mpath_device))
-            
+
         return result
 
-RESCAN_SCRIPT_NAME = "rescan-scsi-bus.sh"
+POSSIBLE_SCRIPT_NAMES = [
+                          "rescan-scsi-bus",
+                          "rescan-scsi-bus.sh",
+                        ]
+
+def _locate_rescan_script():
+    from os import access, environ, X_OK
+    from os.path import exists, join
+    for script in POSSIBLE_SCRIPT_NAMES:
+        for base in environ["PATH"].split(':'):
+            for name in POSSIBLE_SCRIPT_NAMES:
+                script = join(base, name)
+                if exists(script) and access(script, X_OK):
+                    return script
+    # no script found
+    return None
+
+RESCAN_SCRIPT_NAME = _locate_rescan_script()
 
 def _call_rescan_script(env=None):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
@@ -176,16 +193,19 @@ def _call_rescan_script(env=None):
     from infi.exceptools import chain
     from infi.execute import execute
     from ..errors import StorageModelError
+    rescan_script = _locate_rescan_script()
+    if rescan_script is None:
+        raise StorageModelError("no rescan-scsi-bus script found")
     try:
-        _ = execute([RESCAN_SCRIPT_NAME, "--remove"], env=env)
-    except:
+        _ = execute([rescan_script, "--remove"], env=env)
+    except Exception, e:
        raise chain(StorageModelError("failed to initiate rescan"))
 
 class LinuxStorageModel(StorageModel):
     @cached_method
     def _get_sysfs(self):
         return Sysfs()
-    
+
     def _create_scsi_model(self):
         return LinuxSCSIModel(self._get_sysfs())
 
@@ -201,6 +221,5 @@ class LinuxStorageModel(StorageModel):
         _call_rescan_script()
 
 def is_rescan_script_exists():
-    from os import environ, pathsep
-    from os.path import exists, join
-    return any([exists(join(dirpath, RESCAN_SCRIPT_NAME)) for dirpath in environ["PATH"].split(pathsep)])
+    return _locate_rescan_script() is None
+
