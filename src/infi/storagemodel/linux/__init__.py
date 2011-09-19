@@ -219,5 +219,5 @@ class LinuxStorageModel(StorageModel):
         _call_rescan_script()
 
 def is_rescan_script_exists():
-    return _locate_rescan_script() is None
+    return _locate_rescan_script() is not None
 
