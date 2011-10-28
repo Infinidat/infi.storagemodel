@@ -158,6 +158,8 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
     def get_all_multipath_devices(self):
         from infi.multipathtools import MultipathClient
         client = MultipathClient()
+        if not client.is_running():
+            return []
         devices = client.get_list_of_multipath_devices()
 
         result = []
