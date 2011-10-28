@@ -2,6 +2,9 @@
 from infi.pyutils.lazy import cached_method
 from . import VendorMultipathDevice, VendorSCSIBlockDevice, VendorSCSIStorageController
 
+from logging import getLogger
+log = getLogger()
+
 class InfiniBoxMixin(object):
     @cached_method
     def get_box_ipv4_address(self):
@@ -9,8 +12,13 @@ class InfiniBoxMixin(object):
         :rtype: string"""
         from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
         device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
-        for designator in device_identification_page.designators_list:
+        designators = device_identification_page.designators_list
+        for designator in designators:
+            log.debug("checking designator type %s %d of %d", designator.__class__.__name__,
+                      designators.index(designator), len(designators))
+
             if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("ip"):
+                log.debug("SCSINameDesginator string = %r", designator.scsi_name_string)
                 return designator.scsi_name_string.split("=")[1].strip()
 
     @cached_method
@@ -94,7 +102,7 @@ class InfiniBoxVolumeMixin(object):
     @cached_method
     def get_volume_id(self):
         """:returns: the volume name within the InfiniBox
-        :rtype: string"""
+        :rtype: int"""
         from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
         # TODO remove the following clause after INFINIBOX-31 is resolved:
         if not self._is_volume_mapped():
