@@ -153,7 +153,7 @@ class InfinidatNAA(object):
     def get_volume_serial(self):
         return self._data.vendor_specific_identifier__low & 0xffffff
 
-vid_pid = ("NFINIDAT" , "Infinidat A01")
+vid_pid = ("NFINIDAT" , "InfiniBox")
 
 class InfinidatVolumeExists(object):
     """A predicate that checks if an Infinidat volume exists"""
