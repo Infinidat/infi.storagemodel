@@ -169,7 +169,7 @@ class InfinidatVolumeExists(object):
         # TODO remove these comments after the linux implementation is complete
         #mp_devices = mpath.filter_vendor_specific_devices(mpath.get_all_multipath_devices(), vid_pid)
         #non_mp_devices = mpath.filter_non_multipath_scsi_block_devices(block_devices)
-        return any([self.volume_name == device.get_vendor().get_volume_name() \
+        return any([self.volume_name == device.get_vendor().get_volume_id() \
 #                    for device in mp_devices + non_mp_devices])
                      for device in block_devices])
 

@@ -3,6 +3,9 @@ import unittest
 import mock
 from contextlib import contextmanager, nested
 
+from logging import getLogger
+log = getLogger()
+
 class ModelTestCase(unittest.TestCase):
     def setUp(self):
         from os import name
@@ -20,6 +23,7 @@ class ModelTestCase(unittest.TestCase):
         native_multipath = model.get_native_multipath()
 
     def _assert_block_device(self, device):
+        log.debug("asserting on device %s", device.get_display_name())
         from infi.dtypes.hctl import HCTL
         self.assertGreater(device.get_size_in_bytes(), 0)
         self.assertIsInstance(device.get_hctl(), HCTL)
