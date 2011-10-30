@@ -75,9 +75,7 @@ class WindowsSCSIBlockDevice(WindowsDiskDeviceMixin, WindowsSCSIDevice, scsi.SCS
     pass
 
 class WindowsSCSIStorageController(WindowsSCSIDevice, scsi.SCSIStorageController):
-    def __init__(self, device_object):
-        super(WindowsSCSIStorageController, self).__init__()
-        self._device_object = device_object
+    pass
 
 class WindowsSCSIModel(scsi.SCSIModel):
     @cached_method

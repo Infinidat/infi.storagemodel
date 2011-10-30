@@ -15,9 +15,7 @@ def devlist():
     print_header("Multipath Devices")
 
     def print_infinidat_device(device):
-        print "\t" + "volume name: %s" % device.get_vendor().get_volume_name()
-        print "\t" + "host name: %s" % device.get_vendor().get_host_name()
-        print "\t" + "ip address: %s" % device.get_vendor().get_box_ipv4_address()
+        print "skipping"
 
     def print_multipath_device(device):
         from infi.storagemodel.base.multipath import FailoverOnly, WeightedPaths, RoundRobinWithSubset
