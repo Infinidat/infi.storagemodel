@@ -51,6 +51,7 @@ class InquiryPageMock(object):
         designators = ''
         designators = self._append_to_page(designators, self._get_naa())
         designators = self._append_to_page(designators, self._get_management_network_address())
+        designators = self._append_to_page(designators, self._get_management_network_port())
         designators = self._append_to_page(designators, self._get_relative_target_port_identifier())
         designators = self._append_to_page(designators, self._get_target_port_group())
         designators = self._append_to_page(designators, self._get_host_id(host_id))
@@ -84,6 +85,18 @@ class InquiryPageMock(object):
         attributes.update(DEFAULT_ATTRIBUTES)
         self._set_attributes_in_designator(designator, attributes)
         return designator
+
+    def _get_management_network_port(self):
+        designator = designators.SCSINameDesignator()
+        attributes = dict(code_set=2,
+                          designator_type=8,
+                          designator_length=9,
+                          scsi_name_string="port=8080"
+                          )
+        attributes.update(DEFAULT_ATTRIBUTES)
+        self._set_attributes_in_designator(designator, attributes)
+        return designator
+
 
     def _get_management_network_address(self):
         designator = designators.SCSINameDesignator()
@@ -169,7 +182,7 @@ class InquiryPageTestCase(TestCase):
 
     def test_designators(self):
         designators = self.mock._get_device_identification_page__designators(DIRECT_ACCESS_BLOCK_DEVICE, 1, 1)
-        self.assertEqual(len(designators), 186)
+        self.assertEqual(len(designators), 199)
 
     def test_empty_page(self):
         raw_data = ''
@@ -203,7 +216,8 @@ class MixinTestCase(TestCase):
         self.mixin = MixinWithDevice()
 
     def test_management_address(self):
-        self.assertEqual(self.mixin.get_box_ipv4_address(), "255.255.255.255")
+        self.assertEqual(self.mixin.get_box_management_address(), "255.255.255.255")
+        self.assertEqual(self.mixin.get_box_management_port(), 8080)
 
     def test_host_id(self):
         self.assertEqual(self.mixin.get_host_id(), 1)
