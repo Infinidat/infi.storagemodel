@@ -15,15 +15,21 @@ class MultipathFrameworkModel(object):
         """:returns: only the items from the devices list that are of the specific type"""
         return filter(lambda device: device.get_scsi_vid_pid() == vid_pid_tuple, devices)
 
+    def find_multipath_device_by_block_access_path(self, path):
+        """:returns: :class:`MultipathDevice` object that matches the given path. 
+        :raises: KeyError if no such device is found"""
+        devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_multipath_devices()])
+        return devices_dict[path]
+
     #############################
     # Platform Specific Methods #
     #############################
 
     @cached_method
-    def get_all_multipath_devices(self):
+    def get_all_multipath_devices(self): # pragma: no cover
         """:returns: all multipath devices claimed by this framework"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
 class NativeMultipathModel(MultipathFrameworkModel):
     pass
@@ -35,41 +41,53 @@ class MultipathDevice(InquiryInformationMixin, object):
         from ..vendor  import VendorFactory
         return VendorFactory.create_multipath_by_vid_pid(self.get_scsi_vid_pid(), self)
 
+    @cached_method
+    def get_disk_drive(self): # pragma: no cover
+        """:returns: a :class:`.DiskDevice` object
+        :raises: NoSuchDisk"""
+        from infi.storagemodel import get_storage_model
+        model = get_storage_model().get_disk()
+        return model.find_disk_drive_by_block_access_path(self.get_block_access_path())
+
     #############################
     # Platform Specific Methods #
     #############################
 
     @contextmanager
-    def asi_context(self):
+    def asi_context(self): # pragma: no cover
+        """:returns: an infi.asi context"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
     @cached_method
-    def get_device_access_path(self):
+    def get_block_access_path(self): # pragma: no cover
+        """:returns: a path for the device"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
     @cached_method
-    def get_display_name(self):
+    def get_display_name(self): # pragma: no cover
+        """:returns: a string represtation for the device"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
     @cached_method
-    def get_size_in_bytes(self):
+    def get_size_in_bytes(self): # pragma: no cover
+        """:returns: size in bytes"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
     @cached_method
-    def get_paths(self):
+    def get_paths(self): # pragma: no cover
         """:rtype: list of :class:`.Path` instances"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
     @cached_method
-    def get_policy(self):
+    def get_policy(self): # pragma: no cover
         """:rtype: an instance of :class:`.LoadBalancePolicy`"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
 class LoadBalancePolicy(object):
     name = None
@@ -78,10 +96,11 @@ class LoadBalancePolicy(object):
 
     @cached_method
     def get_display_name(self):
+        """:returns: display name"""
         return self.name
 
-    def apply_on_device(self, device):
-        raise NotImplementedError # pragma: no cover
+    def apply_on_device(self, device): # pragma: no cover
+        raise NotImplementedError()
 
 class FailoverOnly(LoadBalancePolicy):
     name = "Fail Over Only"
@@ -137,22 +156,22 @@ class Path(object):
     #############################
 
     @cached_method
-    def get_path_id(self):
+    def get_path_id(self): # pragma: no cover
         """:returns: depending on the operating system:
         
                     - sdX on linux
                     - PathId on Windows"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
     @cached_method
-    def get_hctl(self):
+    def get_hctl(self): # pragma: no cover
         """:returns: a :class:`infi.dtypes.hctl.HCTL` object"""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()
 
     @cached_method
-    def get_state(self):
+    def get_state(self): # pragma: no cover
         """:returns: either "up" or "down"."""
         # platform implementation
-        raise NotImplementedError # pragma: no cover
+        raise NotImplementedError()

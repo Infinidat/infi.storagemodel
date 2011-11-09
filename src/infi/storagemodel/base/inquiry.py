@@ -73,6 +73,7 @@ class InquiryInformationMixin(object):
 
     @cached_method
     def get_scsi_standard_inquiry(self):
+        """:returns: the standard inquiry data"""
         from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
         with self.asi_context() as asi:

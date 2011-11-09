@@ -63,7 +63,7 @@ class ModelTestCase(unittest.TestCase):
     def _assert_multipath_device(self, device):
         self.assertGreater(device.get_size_in_bytes(), 0)
         self.assertTrue(device.get_display_name().startswith("PHYSICALDRIVE"))
-        self.assertIsInstance(device.get_device_access_path(), unicode)
+        self.assertIsInstance(device.get_block_access_path(), unicode)
         self.assertIsInstance(device.get_scsi_vendor_id(), str)
         self.assertIsInstance(device.get_scsi_product_id(), str)
         self.assertEqual(device.get_scsi_vid_pid(), (device.get_scsi_vendor_id(), device.get_scsi_product_id()))

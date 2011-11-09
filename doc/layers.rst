@@ -14,7 +14,7 @@ SCSI Layer
 
 .. _multipath-layer:
 
-Muitipath Layer
+Multipath Layer
 ---------------
 
 .. py:currentmodule:: infi.storagemodel.base.multipath
@@ -23,3 +23,11 @@ Muitipath Layer
 
 .. autoclass:: NativeMultipathModel
    :show-inheritance:
+
+Disk Layer
+----------
+
+.. py:currentmodule:: infi.storagemodel.base.disk
+
+.. autoclass:: DiskModel
+
