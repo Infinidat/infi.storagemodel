@@ -1,6 +1,6 @@
 
-Objects
-=======
+SCSI Objects
+============
 
 .. module:: infi.storagemodel.base.scsi
 
@@ -22,6 +22,9 @@ SCSI Storage Controller Device
 .. autoclass:: SCSIStorageController
     :show-inheritance:
 
+Multipath Objects
+=================
+
 .. module:: infi.storagemodel.base.multipath
 
 Multipath Device
@@ -31,7 +34,7 @@ Multipath Device
     :inherited-members:
 
 Multipath Path
-++++++++++++++
+--------------
 
 .. autoclass:: Path
     :inherited-members:
@@ -39,7 +42,7 @@ Multipath Path
 .. _supported-policies:
 
 Load Balance Policies
-+++++++++++++++++++++
+---------------------
 
 .. autoclass:: LoadBalancePolicy
 
@@ -67,6 +70,72 @@ Load Balance Policies
 .. autoclass:: LeastQueueDepth
     :show-inheritance:
 
+Disk Objects
+============
+.. module:: infi.storagemodel.base.disk
+
+Disk Drive
+----------
+
+.. autoclass:: DiskDrive
+    :inherited-members:
+
+Partition Objects
+=================
+
+.. module:: infi.storagemodel.base.partition
+
+Partition Table
+---------------
+
+.. autoclass:: PartitionTable
+    :inherited-members:
+
+Master Boot Record
+++++++++++++++++++
+
+.. autoclass:: MBRPartitionTable
+    :inherited-members:
+
+GPT
++++
+
+.. autoclass:: GPTPartitionTable
+    :inherited-members:
+
+Mount Objects
+=============
+
+.. module:: infi.storagemodel.base.mount
+
+Mount
+----------
+
+.. autoclass:: Mount
+    :inherited-members:
+
+Persistent Mount
+++++++++++++++++
+
+.. autoclass:: PersistentMount
+    :inherited-members:
+
+File System Objects
+===================
+
+.. module:: infi.storagemodel.base.filesystem
+
+Filesystem
+----------
+
+.. autoclass:: FileSystem
+    :inherited-members:
+
+Filesystem Factory
+------------------
+
+.. autoclass:: FileSystemFactoryImpl
+    :inherited-members:
 
 Connectivity
 ============

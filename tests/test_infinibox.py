@@ -55,7 +55,6 @@ class InquiryPageMock(object):
         designators = self._append_to_page(designators, self._get_relative_target_port_identifier())
         designators = self._append_to_page(designators, self._get_target_port_group())
         designators = self._append_to_page(designators, self._get_host_id(host_id))
-        designators = self._append_to_page(designators, self._get_volume_id(volume_id))
         return designators
 
     def _set_attributes_in_designator(self, designator, attributes):
@@ -71,27 +70,28 @@ class InquiryPageMock(object):
         return device
 
     def _get_naa(self):
-        designator = designators.NAA_IEEE_Registered_Designator()
+        designator = designators.NAA_IEEE_Registered_Extended_Designator()
         attributes = dict(code_set=1,
                           designator_type=3,
                           designator_length=8,
-                          naa=5,
+                          naa=6,
                           ieee_company_id__high=1, # TODO put real value
                           ieee_company_id__low=1, # TODO put real value
                           ieee_company_id__middle=1, # TODO put real value
-                          vendor_specific_identifier__high=1, # TODO put real value
-                          vendor_specific_identifier__low=1 # TODO put real value
+                          vendor_specific_identifier_extension=1, # TODO put real value
+                          vendor_specific_identifier__low=0,
+                          vendor_specific_identifier__high=0
                           )
         attributes.update(DEFAULT_ATTRIBUTES)
         self._set_attributes_in_designator(designator, attributes)
         return designator
 
     def _get_management_network_port(self):
-        designator = designators.SCSINameDesignator()
+        designator = designators.VendorSpecificDesignator()
         attributes = dict(code_set=2,
-                          designator_type=8,
+                          designator_type=0,
                           designator_length=9,
-                          scsi_name_string="port=8080"
+                          vendor_specific_identifier="port=8080"
                           )
         attributes.update(DEFAULT_ATTRIBUTES)
         self._set_attributes_in_designator(designator, attributes)
@@ -99,11 +99,11 @@ class InquiryPageMock(object):
 
 
     def _get_management_network_address(self):
-        designator = designators.SCSINameDesignator()
+        designator = designators.VendorSpecificDesignator()
         attributes = dict(code_set=2,
-                          designator_type=8,
+                          designator_type=0,
                           designator_length=18,
-                          scsi_name_string="ip=255.255.255.255"
+                          vendor_specific_identifier="ip=255.255.255.255"
                           )
         attributes.update(DEFAULT_ATTRIBUTES)
         self._set_attributes_in_designator(designator, attributes)
@@ -132,21 +132,11 @@ class InquiryPageMock(object):
         return designator
 
     def _get_host_id(self, id):
-        designator = designators.SCSINameDesignator()
+        designator = designators.VendorSpecificDesignator()
         attributes = dict(code_set=2,
-                          designator_type=8,
+                          designator_type=0,
                           designator_length=64,
-                          scsi_name_string="host={}".format(str(id).zfill(59)))
-        attributes.update(DEFAULT_ATTRIBUTES)
-        self._set_attributes_in_designator(designator, attributes)
-        return designator
-
-    def _get_volume_id(self, id):
-        designator = designators.SCSINameDesignator()
-        attributes = dict(code_set=2,
-                          designator_type=8,
-                          designator_length=64,
-                          scsi_name_string="vol={}".format(str(id).zfill(60)))
+                          vendor_specific_identifier="host={}".format(str(id).zfill(59)))
         attributes.update(DEFAULT_ATTRIBUTES)
         self._set_attributes_in_designator(designator, attributes)
         return designator
@@ -162,13 +152,9 @@ class InquiryPageTestCase(TestCase):
         designator = self.mock._get_host_id(1)
         self.assertEqual(designator.sizeof(designator), 68)
 
-    def test_volume_id(self):
-        designator = self.mock._get_volume_id(1)
-        self.assertEqual(designator.sizeof(designator), 68)
-
     def test_naa(self):
         designator = self.mock._get_naa()
-        self.assertEqual(designator.sizeof(designator), 12)
+        self.assertEqual(designator.sizeof(designator), 20)
 
     def test_rtpg(self):
         rtpi = self.mock._get_relative_target_port_identifier()
@@ -182,7 +168,7 @@ class InquiryPageTestCase(TestCase):
 
     def test_designators(self):
         designators = self.mock._get_device_identification_page__designators(DIRECT_ACCESS_BLOCK_DEVICE, 1, 1)
-        self.assertEqual(len(designators), 199)
+        self.assertEqual(len(designators), 139)
 
     def test_empty_page(self):
         raw_data = ''
