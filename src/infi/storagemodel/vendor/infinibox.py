@@ -5,53 +5,64 @@ from . import VendorMultipathDevice, VendorSCSIBlockDevice, VendorSCSIStorageCon
 from logging import getLogger
 log = getLogger()
 
+NAA_SYSTEM_SERIAL_MASK = 0xFFFFFFFF00000000
+NAA_VOLUME_SERIAL_MASK = 0xFFFFFFFF
+NFINIDAT_IEEE = 0x742B0F
+
 class InfiniBoxMixin(object):
     @cached_method
     def get_box_management_address(self):
         """:returns: the management IPv4 address of the InfiniBox
         :rtype: string"""
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
+        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import VendorSpecificDesignator
         device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
         designators = device_identification_page.designators_list
         for designator in designators:
             log.debug("checking designator type %s %d of %d", designator.__class__.__name__,
                       designators.index(designator), len(designators))
 
-            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("ip"):
-                log.debug("SCSINameDesginator string = %r", designator.scsi_name_string)
-                return designator.scsi_name_string.split("=")[1].strip()
+            if isinstance(designator, VendorSpecificDesignator):
+                value = designator.vendor_specific_identifier
+                if value.startswith("ip"):
+                    log.debug("SCSINameDesginator string = %r", value)
+                    return value.split("=")[1].strip()
 
     @cached_method
     def get_box_management_port(self):
         """:returns: the management IPv4 port of the InfiniBox
         :rtype: string"""
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
+        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import VendorSpecificDesignator
         device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
         designators = device_identification_page.designators_list
         for designator in designators:
             log.debug("checking designator type %s %d of %d", designator.__class__.__name__,
                       designators.index(designator), len(designators))
 
-            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("port"):
-                log.debug("SCSINameDesginator string = %r", designator.scsi_name_string)
-                return int(designator.scsi_name_string.split("=")[1].strip())
+            if isinstance(designator, VendorSpecificDesignator):
+                value = designator.vendor_specific_identifier
+                if value.startswith("port"):
+                    log.debug("SCSINameDesginator string = %r", value)
+                    return int(value.split("=")[1].strip())
 
     @cached_method
     def get_host_id(self):
         """:returns: the host id within the InfiniBox
-        :rtype: string"""
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
+        :rtype: int"""
+        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import VendorSpecificDesignator
         device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
         for designator in device_identification_page.designators_list:
-            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("host"):
-                return int(designator.scsi_name_string.split("=")[1].strip())
+            if isinstance(designator, VendorSpecificDesignator):
+                value = designator.vendor_specific_identifier
+                if value.startswith("host"):
+                    return int(value.split("=")[1].strip())
 
     @cached_method
     def get_naa(self):
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import NAA_IEEE_Registered_Designator
+        from infi.asi.cdb.inquiry.vpd_pages.device_identification import designators
+        NAA = designators.NAA_IEEE_Registered_Extended_Designator
         device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
         for designator in device_identification_page.designators_list:
-            if isinstance(designator, NAA_IEEE_Registered_Designator):
+            if isinstance(designator, NAA):
                 return InfinidatNAA(designator)
 
     @cached_method
@@ -118,14 +129,7 @@ class InfiniBoxVolumeMixin(object):
     def get_volume_id(self):
         """:returns: the volume name within the InfiniBox
         :rtype: int"""
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import SCSINameDesignator
-        # TODO remove the following clause after INFINIBOX-31 is resolved:
-        if not self._is_volume_mapped():
-            return "(none)"
-        device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
-        for designator in device_identification_page.designators_list:
-            if isinstance(designator, SCSINameDesignator) and designator.scsi_name_string.startswith("vol"):
-                return int(designator.scsi_name_string.split("=")[1].strip())
+        return self.get_naa().get_volume_serial()
 
 class InfinidatFiberChannelPort(object):
     def __init__(self, relative_target_port_identifer, target_port_group):
@@ -162,11 +166,10 @@ class InfinidatNAA(object):
                (self._data.ieee_company_id__low)
 
     def get_machine_serial(self):
-        return (self._data.vendor_specific_identifier__high << 8) + \
-            ((self._data.vendor_specific_identifier__low >> 24) & 0xff)
+        return (self._data.vendor_specific_identifier_extension & NAA_SYSTEM_SERIAL_MASK) >> 32
 
     def get_volume_serial(self):
-        return self._data.vendor_specific_identifier__low & 0xffffff
+        return (self._data.vendor_specific_identifier_extension & NAA_VOLUME_SERIAL_MASK)
 
 vid_pid = ("NFINIDAT" , "InfiniBox")
 
