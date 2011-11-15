@@ -5,8 +5,6 @@ from . import VendorMultipathDevice, VendorSCSIBlockDevice, VendorSCSIStorageCon
 from logging import getLogger
 log = getLogger()
 
-NAA_SYSTEM_SERIAL_MASK = 0xFFFFFFFF00000000
-NAA_VOLUME_SERIAL_MASK = 0xFFFFFFFF
 NFINIDAT_IEEE = 0x742B0F
 
 class InfiniBoxMixin(object):
@@ -165,11 +163,11 @@ class InfinidatNAA(object):
                (self._data.ieee_company_id__middle << 4) + \
                (self._data.ieee_company_id__low)
 
-    def get_machine_serial(self):
-        return (self._data.vendor_specific_identifier_extension & NAA_SYSTEM_SERIAL_MASK) >> 32
+    def get_system_serial(self):
+        return self._data.vendor_specific_identifier__low
 
     def get_volume_serial(self):
-        return (self._data.vendor_specific_identifier_extension & NAA_VOLUME_SERIAL_MASK)
+        return self._data.vendor_specific_identifier_extension
 
 vid_pid = ("NFINIDAT" , "InfiniBox")
 
