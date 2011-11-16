@@ -147,3 +147,20 @@ Fiber Channel
 
 .. autoclass:: FCConnectivity
 
+
+Vendor Information
+==================
+
+Infinidat
+---------
+
+.. module:: infi.storagemodel.vendor.infinibox
+
+.. autoclass:: InfiniBoxMixin
+
+.. autoclass:: InfiniBoxVolumeMixin
+
+.. autoclass:: InfinidatNAA
+
+.. autoclass:: InfinidatFiberChannelPort
+
