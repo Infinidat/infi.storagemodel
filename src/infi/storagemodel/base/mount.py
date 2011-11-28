@@ -1,9 +1,13 @@
 
-from bunch import Bunch
 from infi.pyutils.lazy import cached_method, clear_cache
 
 class Mount(object):
     """Represents a mount in the operating system"""
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
     def get_block_access_path(self): # pragma: no cover
         """:returns the block access path of the device to be mounted"""
         raise NotImplementedError()
@@ -25,6 +29,11 @@ class PersistentMount(Mount):
 
 class MountRepository(object):
     """Holds all the persistent mounts configurations"""
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
     def get_all_persistent_mounts(self):
         """:returns: A list :class:`.PersistentMount` objects"""
         raise NotImplementedError()
@@ -43,11 +52,6 @@ class MountRepository(object):
         raise NotImplementedError()
 
 class MountManager(object):
-    @cached_method
-    def get_mounts(self):
-        """:returns: A list of lvie :class:`.Mount` objects"""
-        raise NotImplementedError() # pragma: no cover
-
     def mount(self, mount_object):
         """A utility function that calls the :method:`.FileSystem.mount` method of a :class:`.FileSystem` object
         
@@ -67,6 +71,15 @@ class MountManager(object):
         mount_point = mount_object.get_mount_point()
         mount_object.get_filesystem().unmount(mount_point)
         clear_cache(self)
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    @cached_method
+    def get_mounts(self):
+        """:returns: A list of live :class:`.Mount` objects"""
+        raise NotImplementedError() # pragma: no cover
 
     def is_mount_point_in_use(self, mount_point): # pragma: no cover
         """:returns: True if the mount point is in use"""

@@ -9,6 +9,11 @@ class NoPartitionTable(StorageModelFindError):
     pass
 
 class DiskDrive(object):
+    @cached_method
+    def is_empty(self): # pragma: no cover
+        """:returns: True if there is a partition table on the disk"""
+        raise NotImplementedError()
+
     #############################
     # Platform Specific Methods #
     #############################
@@ -21,14 +26,9 @@ class DiskDrive(object):
         raise NotImplementedError()
 
     @cached_method
-    def is_empty(self): # pragma: no cover
-        """:returns: True if there is a partition table on the disk"""
-        raise NotImplementedError()
-
-    @cached_method
-    def get_size_in_bytes(self): # pragma: no cover
+    def get_size_in_bytes(self):
         """:returns: the disk size in bytes"""
-        raise NotImplementedError()
+        return self.get_storage_device().get_size_in_bytes()
 
     def delete_partition_table(self):# pragma: no cover
         """deletes the partition table from the disk"""
@@ -53,7 +53,7 @@ class DiskDrive(object):
 
     @cached_method
     def get_storage_device(self): # pragma: no cover
-        """The storage device that is repsented by this disk drive.
+        """The storage device that is represented by this disk drive.
         
         :returns: a :class:`.MultipathDevice` or a :class:`.SCSIBlockDevice`"""
         raise NotImplementedError()

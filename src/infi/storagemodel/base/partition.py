@@ -42,6 +42,11 @@ class GUIDPartition(Partition):
     pass
 
 class PartitionTable(object):
+    @cached_method
+    def is_empty(self):
+        """:returns: True if there are no partitions in the partition table"""
+        return len(self.get_partitions()) == 0
+
     #############################
     # Platform Specific Methods #
     #############################
@@ -73,11 +78,6 @@ class PartitionTable(object):
         # This is one of the places where things can get complicated
         # I just want to be able to create a new partition in an empty partition table
         raise NotImplementedError()
-
-    @cached_method
-    def is_empty(self):
-        """:returns: True if there are no partitions in the partition table"""
-        return len(self.get_partitions()) == 0
 
 class MBRPartitionTable(PartitionTable):
     #############################
