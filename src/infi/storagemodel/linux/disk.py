@@ -33,7 +33,7 @@ class LinuxDiskDrive(disk.DiskDrive):
 
     @cached_method
     def is_empty(self):
-        return self._get_parted_disk_drive().has_partition_table()
+        return not self._get_parted_disk_drive().has_partition_table()
 
     @cached_method
     def delete_partition_table(self):
