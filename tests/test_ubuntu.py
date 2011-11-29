@@ -26,3 +26,4 @@ class UbuntuTestCase(unittest.TestCase):
         model = get_storage_model()
         block_devices = model.get_scsi().get_all_scsi_block_devices()
         disk = block_devices[0].get_disk_drive()
+        self.assertFalse(disk.is_empty())
