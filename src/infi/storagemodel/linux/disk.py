@@ -48,16 +48,6 @@ class LinuxDiskDrive(disk.DiskDrive):
         return LinuxMBRPartitionTable.create_partition_table(self)
 
 class LinuxDiskModel(disk.DiskModel):
-    @cached_method
-    def get_sg_to_hctl_dict(self):
-        from infi.sgutils.sg_map import get_sg_to_hctl_mappings
-        return get_sg_to_hctl_mappings()
-
-    @cached_method
-    def get_hctl_to_sd_dict(self):
-        from infi.sgutils.sg_map import get_hctl_to_sd_mappings
-        return get_hctl_to_sd_mappings()
-
     def find_disk_drive_by_block_access_path(self, path):
         from infi.storagemodel import get_storage_model
         scsi = get_storage_model().get_scsi()
