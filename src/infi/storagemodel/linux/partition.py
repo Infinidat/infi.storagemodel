@@ -41,14 +41,13 @@ class LinuxPartitionTable(object):
         self._disk_drive = disk_drive
 
     def _translate_partition_object(self, parted_partition):
-        from infi.parted import GUIDPartition, MBRPartition
         if isinstance(parted_partition, LinuxGUIDPartition):
             return LinuxGUIDPartition(self._disk_drive, parted_partition)
-        if parted_partition.type == "Primary":
+        if parted_partition.get_type() == "Primary":
             return LinuxPrimaryPartition(self._disk_drive, parted_partition)
-        if parted_partition.type == "Extended":
+        if parted_partition.get_type() == "Extended":
             return LinuxExtendedPartition(self._disk_drive, parted_partition)
-        if parted_partition.type == "Logical":
+        if parted_partition.get_type() == "Logical":
             return LinuxLogicalPartition(self._disk_drive, parted_partition)
 
     @cached_method
