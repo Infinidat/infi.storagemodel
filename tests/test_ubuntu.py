@@ -27,3 +27,5 @@ class UbuntuTestCase(unittest.TestCase):
         block_devices = model.get_scsi().get_all_scsi_block_devices()
         disk = block_devices[0].get_disk_drive()
         self.assertFalse(disk.is_empty())
+        partition_table = disk.get_partition_table()
+        size = disk.get_size_in_bytes()
