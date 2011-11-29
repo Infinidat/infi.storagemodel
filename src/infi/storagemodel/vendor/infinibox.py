@@ -181,4 +181,4 @@ class InfinidatNAA(object):
         """:returns: the volume entity ID"""
         return self._data.vendor_specific_identifier_extension
 
-vid_pid = ("NFINIDAT" , "InfiniBox")
+vid_pid = ("NFINIDAT" , "Infinidat A01")
