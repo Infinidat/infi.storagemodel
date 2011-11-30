@@ -198,9 +198,14 @@ class InfinidatVolumeExists(object):
         block_devices = scsi.filter_vendor_specific_devices(scsi.get_all_scsi_block_devices(), vid_pid)
         mp_devices = mpath.filter_vendor_specific_devices(mpath.get_all_multipath_devices(), vid_pid)
         non_mp_devices = mpath.filter_non_multipath_scsi_block_devices(block_devices)
+        devices_to_query = mp_devices + non_mp_devices
+        for device in devices_to_query:
+            volume_id = device.get_vendor().get_naa().get_volume_serial()
+            system_serial = device.get_vendor().get_naa().get_system_serial()
+            log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))
         return any([self.volume_id == device.get_vendor().get_naa().get_volume_serial() and
                     self.system_serial == device.get_vendor().get_naa().get_system_serial() \
-                    for device in mp_devices + non_mp_devices])
+                    for device in devices_to_query])
 
 class InfinidatVolumeDoesNotExist(InfinidatVolumeExists):
     """A predicate that checks if an Infinidat volume does not exist"""
