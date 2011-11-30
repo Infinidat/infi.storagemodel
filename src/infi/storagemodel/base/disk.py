@@ -9,7 +9,6 @@ class NoPartitionTable(StorageModelFindError):
     pass
 
 class DiskDrive(object):
-    @cached_method
     def is_empty(self): # pragma: no cover
         """:returns: True if there is a partition table on the disk"""
         raise NotImplementedError()
@@ -18,7 +17,6 @@ class DiskDrive(object):
     # Platform Specific Methods #
     #############################
 
-    @cached_method
     def get_partition_table(self): # pragma: no cover
         """:raises: ValueError if there is no partition table on disk
         
