@@ -31,11 +31,9 @@ class LinuxDiskDrive(disk.DiskDrive):
             return LinuxMBRPartitionTable(self)
         raise ValueError()
 
-    @cached_method
     def is_empty(self):
         return not self._get_parted_disk_drive().has_partition_table()
 
-    @cached_method
     def delete_partition_table(self):
         raise NotImplementedError()
 
