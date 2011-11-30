@@ -16,7 +16,7 @@ class LinuxFileSystem(filesystem.FileSystem):
     def unmount(self, mount_point):
         from infi.mountoolinux.mount.manager import MountManager, MountEntry
         entry = MountEntry(None, mount_point, None, {}, 0, 0)
-        MountManager.umount_entry(self, entry)
+        MountManager().umount_entry(entry)
 
     def format(self, block_device, *args, **kwargs):
         """currently we ignore args and kwargs"""
