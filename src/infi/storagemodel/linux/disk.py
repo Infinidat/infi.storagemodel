@@ -45,7 +45,7 @@ class LinuxDiskDrive(disk.DiskDrive):
         from .partition import LinuxMBRPartitionTable
         return LinuxMBRPartitionTable.create_partition_table(self)
 
-    def _format_partion(self, number, filesystem_name):
+    def _format_partition(self, number, filesystem_name):
         self._get_parted_disk_drive().format_partition(number, filesystem_name)
 
 class LinuxDiskModel(disk.DiskModel):
