@@ -25,7 +25,7 @@ class LinuxFileSystem(filesystem.FileSystem):
             disk = block_device._containing_disk
             partition = block_device._parted_partition
             number = partition.get_number()
-            disk.format_partition(number, self.get_name())
+            disk._format_partition(number, self.get_name())
         else:
             from infi.execute import execute
             mkfs = execute(["mkfs.{}", "-F", block_device.get_block_access_path()])

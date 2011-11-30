@@ -21,7 +21,6 @@ class LinuxPartition(partition.Partition):
 
     @cached_method
     def get_current_filesystem(self):
-
         raise NotImplementedError()
 
 class LinuxPrimaryPartition(LinuxPartition, partition.PrimaryPartition):
