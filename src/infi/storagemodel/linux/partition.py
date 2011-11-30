@@ -21,6 +21,7 @@ class LinuxPartition(partition.Partition):
 
     @cached_method
     def get_current_filesystem(self):
+
         raise NotImplementedError()
 
 class LinuxPrimaryPartition(LinuxPartition, partition.PrimaryPartition):
@@ -41,7 +42,8 @@ class LinuxPartitionTable(object):
         self._disk_drive = disk_drive
 
     def _translate_partition_object(self, parted_partition):
-        if isinstance(parted_partition, LinuxGUIDPartition):
+        from infi.parted import GUIDPartition
+        if isinstance(parted_partition, GUIDPartition):
             return LinuxGUIDPartition(self._disk_drive, parted_partition)
         if parted_partition.get_type() == "Primary":
             return LinuxPrimaryPartition(self._disk_drive, parted_partition)
@@ -49,6 +51,8 @@ class LinuxPartitionTable(object):
             return LinuxExtendedPartition(self._disk_drive, parted_partition)
         if parted_partition.get_type() == "Logical":
             return LinuxLogicalPartition(self._disk_drive, parted_partition)
+        # If there is only primary, then the type is empty
+        return LinuxPrimaryPartition(self._disk_drive, parted_partition)
 
     @cached_method
     def get_partitions(self):

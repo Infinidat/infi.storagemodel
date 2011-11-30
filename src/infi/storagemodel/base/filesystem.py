@@ -49,7 +49,7 @@ class FileSystemFactoryImpl(object):
     # Platform Specific Methods #
     #############################
 
-    def get_filesystem_for_partition(self, device, filesystem_object):
+    def get_filesystem_for_device(self, device, filesystem_object):
         """:returns: a :class:`.FileSystem` object that is on top of a block device
         :param device: Either a :class:`.MultipathDevice` or a :class:`.SCSIBlockDevice` or :class:`.Partition`
         :param filesystem_object: a :class:`.FileSystem` obeject"""
