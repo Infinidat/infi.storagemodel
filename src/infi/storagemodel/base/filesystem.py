@@ -1,21 +1,20 @@
-from ..errors import StorageModelError
 
 class FileSystem(object):
     """Represents a Filesystem that can be formatted and mounted"""
 
+    #############################
+    # Platform Specific Methods #
+    #############################
+
     def get_name(self): # pragma: no cover
         """:returns: the string name of the filesystem"""
-        raise NotImplementedError()
-
-    def get_number(self): # pragma: no cover
-        """:returns: the filesystem type number that is written inside the partition table"""
         raise NotImplementedError()
 
     def __str__(self): # pragma: no cover
         return self.get_name()
 
     def __repr(self):
-        return "{}:{}".format(self.get_name(), self.get_number())
+        return "{}".format(self.get_name())
 
     def format(self, block_device, *args, **kwargs): # pragma: no cover
         """formats the device with this filesystem
@@ -46,7 +45,11 @@ class FileSystem(object):
         raise NotImplementedError()
 
 class FileSystemFactoryImpl(object):
-    def get_filesystem_for_partition(self, device, filesystem_object):
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    def get_filesystem_for_device(self, device, filesystem_object):
         """:returns: a :class:`.FileSystem` object that is on top of a block device
         :param device: Either a :class:`.MultipathDevice` or a :class:`.SCSIBlockDevice` or :class:`.Partition`
         :param filesystem_object: a :class:`.FileSystem` obeject"""
