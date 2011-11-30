@@ -66,11 +66,11 @@ class LinuxPartitionTable(object):
 class LinuxMBRPartitionTable(LinuxPartitionTable, partition.MBRPartitionTable):
     @classmethod
     def create_partition_table(cls, disk_drive):
-        disk_drive._get_parted_disk_drive().create_partition_table("msdos")
+        disk_drive._get_parted_disk_drive().create_a_new_partition_table("msdos")
         return cls(disk_drive)
 
 class LinuxGPTPartitionTable(LinuxPartitionTable, partition.GPTPartitionTable):
     @classmethod
     def create_partition_table(cls, disk_drive):
-        disk_drive._get_parted_disk_drive().create_partition_table("gpt")
+        disk_drive._get_parted_disk_drive().create_a_new_partition_table("gpt")
         return cls(disk_drive)
