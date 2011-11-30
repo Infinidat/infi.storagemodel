@@ -20,6 +20,11 @@ def _locate_rescan_script():
     # no script found
     return None
 
+def _call_partprobe(env=None):
+    from infi.execute import execute
+    execute(["partprobe", ]).wait()
+
+
 def _call_rescan_script(env=None):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
     that the script does not exist"""
@@ -67,6 +72,7 @@ class LinuxStorageModel(StorageModel):
         and modify it accordingly.
         """
         _call_rescan_script()
+        _call_partprobe()
 
 def is_rescan_script_exists():
     return _locate_rescan_script() is not None
