@@ -2,15 +2,15 @@
 from infi.exceptools import InfiException
 
 class StorageModelError(InfiException):
-    """ """
+    """Base Exception class for this module """
     pass
 
 class StorageModelFindError(StorageModelError):
-    """ """
+    """Find error"""
     pass
 
 class TimeoutError(StorageModelError):
-    """ """
+    """Timeout error"""
     pass
 
 class NotMounted(StorageModelError):
