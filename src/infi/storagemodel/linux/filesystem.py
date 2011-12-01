@@ -1,5 +1,7 @@
 from ..base import filesystem
 
+# pylint: disable=W0102,W0212
+
 class LinuxFileSystem(filesystem.FileSystem):
     def __init__(self, name):
         super(LinuxFileSystem, self).__init__()

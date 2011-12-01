@@ -33,7 +33,7 @@ def _call_rescan_script(env=None):
     from ..errors import StorageModelError
     rescan_script = _locate_rescan_script()
     if rescan_script is None:
-        raise StorageModelError("no rescan-scsi-bus script found")
+        raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
         _ = execute([rescan_script, "--remove"], env=env)
     except Exception:

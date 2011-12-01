@@ -77,6 +77,9 @@ class SCSIBlockDevice(SCSIDevice):
         raise NotImplementedError()
 
 class SCSIStorageController(SCSIDevice):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
+
     @cached_method
     def get_vendor(self):
         """ :returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""

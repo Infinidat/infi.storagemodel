@@ -43,6 +43,9 @@ class LinuxSCSIBlockDevice(LinuxSCSIBlockDeviceMixin, scsi.SCSIBlockDevice):
         return self.sysfs_device.get_block_device_name()
 
 class LinuxSCSIStorageController(LinuxSCSIDeviceMixin, scsi.SCSIStorageController):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
+
     def __init__(self, sysfs_device):
         super(LinuxSCSIStorageController, self).__init__()
         self.sysfs_device = sysfs_device
@@ -66,5 +69,5 @@ class LinuxSCSIModel(scsi.SCSIModel):
     def find_scsi_block_device_by_block_devno(self, devno):
         devices = [ dev for dev in self.get_all_scsi_block_devices() if dev.get_unix_block_devno() == devno ]
         if len(devices) != 1:
-            raise StorageModelFindError("%d SCSI block devices found with devno=%s" % (len(devices), devno))
+            raise StorageModelFindError("%d SCSI block devices found with devno=%s" % (len(devices), devno)) # pylint: disable=W0710
         return devices[0]

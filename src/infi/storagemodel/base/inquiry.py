@@ -1,5 +1,7 @@
 from infi.pyutils.lazy import cached_method, LazyImmutableDict
 
+#pylint: disable=E1002,W0622
+
 class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):
         super(SupportedVPDPagesDict, self).__init__(dict.copy())

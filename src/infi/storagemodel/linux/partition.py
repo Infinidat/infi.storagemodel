@@ -1,6 +1,8 @@
 from infi.pyutils.lazy import cached_method
 from ..base import partition
 
+# pylint: disable=W0212
+
 class LinuxPartition(partition.Partition):
     def __init__(self, containing_disk, parted_partition):
         super(LinuxPartition, self).__init__()
@@ -24,15 +26,23 @@ class LinuxPartition(partition.Partition):
         raise NotImplementedError()
 
 class LinuxPrimaryPartition(LinuxPartition, partition.PrimaryPartition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class LinuxExtendedPartition(LinuxPartition, partition.ExtendedPartition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class LinuxLogicalPartition(LinuxPartition, partition.LogicalPartition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class LinuxGUIDPartition(LinuxPartition, partition.GUIDPartition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class LinuxPartitionTable(object):

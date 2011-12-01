@@ -27,18 +27,28 @@ class Partition(object):
         raise NotImplementedError()
 
 class MBRPartition(Partition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class PrimaryPartition(MBRPartition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class ExtendedPartition(MBRPartition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class LogicalPartition(MBRPartition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class GUIDPartition(Partition):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class PartitionTable(object):
@@ -80,22 +90,12 @@ class PartitionTable(object):
         raise NotImplementedError()
 
 class MBRPartitionTable(PartitionTable):
-    #############################
-    # Platform Specific Methods #
-    #############################
-
-    @cached_method
-    def get_guid(self): # pragma: no cover
-        """:returns: a 4-byte number"""
-        raise NotImplementedError()
-
+    # This methods below are overriden by platform-specific implementations
+    # pylint: disable=W0223
+    pass
 
 class GPTPartitionTable(PartitionTable):
-    #############################
-    # Platform Specific Methods #
-    #############################
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
+    pass
 
-    @cached_method
-    def get_uuid(self): # pragma: no cover
-        """:returns: a :class:uuid.UUID identifier for the disk"""
-        raise NotImplementedError()

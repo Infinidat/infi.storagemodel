@@ -1,6 +1,8 @@
 from ..base import disk
 from infi.pyutils.lazy import cached_method
 
+# pylint: disable=R0921
+
 class LinuxDiskDrive(disk.DiskDrive):
     def __init__(self, storage_device, scsi_disk_path):
         super(LinuxDiskDrive, self).__init__()

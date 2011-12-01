@@ -1,6 +1,8 @@
 from ..base import mount
 from infi.pyutils.lazy import cached_method
 
+# pylint: disable=W0223,W0212
+
 class LinuxMountManager(mount.MountManager):
     def _translate_mount_object(self, hidden_object):
         return LinuxMount(hidden_object)
@@ -42,7 +44,7 @@ class LinuxMount(mount.Mount):
     def get_mount_options(self):
         return self._entry.get_opts()
 
-    def get_mount_mount(self):
+    def get_mount_point(self):
         return self._entry.get_dirname()
 
     def get_filesystem(self):
@@ -64,7 +66,7 @@ class LinuxMountRepository(mount.MountRepository):
         if MountManager().is_entry_in_fstab(entry):
             MountManager().remove_entry_from_fstab(entry)
 
-    def add_persistent_mountpoint(self, mount):
+    def add_persistent_mountpoint(self, mount): # pylint: disable=W0621
         from infi.mountoolinux.mount.manager import MountManager
         entry = mount._entry
         if not MountManager().is_entry_in_fstab(entry):

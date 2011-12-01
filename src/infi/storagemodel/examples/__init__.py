@@ -1,6 +1,8 @@
 
 
 def devlist():
+    # pylint: disable=R912
+
     from infi.storagemodel import get_storage_model
     from infi.storagemodel.vendor.infinibox import vid_pid as infinibox_vid_pid
     model = get_storage_model()

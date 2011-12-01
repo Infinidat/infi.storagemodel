@@ -3,6 +3,8 @@ from infi.pyutils.lazy import cached_method, cached_property, clear_cache, LazyI
 from ..base import StorageModel, scsi, multipath
 from contextlib import contextmanager
 
+# pylint: disable=W0212,E1002
+
 class WindowsDeviceMixin(object):
     @cached_method
     def get_pdo(self):

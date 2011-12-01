@@ -1,6 +1,5 @@
 import os
 from infi.dtypes.hctl import HCTL
-from infi.pyutils.lazy import cached_method
 from ..errors import StorageModelError
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
@@ -33,7 +32,7 @@ class SysfsBlockDevice(SysfsBlockDeviceMixin):
     def __init__(self, block_device_name):
         self.block_device_name = block_device_name
         self.sysfs_block_device_path = os.path.join(SYSFS_CLASS_BLOCK_DEVICE_PATH, self.block_device_name)
-                 
+
 class SysfsSCSIDevice(object):
     def __init__(self, sysfs_dev_path, hctl):
         super(SysfsSCSIDevice, self).__init__()
@@ -42,8 +41,8 @@ class SysfsSCSIDevice(object):
 
         sg_dev_names = os.listdir(os.path.join(self.sysfs_dev_path, "scsi_generic"))
         if len(sg_dev_names) != 1:
-            raise SysfsError("%s doesn't have a single device/scsi_generic/sg* path (%s)" % (self.sysfs_dev_path,
-                                                                                             repr(sg_dev_names)))
+            msg = "{} doesn't have a single device/scsi_generic/sg* path ({!r})"
+            raise SysfsError(msg.format(self.sysfs_dev_path, sg_dev_names))
         self.scsi_generic_device_name = sg_dev_names[0]
         self.sysfs_scsi_generic_device_path = os.path.join(self.sysfs_dev_path, "scsi_generic",
                                                            self.scsi_generic_device_name)
@@ -69,7 +68,8 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
 
         block_dev_names = os.listdir(os.path.join(self.sysfs_dev_path, "block"))
         if len(block_dev_names) != 1:
-            raise SysfsError("%s doesn't have a single device/block/sd* path (%s)" % (self.sysfs_dev_path,
+            msg = "{} doesn't have a single device/lbock/sg* path ({!r})"
+            raise SysfsError(msg.format(self.sysfs_dev_path, block_dev_names))
                                                                                       repr(block_dev_names)))
         self.block_device_name = block_dev_names[0]
         self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)

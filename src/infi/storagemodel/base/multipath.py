@@ -32,6 +32,8 @@ class MultipathFrameworkModel(object):
         raise NotImplementedError()
 
 class NativeMultipathModel(MultipathFrameworkModel):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class MultipathDevice(InquiryInformationMixin, object):
@@ -103,6 +105,9 @@ class LoadBalancePolicy(object):
         raise NotImplementedError()
 
 class FailoverOnly(LoadBalancePolicy):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
+
     name = "Fail Over Only"
 
     def __init__(self, active_path_id):
@@ -110,9 +115,13 @@ class FailoverOnly(LoadBalancePolicy):
         self.active_path_id = active_path_id
 
 class RoundRobin(LoadBalancePolicy):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     name = "Round Robin"
 
 class RoundRobinWithSubset(LoadBalancePolicy):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     name = "Round Robin with subset"
 
     def __init__(self, active_path_ids):
@@ -120,14 +129,20 @@ class RoundRobinWithSubset(LoadBalancePolicy):
         self.active_path_ids = active_path_ids
 
 class RoundRobinWithTPGSSubset(RoundRobinWithSubset):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class RoundRobinWithExplicitSubset(RoundRobinWithSubset):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class WeightedPaths(LoadBalancePolicy):
     """weights is dictionary mapping between Path IDs to their intger weight"""
 
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     name = "Weighted Paths"
     def __init__(self, weights):
         super(WeightedPaths, self).__init__()
@@ -135,9 +150,13 @@ class WeightedPaths(LoadBalancePolicy):
         self.weights = weights
 
 class LeastBlocks(LoadBalancePolicy):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     name = "Least Blocks"
 
 class LeastQueueDepth(LoadBalancePolicy):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     name = "Least Queue Depth"
 
 class Path(object):
