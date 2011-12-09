@@ -108,7 +108,7 @@ class Sysfs(object):
 
     def _get_sysfs_block_devices_pathnames(self):
         """:returns a dict of name:path"""
-        for base in ["/sys/class/block", "/sys/block"]:
+        for base in ["/sys/block", ]:
             if os.path.exists(base):
                 #  /sys/class/block/sda -> 
                 #     ../../devices/pci0000:00/0000:00:15.0/0000:03:00.0/host2/target2:0:0/2:0:0:0/block/sda
