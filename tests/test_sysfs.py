@@ -5,9 +5,11 @@ from infi.dtypes.hctl import HCTL
 from infi.storagemodel.linux.sysfs import Sysfs
 
 class SysfsTestCase(TestCase):
+    @patch('os.path.islink')
+    @patch('os.path.exists')
     @patch('os.listdir')
     @patch('__builtin__.open')
-    def test_sysfs(self, open_mock, listdir_mock):
+    def test_sysfs(self, open_mock, listdir_mock, exists_mock, islink_mock):
         if name == "nt":
             raise SkipTest
 
@@ -33,7 +35,7 @@ class SysfsTestCase(TestCase):
             '/sys/class/scsi_device/5:0:0:0/device/scsi_generic': [ 'sg3' ],
             
             # Block Devices:
-            '/sys/class/block': [],
+            '/sys/block': [],
         }
 
         file_map = {
@@ -77,7 +79,8 @@ class SysfsTestCase(TestCase):
             '/sys/class/scsi_device/5:0:0:0/device/queue_depth': '32',
         }
 
-        def create_file_context_manager(path, mode):
+        def create_file_context_manager(*args, **kwargs):
+            path = args[0]
             file_mock = Mock()
             file_mock.read = Mock(return_value=file_map[path])
             cm = Mock()
@@ -97,6 +100,8 @@ class SysfsTestCase(TestCase):
 
         listdir_mock.side_effect = listdir_map.get
         open_mock.side_effect = create_file_context_manager
+        exists_mock.return_value = True
+        islink_mock.return_value = False
 
         sysfs = Sysfs()
 
