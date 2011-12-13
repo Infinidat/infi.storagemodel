@@ -4,6 +4,8 @@ import mock
 
 from . import LinuxStorageModel
 
+# pylint: disable=W0312,W0212,W0710,R0904
+
 class InitiateRescan(unittest.TestCase):
 
     def test_for_real(self):
@@ -20,7 +22,7 @@ class InitiateRescan(unittest.TestCase):
         original_call_function = linux._call_rescan_script
 
         def side_effect(*args, **kwargs):
-	    raise StorageModelError
+            raise StorageModelError
 
         with mock.patch("infi.storagemodel.linux._call_rescan_script") as patch:
             model = LinuxStorageModel()

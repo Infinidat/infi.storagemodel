@@ -6,12 +6,16 @@ __storage_model = None
 
 def get_storage_model():
     """returns a global instance of a StorageModel"""
+    # pylint: disable=W0603,C0103
     global __storage_model
     if __storage_model is None:
         # do platform-specific magic here.
         from platform import system
         plat = system().lower().replace('-', '')
         from .base import StorageModel as PlatformStorageModel # helps IDEs
-        exec "from .%s import %sStorageModel as PlatformStorageModel" % (plat, plat.capitalize())
+        from brownie.importing import import_string
+        platform_module_string = "{}.{}".format(__name__, plat)
+        platform_module = import_string(platform_module_string)
+        PlatformStorageModel = getattr(platform_module, "{}StorageModel".format(plat.capitalize()))
         __storage_model = PlatformStorageModel()
     return __storage_model

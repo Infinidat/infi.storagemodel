@@ -4,7 +4,7 @@ from infi.dtypes.wwn import WWN
 from infi.hbaapi import Port
 
 class FCConnectivity(object):
-    """ """
+    """Fibre Channel Connectivity Information """
     def __init__(self, device, local_port, remote_port):
         super(FCConnectivity, self).__init__()
         self._device = device

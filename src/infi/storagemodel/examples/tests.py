@@ -1,5 +1,7 @@
 import unittest
 
+# pylint: disable=R0904
+
 class ExamplesTestCase(unittest.TestCase):
     def setUp(self):
         from .. import get_storage_model

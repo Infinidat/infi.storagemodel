@@ -28,8 +28,8 @@ class VendorFactoryImpl(object):
         self.vendor_mapping[vid_pid] = dict(block=block_class, controller=controller_class, multipath=multipath_class)
 
     def _create_device_by_vid_pid(self, vid_pid, device_type, device):
-        map = self.vendor_mapping.get(vid_pid)
-        return None if map is None else map.get(device_type)(device)
+        mapping = self.vendor_mapping.get(vid_pid)
+        return None if map is None else mapping.get(device_type)(device)
 
     def create_block_by_vid_pid(self, vid_pid, device):
         return self._create_device_by_vid_pid(vid_pid, 'block', device)

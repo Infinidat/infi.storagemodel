@@ -25,6 +25,8 @@ class Mount(object):
         raise NotImplementedError()
 
 class PersistentMount(Mount):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
     pass
 
 class MountRepository(object):

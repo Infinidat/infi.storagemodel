@@ -1,10 +1,12 @@
 
 import unittest
 import mock
-from contextlib import contextmanager, nested
+from contextlib import nested
 
 from logging import getLogger
 log = getLogger()
+
+# pylint: disable=R0904,C0103,R0922
 
 class ModelTestCase(unittest.TestCase):
     def setUp(self):

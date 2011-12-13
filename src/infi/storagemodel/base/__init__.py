@@ -80,7 +80,7 @@ class StorageModel(object):
         start_time = time()
         while not predicate():
             if time() - start_time >= timeout_in_seconds:
-                raise TimeoutError()
+                raise TimeoutError() # pylint: disable=W0710
             sleep(1)
             self.initiate_rescan()
             self.refresh()

@@ -3,6 +3,8 @@ from infi.pyutils.lazy import cached_method, cached_property, clear_cache, LazyI
 from ..base import StorageModel, scsi, multipath
 from contextlib import contextmanager
 
+# pylint: disable=W0212,E1002
+
 class WindowsDeviceMixin(object):
     @cached_method
     def get_pdo(self):
@@ -91,7 +93,7 @@ class WindowsSCSIModel(scsi.SCSIModel):
     @cached_method
     def get_all_storage_controller_devices(self):
         from infi.devicemanager.setupapi.constants import SYSTEM_DEVICE_GUID_STRING
-        return filter(lambda device: u'ScsiArray' in device.hardware_ids,
+        return filter(lambda device: u'ScsiArray' in device._device_object.hardware_ids,
                       [WindowsSCSIStorageController(device) for device in self.get_device_manager().scsi_devices])
 
 class LazyLoadBalancingInfomrationDict(LazyImmutableDict):

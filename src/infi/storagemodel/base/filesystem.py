@@ -1,4 +1,6 @@
 
+# pylint: disable=W0102,E1002
+
 class FileSystem(object):
     """Represents a Filesystem that can be formatted and mounted"""
 

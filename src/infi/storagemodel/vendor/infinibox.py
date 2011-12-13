@@ -59,10 +59,10 @@ class InfiniBoxMixin(object):
         """:returns: the infinidat naa
         :rtype: :class:`.InfinidatNAA`"""
         from infi.asi.cdb.inquiry.vpd_pages.device_identification import designators
-        NAA = designators.NAA_IEEE_Registered_Extended_Designator
+        naa = designators.NAA_IEEE_Registered_Extended_Designator
         device_identification_page = self.device.get_scsi_inquiry_pages()[0x83]
         for designator in device_identification_page.designators_list:
-            if isinstance(designator, NAA):
+            if isinstance(designator, naa):
                 return InfinidatNAA(designator)
 
     @cached_method
@@ -120,6 +120,8 @@ class JSONInquiryPageData(Struct):
 
 class JSONInquiryPageCommand(EVPDInquiryCommand):
     def __init__(self):
+        # pylint: disable=E1002
+            # pylint: disable=E1002
         super(JSONInquiryPageCommand, self).__init__(0xc5, 1024, JSONInquiryPageData)
 
 class InfiniBoxVolumeMixin(object):
@@ -152,6 +154,8 @@ class InfinidatFiberChannelPort(object):
 
     def get_port_group(self):
         return self._target_port_group
+
+# pylint: disable=C0103
 
 class block_class(InfiniBoxMixin, InfiniBoxVolumeMixin, VendorSCSIBlockDevice):
     pass

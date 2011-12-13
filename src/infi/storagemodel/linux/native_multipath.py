@@ -16,7 +16,7 @@ class LinuxNativeMultipathDevice(LinuxBlockDeviceMixin, multipath.MultipathDevic
         for path in self.get_paths():
             if path.get_state() == "up":
                 return path.asi_context()
-        raise StorageModelFindError("cannot find an active path to open SCSI generic device")
+        raise StorageModelFindError("cannot find an active path to open SCSI generic device") # pylint: disable=W0710
 
     @cached_method
     def get_display_name(self):

@@ -2,6 +2,8 @@
 from infi.pyutils.lazy import cached_method
 from ..errors import StorageModelFindError
 
+# pylint: disable=R0922
+
 class NoSuchDisk(StorageModelFindError):
     pass
 
@@ -75,27 +77,3 @@ class DiskModel(object):
 #     A more sophisticated method of creating partitions
 #     Non-persistent mount_all_persistent_mountpoints-points
 
-
-"""
-# create fs and mount
-from infi.storagemodel import get_storage_model
-model = get_storage_model()
-device = model.get_native_multipath().get_all_multipath_devices()[0]
-disk = device.get_disk_drive()
-partition_table = disk.supported_partition_tables.gpt.create(disk)
-filesystem = get_prefered_filesystem()
-partition = partition_table.create_partition_for_whole_table(filesystem.get_number())
-filesystem.format(partition)
-mount_repository = MountRepository()
-mount = PersistentMount(...)
-mount_repository.add_persistent_mount(mount)
-mount_manager.mount(mount)
-
-# get device from mountpoint
-from infi.storagemodel import get_storage_model
-model = get_storage_model()
-mount = model.get_disk().get_mount_point_by_access_path("/mnt/foo")
-partition = mount.get_device_mounted()
-disk = partition.get_containing_disk()
-device = disk.get_storage_device()
-"""

@@ -5,6 +5,8 @@ from ..base import StorageModel, scsi, multipath
 from .. import connectivity
 from infi.dtypes.hctl import HCTL
 
+# pylint: disable=W0312,W0212,W0710,R0904,W0223
+
 class MultipathModelImpl(multipath.MultipathFrameworkModel):
     def __init__(self, *args, **kwargs):
         multipath.MultipathFrameworkModel.__init__(self, *args, **kwargs)
