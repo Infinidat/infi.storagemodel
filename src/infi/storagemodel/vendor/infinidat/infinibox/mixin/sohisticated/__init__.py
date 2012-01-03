@@ -16,7 +16,7 @@ class SophisticatedMixin(object):
         return address, port
 
     def _get_host_name_from_json_page(self):
-        return self.get_json_page()['host_name']
+        return self.get_json_data()['host_name']
 
     def _get_management_json_sender(self):
         address, port = self._get_management_address_and_port()
@@ -35,7 +35,7 @@ class SophisticatedMixin(object):
             self._get_host_name_from_management()
 
     def _get_system_serial_from_json_page(self):
-        return self.get_json_page()['system_serial']
+        return self.get_json_data()['system_serial']
 
     def _get_system_serial_from_management(self):
         sender = self._get_management_json_sender()
@@ -47,7 +47,7 @@ class SophisticatedMixin(object):
             self._get_system_serial_from_management()
 
     def _get_system_name_from_json_page(self):
-        return self.get_json_page()['system_name']
+        return self.get_json_data()['system_name']
 
     def _get_system_name_from_management(self):
         sender = self._get_management_json_sender()
