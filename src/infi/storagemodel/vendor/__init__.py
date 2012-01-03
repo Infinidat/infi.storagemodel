@@ -41,7 +41,7 @@ class VendorFactoryImpl(object):
         return self._create_device_by_vid_pid(vid_pid, 'multipath', device)
 
     def _register_builtin_factories(self):
-        from . import infinibox
-        self.register(infinibox.vid_pid, infinibox.block_class, infinibox.controller_class, infinibox.multipath_class)
+        from .infinidat.infinibox import mixin, vid_pid
+        self.register(vid_pid, mixin.block_class, mixin.controller_class, mixin.multipath_class)
 
 VendorFactory = VendorFactoryImpl()

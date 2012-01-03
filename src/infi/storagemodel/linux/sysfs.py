@@ -81,7 +81,7 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         else:
             block_dev_names = glob.glob(os.path.join(self.sysfs_dev_path, "block*"))
         if len(block_dev_names) != 1:
-            msg = "{} doesn't have a single device/lbock/sg* path ({!r})"
+            msg = "{} doesn't have a single device/block/sg* path ({!r})"
             raise SysfsError(msg.format(self.sysfs_dev_path, block_dev_names))
         self.block_device_name = block_dev_names[0].split(':')[-1]
         self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)
