@@ -39,11 +39,11 @@ class SophisticatedMixin(object):
 
     def _get_system_serial_from_management(self):
         sender = self._get_management_json_sender()
-        return sender.get('system')['name']
+        return sender.get('system')['serial']
 
     @cached_method
     def get_system_serial(self):
-        return self._get_system_name_from_json_page() or \
+        return self._get_system_serial_from_json_page() or \
             self._get_system_serial_from_management()
 
     def _get_system_name_from_json_page(self):
@@ -51,12 +51,12 @@ class SophisticatedMixin(object):
 
     def _get_system_name_from_management(self):
         sender = self._get_management_json_sender()
-        return sender.get('system')['serial']
+        return sender.get('system')['name']
 
     @cached_method
     def get_system_name(self):
-        return self._get_system_serial_from_json_page() or \
-            self._get_system_serial_from_management()
+        return self._get_system_name_from_json_page() or \
+            self._get_system_name_from_management()
 
     def _get_volume_name_from_json_page(self):
         return self.get_json_data()['volume_name']
