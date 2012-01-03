@@ -181,7 +181,7 @@ class InquiryPageTestCase(TestCase):
         return DeviceIdentificationVPDPageData.create_from_string(raw_data)
 
 from mock import patch, Mock
-from infi.storagemodel.vendor.infinibox import InfiniBoxMixin, InfiniBoxVolumeMixin
+from infi.storagemodel.vendor.infinidat.infinibox.mixin import InfiniBoxMixin, InfiniBoxVolumeMixin
 
 class MixinWithDevice(InfiniBoxVolumeMixin, InfiniBoxMixin):
     def get_scsi_inquiry_pages(self):
@@ -202,8 +202,8 @@ class MixinTestCase(TestCase):
         self.mixin = MixinWithDevice()
 
     def test_management_address(self):
-        self.assertEqual(self.mixin.get_box_management_address(), "255.255.255.255")
-        self.assertEqual(self.mixin.get_box_management_port(), 8080)
+        self.assertEqual(self.mixin.get_management_address(), "255.255.255.255")
+        self.assertEqual(self.mixin.get_management_port(), 8080)
 
     def test_host_id(self):
         self.assertEqual(self.mixin.get_host_id(), 1)
