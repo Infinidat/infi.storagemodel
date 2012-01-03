@@ -24,3 +24,4 @@ def get_infinidat_block_devices():
 
 def get_infinidat_block_devices_and_controllers():
     return get_infinidat_block_devices() + get_infinidat_scsi_storage_controller_devices()
+
