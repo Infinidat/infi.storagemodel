@@ -97,7 +97,7 @@ class MockModelTestCase(ModelTestCase):
     def test_get_block_devices(self):
         with nested(mock.patch("infi.devicemanager.DeviceManager"),
                     mock.patch("infi.devicemanager.Device"),
-                    mock.patch("infi.storagemodel.windows.WindowsSCSIBlockDevice"),
+                    mock.patch("infi.storagemodel.windows.scsi.WindowsSCSIBlockDevice"),
                     ) as (DeviceManager, Device, WindowsSCSIBlockDevice):
             Device.return_value.psuedo_device_object = r'\Device\00000000'
             Device.return_value.get_ioctl_interface = mock.Mock()
