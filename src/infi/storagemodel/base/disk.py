@@ -21,7 +21,7 @@ class DiskDrive(object):
 
     def get_partition_table(self): # pragma: no cover
         """:raises: ValueError if there is no partition table on disk
-        
+
         :returns: A :class:`.PartitionTable` object"""
         raise NotImplementedError()
 
@@ -36,13 +36,13 @@ class DiskDrive(object):
 
     def create_mbr_partition_table(self): # pragma: no cover
         """creates a MBR partition table
-        
+
         :returns: a :class:`.MBRPartitionTable` object"""
         raise NotImplementedError()
 
     def create_gpt_partition_table(self): # pragma: no cover
         """creates a GPT partition table
-        
+
         :returns: a :class:`.GPTPartitionTable` object"""
         raise NotImplementedError()
 
@@ -54,7 +54,7 @@ class DiskDrive(object):
     @cached_method
     def get_storage_device(self): # pragma: no cover
         """The storage device that is represented by this disk drive.
-        
+
         :returns: a :class:`.MultipathDevice` or a :class:`.SCSIBlockDevice`"""
         raise NotImplementedError()
 
