@@ -34,7 +34,7 @@ class FileSystem(object):
         :raises: :class:`.MountPointDoesNotExist` if the mount point does not exist
         :raises: :class:`.MountPointInUse` if the mount point is in use by another mount
         :raises: :class:`.AlreadyMounted` if the device is already mounted
-        :returns: None
+        :returns: a :class:`Mount` object
         """
         raise NotImplementedError()
 
