@@ -14,7 +14,7 @@ class LinuxMountManager(mount.MountManager):
     @cached_method
     def get_mounts(self):
         from infi.mountoolinux.mount.manager import MountManager
-        return MountManager().get_mounts_from_mtab()
+        return [LinuxMount(entry) for entry in MountManager().get_mounts_from_mtab()]
 
     def is_mount_point_in_use(self, mount_point):
         from infi.mountoolinux.mount.manager import MountManager
@@ -51,14 +51,13 @@ class LinuxMount(mount.Mount):
         from .filesystem import LinuxFileSystem
         return LinuxFileSystem(self._entry.get_type())
 
-class LinuxMountRepository(mount.MountRepository):
-    def _translate_peristent_mount(self, hidden_object):
-        return LinuxMount(hidden_object)
+class LinuxPersistentMount(LinuxMount, mount.PersistentMount):
+    pass
 
+class LinuxMountRepository(mount.MountRepository):
     def get_all_persistent_mounts(self):
         from infi.mountoolinux.mount.manager import MountManager
-        return [self._translate_peristent_mount(hidden_object)
-                for hidden_object in MountManager().get_mounts_from_fstab()]
+        return [LinuxPersistentMount(entry) for entry in MountManager().get_mounts_from_mtab()]
 
     def remove_persistent_mountpoint(self, persistent_mount):
         from infi.mountoolinux.mount.manager import MountManager
