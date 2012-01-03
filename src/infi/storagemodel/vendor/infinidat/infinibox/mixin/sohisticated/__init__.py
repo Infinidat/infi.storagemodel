@@ -59,7 +59,7 @@ class SophisticatedMixin(object):
             self._get_system_serial_from_management()
 
     def _get_volume_name_from_json_page(self):
-        return self.get_json_page()['volume_name']
+        return self.get_json_data()['volume_name']
 
     def _get_volume_name_from_management(self):
         volume_id = self.get_volume_id()
