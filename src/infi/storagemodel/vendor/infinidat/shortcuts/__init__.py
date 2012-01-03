@@ -12,7 +12,7 @@ def get_infinidat_scsi_block_devices():
 
 def get_infinidat_native_multipath_devices():
     model = get_storage_model().get_native_multipath()
-    model.filter_vendor_specific_devices(model.get_all_multipath_devices(), vid_pid)
+    return model.filter_vendor_specific_devices(model.get_all_multipath_devices(), vid_pid)
 
 def get_infinidat_non_multiathed_scsi_block_devices():
     all_scsi = get_infinidat_scsi_block_devices()
