@@ -15,3 +15,7 @@ class InfiniBoxVolumeMixin(object):
         """:returns: the volume name within the InfiniBox
         :rtype: int"""
         return self.get_naa().get_volume_serial()
+
+    @cached_method
+    def get_volume_name(self):
+        return self._get_volume_name_from_json_page() or self._get_volume_name_from_management()
