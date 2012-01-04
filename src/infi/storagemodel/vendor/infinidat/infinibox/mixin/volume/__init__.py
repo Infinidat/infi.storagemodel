@@ -19,3 +19,11 @@ class InfiniBoxVolumeMixin(object):
     @cached_method
     def get_volume_name(self):
         return self._get_volume_name_from_json_page() or self._get_volume_name_from_management()
+
+    def _get_volume_name_from_json_page(self):
+        return self.get_json_data()['volume_name']
+
+    def _get_volume_name_from_management(self):
+        volume_id = self.get_volume_id()
+        sender = self._get_management_json_sender()
+        return sender.get('volumes/{}'.format(volume_id))['name']
