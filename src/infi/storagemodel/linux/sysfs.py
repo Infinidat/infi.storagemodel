@@ -86,6 +86,9 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         self.block_device_name = block_dev_names[0].split(':')[-1]
         self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)
 
+from logging import getLogger
+log = getLogger()
+
 class Sysfs(object):
     def __init__(self):
         self.disks = []
@@ -98,7 +101,10 @@ class Sysfs(object):
             if scsi_type == SCSI_TYPE_STORAGE_CONTROLLER:
                 self.controllers.append(SysfsSCSIDevice(dev_path, HCTL.from_string(hctl_str)))
             elif scsi_type == SCSI_TYPE_DISK:
-                self.disks.append(SysfsSCSIDisk(dev_path, HCTL.from_string(hctl_str)))
+                try:
+                    self.disks.append(SysfsSCSIDisk(dev_path, HCTL.from_string(hctl_str)))
+                except SysfsError, e:
+                    log.error(e)
 
         for name, path in self._get_sysfs_block_devices_pathnames().items():
             dev = SysfsBlockDevice(name, path)
