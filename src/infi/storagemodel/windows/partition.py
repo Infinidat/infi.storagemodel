@@ -41,7 +41,7 @@ class WindowsMBRPartitionTable(WindowsPartitionTable, partition.GPTPartitionTabl
 
     def get_partitions(self):
         return [WindowsPrimaryPartition(self, partition) for partition in self._get_partitions()[:3]] + \
-               [WindowsLogicalPartition(self, partition) for partition in self._get_partitions()[3:]] +
+               [WindowsLogicalPartition(self, partition) for partition in self._get_partitions()[3:]]
 
 class WindowsPartition(object):
     def __init__(self, disk_device, partition_object):
