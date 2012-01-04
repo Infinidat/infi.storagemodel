@@ -19,7 +19,7 @@ class DeviceIdentificationPage(object):
     def get_vendor_specific_dict(self):
         result = dict()
         for designator in self.filter_vendor_specific_designators():
-            key, value = [item.split() for item in designator.vendor_specific_identifier.split('=', 1)]
+            key, value = [item.strip() for item in designator.vendor_specific_identifier.split('=', 1)]
             result[key] = value
         return result
 
@@ -66,13 +66,13 @@ class InfiniBoxInquiryMixin(object):
     def get_management_port(self):
         """:returns: the management IPv4 port of the InfiniBox
         :rtype: string"""
-        return self.get_device_identification_page().get_vendor_specific_dict()['port']
+        return int(self.get_device_identification_page().get_vendor_specific_dict()['port'])
 
     @cached_method
     def get_host_id(self):
         """:returns: the host id within the InfiniBox
         :rtype: int"""
-        return self.get_device_identification_page().get_vendor_specific_dict()['host']
+        return int(self.get_device_identification_page().get_vendor_specific_dict()['host'], 16)
 
     @cached_method
     def get_naa(self):
