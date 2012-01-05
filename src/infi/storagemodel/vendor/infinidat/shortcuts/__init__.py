@@ -8,7 +8,7 @@ def get_infinidat_storage_controller_devices():
 
 def get_infinidat_scsi_block_devices():
     model = get_storage_model().get_scsi()
-    return model.filter_vendor_specific_devices(model.get_all_storage_controller_devices(), vid_pid)
+    return model.filter_vendor_specific_devices(model.get_all_scsi_block_devices(), vid_pid)
 
 def get_infinidat_native_multipath_devices():
     model = get_storage_model().get_native_multipath()
