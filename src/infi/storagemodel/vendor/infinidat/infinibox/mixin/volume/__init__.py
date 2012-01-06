@@ -1,4 +1,5 @@
 from infi.pyutils.lazy import cached_method
+from ..sohisticated import _is_exception_of_unsupported_inquiry_page, AsiCheckConditionError
 
 class InfiniBoxVolumeMixin(object):
     @cached_method
@@ -21,9 +22,15 @@ class InfiniBoxVolumeMixin(object):
         return self._get_volume_name_from_json_page() or self._get_volume_name_from_management()
 
     def _get_volume_name_from_json_page(self):
-        return self.get_json_data()['volume_name']
+        try:
+            return self.get_json_data()['volume_name']
+        except KeyError:
+            return None
+        except AsiCheckConditionError, error:
+            if _is_exception_of_unsupported_inquiry_page(error):
+                return None
 
     def _get_volume_name_from_management(self):
         volume_id = self.get_volume_id()
         sender = self._get_management_json_sender()
-        return sender.get('volumes/{}'.format(volume_id))['name']
+        return '' if volume_id == -1 else sender.get('volumes/{}'.format(volume_id))['name']
