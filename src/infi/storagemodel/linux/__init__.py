@@ -29,13 +29,13 @@ def _call_rescan_script(env=None):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
     that the script does not exist"""
     from infi.exceptools import chain
-    from infi.execute import execute
+    from infi.execute import execute_async
     from ..errors import StorageModelError
     rescan_script = _locate_rescan_script()
     if rescan_script is None:
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
-        _ = execute([rescan_script, "--remove"], env=env)
+        _ = execute_async([rescan_script, "--remove"], env=env)
     except Exception:
         raise chain(StorageModelError("failed to initiate rescan"))
 
