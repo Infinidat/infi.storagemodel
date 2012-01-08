@@ -181,9 +181,9 @@ class InquiryPageTestCase(TestCase):
         return DeviceIdentificationVPDPageData.create_from_string(raw_data)
 
 from mock import patch, Mock
-from infi.storagemodel.vendor.infinidat.infinibox.mixin import InfiniBoxMixin, InfiniBoxVolumeMixin
+from infi.storagemodel.vendor.infinidat.infinibox.mixin import InfiniBoxInquiryMixin, InfiniBoxVolumeMixin
 
-class MixinWithDevice(InfiniBoxVolumeMixin, InfiniBoxMixin):
+class MixinWithDevice(InfiniBoxVolumeMixin, InfiniBoxInquiryMixin):
     def get_scsi_inquiry_pages(self):
         pages = {}
         pages[0x83] = InquiryPageMock().get_device_identification_page(1, 1 , 1)

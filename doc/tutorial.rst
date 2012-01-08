@@ -56,7 +56,7 @@ Usually, you'd also want to differ between the multipath disks and the non-multi
 
 Also, if you want disks of a specific product:
 
-   >>> from infi.storagemodel.vendor.infinibox import vid_pid
+   >>> from infi.storagemodel.vendor.infinidat.infinibox import vid_pid
    >>> infinidat_mp_disks = mpio.filter_vendor_specific_devices(mp_disks, vid_pid)
    >>> infinidat_non_mp_disks  = mpio.filter_vendor_specific_devices(block_devices, vid_pid)
 

@@ -41,6 +41,15 @@ class WindowsDiskDrive(disk.DiskDrive):
         from .partition import WindowsGPTPartitionTable
         return WindowsGPTPartitionTable.create_partition_table(self)
 
+    def is_online(self):
+        return self._disk_object.is_online()
+
+    def online(self):
+        return self._disk_object.online()
+
+    def offline(self):
+        return self._disk_object.offline()
+
 class WindowsDiskModel(disk.DiskModel):
     def find_disk_drive_by_block_access_path(self, path):
         from infi.storagemodel import get_storage_model

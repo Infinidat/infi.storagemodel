@@ -4,7 +4,7 @@ def devlist():
     # pylint: disable=R912
 
     from infi.storagemodel import get_storage_model
-    from infi.storagemodel.vendor.infinibox import vid_pid as infinibox_vid_pid
+    from infi.storagemodel.vendor.infinidat.infinibox import vid_pid as infinibox_vid_pid
     model = get_storage_model()
 
     scsi_block_devices = model.get_scsi().get_all_scsi_block_devices()
