@@ -1,5 +1,5 @@
 from infi.pyutils.lazy import cached_method
-from ..sohisticated import _is_exception_of_unsupported_inquiry_page, AsiCheckConditionError
+from ..sophisticated import _is_exception_of_unsupported_inquiry_page, AsiCheckConditionError
 
 class InfiniBoxVolumeMixin(object):
     @cached_method
