@@ -2,6 +2,8 @@ from infi.unittest import TestCase
 from infi.asi.cdb.inquiry.vpd_pages.device_identification import DeviceIdentificationVPDPageData
 from infi.asi.cdb.inquiry.vpd_pages.device_identification import designators
 from infi.asi.cdb.inquiry.vpd_pages.device_identification import PeripheralDeviceData
+from infi.instruct import SBInt64, Struct
+import binascii
 
 DIRECT_ACCESS_BLOCK_DEVICE = 0
 STORAGE_ARRAY_CONTROLLER_DEVICE = 12
@@ -49,7 +51,7 @@ class InquiryPageMock(object):
 
     def _get_device_identification_page__designators(self, device_type, host_id, volume_id):
         designators = ''
-        designators = self._append_to_page(designators, self._get_naa())
+        designators = self._append_to_page(designators, self._get_naa(volume_id))
         designators = self._append_to_page(designators, self._get_management_network_address())
         designators = self._append_to_page(designators, self._get_management_network_port())
         designators = self._append_to_page(designators, self._get_relative_target_port_identifier())
@@ -69,7 +71,7 @@ class InquiryPageMock(object):
         device.type = device_type
         return device
 
-    def _get_naa(self):
+    def _get_naa(self, volume_id):
         designator = designators.NAA_IEEE_Registered_Extended_Designator()
         attributes = dict(code_set=1,
                           designator_type=3,
@@ -78,7 +80,7 @@ class InquiryPageMock(object):
                           ieee_company_id__high=1, # TODO put real value
                           ieee_company_id__low=1, # TODO put real value
                           ieee_company_id__middle=1, # TODO put real value
-                          vendor_specific_identifier_extension=1, # TODO put real value
+                          vendor_specific_identifier_extension=volume_id,
                           vendor_specific_identifier__low=0,
                           vendor_specific_identifier__high=0
                           )
@@ -132,11 +134,14 @@ class InquiryPageMock(object):
         return designator
 
     def _get_host_id(self, id):
+        class MyStruct(Struct):
+            _fields_ = [SBInt64("host_id"),]
         designator = designators.VendorSpecificDesignator()
+        value = "host={}".format(binascii.hexlify(MyStruct.write_to_string(MyStruct(host_id=id))))
         attributes = dict(code_set=2,
                           designator_type=0,
-                          designator_length=64,
-                          vendor_specific_identifier="host={}".format(str(id).zfill(59)))
+                          designator_length=len(value),
+                          vendor_specific_identifier=value,)
         attributes.update(DEFAULT_ATTRIBUTES)
         self._set_attributes_in_designator(designator, attributes)
         return designator
@@ -150,10 +155,10 @@ class InquiryPageTestCase(TestCase):
 
     def test_host_id(self):
         designator = self.mock._get_host_id(1)
-        self.assertEqual(designator.sizeof(designator), 68)
+        self.assertEqual(designator.sizeof(designator), 25)
 
     def test_naa(self):
-        designator = self.mock._get_naa()
+        designator = self.mock._get_naa(1)
         self.assertEqual(designator.sizeof(designator), 20)
 
     def test_rtpg(self):
@@ -168,7 +173,7 @@ class InquiryPageTestCase(TestCase):
 
     def test_designators(self):
         designators = self.mock._get_device_identification_page__designators(DIRECT_ACCESS_BLOCK_DEVICE, 1, 1)
-        self.assertEqual(len(designators), 139)
+        self.assertEqual(len(designators), 96)
 
     def test_empty_page(self):
         raw_data = ''
@@ -184,22 +189,24 @@ from mock import patch, Mock
 from infi.storagemodel.vendor.infinidat.infinibox.mixin import InfiniBoxInquiryMixin, InfiniBoxVolumeMixin
 
 class MixinWithDevice(InfiniBoxVolumeMixin, InfiniBoxInquiryMixin):
+    def __init__(self, host_id=-1, volume_id=0):
+        super(MixinWithDevice, self).__init__()
+        self.device = self
+        self.device.get_scsi_inquiry_pages = self.get_scsi_inquiry_pages
+        self._host_id = host_id
+        self._volume_id = volume_id
+
     def get_scsi_inquiry_pages(self):
         pages = {}
-        pages[0x83] = InquiryPageMock().get_device_identification_page(1, 1 , 1)
+        pages[0x83] = InquiryPageMock().get_device_identification_page(1, self._host_id , self._volume_id)
         return pages
 
     def _is_volume_mapped(self):
         return True
 
-    def __init__(self):
-        super(MixinWithDevice, self).__init__()
-        self.device = self
-        self.device.get_scsi_inquiry_pages = self.get_scsi_inquiry_pages
-
 class MixinTestCase(TestCase):
     def setUp(self):
-        self.mixin = MixinWithDevice()
+        self.mixin = MixinWithDevice(1,1)
 
     def test_management_address(self):
         self.assertEqual(self.mixin.get_management_address(), "255.255.255.255")
@@ -210,3 +217,13 @@ class MixinTestCase(TestCase):
 
     def test_volume_id(self):
         self.assertEqual(self.mixin.get_volume_id(), 1)
+
+class UnregisteredMixinTestCase(TestCase):
+    def setUp(self):
+        self.mixin = MixinWithDevice()
+
+    def test_host_id(self):
+        self.assertEqual(self.mixin.get_host_id(), -1)
+
+    def test_volume_id(self):
+        self.assertEqual(self.mixin.get_volume_id(), 0)
