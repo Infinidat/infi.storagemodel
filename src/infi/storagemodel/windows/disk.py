@@ -8,10 +8,11 @@ from contextlib import contextmanager
 from infi.diskmanagement import Disk
 
 class WindowsDiskDrive(disk.DiskDrive):
-    def __init__(self, storage_device):
+    def __init__(self, storage_device, path):
         super(WindowsDiskDrive, self).__init__()
         self._storage_device = storage_device
         self._disk_object = Disk(self._storage_device.get_physical_drive_number())
+        self._path = path
 
     @cached_method
     def get_storage_device(self):
