@@ -1,6 +1,7 @@
 
 from infi.pyutils.lazy import cached_method
-
+import binascii
+from infi.instruct import SBInt64
 from logging import getLogger
 log = getLogger()
 
@@ -52,7 +53,13 @@ class DeviceIdentificationPage(object):
             if isinstance(designator, RelativeTargetPortDesignator):
                 return designator.relative_target_port_identifier
 
+
+def translate_hex_repr_string(hex_repr):
+    binary_string = binascii.unhexlify(hex_repr)
+    return SBInt64.create_from_string(binary_string)
+
 class InfiniBoxInquiryMixin(object):
+
     @cached_method
     def get_device_identification_page(self):
         raw = self.device.get_scsi_inquiry_pages()[0x83]
@@ -69,13 +76,14 @@ class InfiniBoxInquiryMixin(object):
         """:returns: the management IPv4 port of the InfiniBox
         :rtype: string"""
         vendor_specific_dict = self.get_device_identification_page().get_vendor_specific_dict()
-        return vendor_specific_dict.get('port', DEFAULT_PORT)
+        return int(vendor_specific_dict.get('port', str(DEFAULT_PORT)))
 
     @cached_method
     def get_host_id(self):
         """:returns: the host id within the InfiniBox
         :rtype: int"""
-        return int(self.get_device_identification_page().get_vendor_specific_dict()['host'], 16)
+        vendor_specific_dict = self.get_device_identification_page().get_vendor_specific_dict()
+        return translate_hex_repr_string(vendor_specific_dict['host'])
 
     @cached_method
     def get_naa(self):
