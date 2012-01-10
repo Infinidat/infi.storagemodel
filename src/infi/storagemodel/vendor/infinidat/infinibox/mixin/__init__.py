@@ -7,7 +7,7 @@ log = getLogger()
 
 from .inquiry import InfiniBoxInquiryMixin
 from .volume import InfiniBoxVolumeMixin
-from .sophisticated import SophisticatedMixin
+from .sohisticated import SophisticatedMixin
 
 class block_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBoxVolumeMixin, VendorSCSIBlockDevice):
     pass
