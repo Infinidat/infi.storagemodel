@@ -4,6 +4,8 @@ from infi.pyutils.lazy import cached_method
 from logging import getLogger
 log = getLogger()
 
+DEFAULT_PORT = 80
+
 class DeviceIdentificationPage(object):
     def __init__(self, page):
         self._page = page
@@ -66,7 +68,8 @@ class InfiniBoxInquiryMixin(object):
     def get_management_port(self):
         """:returns: the management IPv4 port of the InfiniBox
         :rtype: string"""
-        return int(self.get_device_identification_page().get_vendor_specific_dict()['port'])
+        vendor_specific_dict = self.get_device_identification_page().get_vendor_specific_dict()
+        return vendor_specific_dict.get('port', DEFAULT_PORT)
 
     @cached_method
     def get_host_id(self):

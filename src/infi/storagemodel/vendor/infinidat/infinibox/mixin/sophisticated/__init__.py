@@ -1,8 +1,6 @@
 from infi.pyutils.lazy import cached_method
 from infi.asi import AsiCheckConditionError
 
-DEFAULT_PORT = 80
-
 def _is_exception_of_unsupported_inquiry_page(error):
     return error.sense_obj.sense_key == 'ILLEGAL_REQUEST' and \
         error.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB'
@@ -10,11 +8,7 @@ def _is_exception_of_unsupported_inquiry_page(error):
 class SophisticatedMixin(object):
     def _get_management_address_and_port(self):
         address = self.get_management_address()
-        try:
-            port = self.get_management_port()
-        except AsiCheckConditionError, error:
-            if _is_exception_of_unsupported_inquiry_page(error):
-                port = DEFAULT_PORT
+        port = self.get_management_port()
         return address, port
 
     def _get_host_name_from_json_page(self):
