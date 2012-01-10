@@ -189,7 +189,7 @@ from mock import patch, Mock
 from infi.storagemodel.vendor.infinidat.infinibox.mixin import InfiniBoxInquiryMixin, InfiniBoxVolumeMixin
 
 class MixinWithDevice(InfiniBoxVolumeMixin, InfiniBoxInquiryMixin):
-    def __init__(self, host_id=-1, volume_id=0):
+    def __init__(self, host_id=0, volume_id=0):
         super(MixinWithDevice, self).__init__()
         self.device = self
         self.device.get_scsi_inquiry_pages = self.get_scsi_inquiry_pages
@@ -223,7 +223,8 @@ class UnregisteredMixinTestCase(TestCase):
         self.mixin = MixinWithDevice()
 
     def test_host_id(self):
-        self.assertEqual(self.mixin.get_host_id(), -1)
+        self.assertEqual(self.mixin.get_host_id(), 0)
 
     def test_volume_id(self):
         self.assertEqual(self.mixin.get_volume_id(), 0)
+
