@@ -45,7 +45,7 @@ class WindowsMBRPartitionTable(WindowsPartitionTable, partition.GPTPartitionTabl
 
 class WindowsPartition(object):
     def __init__(self, disk_device, partition_object):
-        super(WindowsPartition, self).__inir__()
+        super(WindowsPartition, self).__init__()
         self._disk_device = disk_device
         self._partition_object = partition_object
 
