@@ -26,7 +26,7 @@ class WindowsMountManager(mount.MountManager):
     def get_mounts(self):
         # TODO we only support NTFS
         mounts = []
-        for volume_guid, list_of_mount_points in MountManager().get_mounts_of_all_volumes.keys():
+        for volume_guid, list_of_mount_points in MountManager().get_mounts_of_all_volumes().items():
             for mount_point in list_of_mount_points:
                 mounts.append(WindowsMount(self.get_recommended_file_system(), volume_guid, mount_point))
         return mounts
@@ -54,9 +54,15 @@ class WindowsMountRepository(mount.MountRepository):
         return [WindowsPersistentMount(mount) for mount in WindowsMountManager().get_mounts()]
 
     def remove_persistent_mountpoint(self, persistent_mount):
+        if all([mount.get_block_access_path() != item.get_block_access_path() and \
+                mount.get_mount_point() != item.get_mount_point() for item in self.get_all_persistent_mounts()]):
+                return
         return WindowsMountManager().unmount(persistent_mount)
 
     def add_persistent_mountpoint(self, mount):
+        if any([mount.get_block_access_path() == item.get_block_access_path() and \
+                mount.get_mount_point() == item.get_mount_point() for item in self.get_all_persistent_mounts()]):
+                return
         return WindowsMountManager().mount(mount)
 
 class WindowsPersistentMount(mount.PersistentMount):
