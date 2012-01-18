@@ -16,7 +16,7 @@ class WindowsFileSystem(filesystem.FileSystem):
         # TODO we only support partitions
         assert isinstance(block_device, partition.Partition)
         volume = block_device._get_volume()
-        kwargs["FileSystem"] = self._name
+        kwargs["file_system"] = self._name
         volume.format(*args, **kwargs)
 
     def mount(self, block_access_path, mount_point, mount_options_dict={}):

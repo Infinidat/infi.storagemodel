@@ -45,7 +45,7 @@ class WindowsMBRPartitionTable(WindowsPartitionTable, partition.GPTPartitionTabl
 
 class WindowsPartition(object):
     def __init__(self, disk_device, partition_object):
-        super(WindowsPartition, self).__inir__()
+        super(WindowsPartition, self).__init__()
         self._disk_device = disk_device
         self._partition_object = partition_object
 
@@ -58,7 +58,7 @@ class WindowsPartition(object):
 
     @cached_method
     def get_block_access_path(self):
-        return self._get_volume()._get_volume_guid
+        return self._get_volume().get_volume_guid()
 
     def get_containing_disk(self):
         return self._disk_device
