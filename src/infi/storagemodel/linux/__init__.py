@@ -1,16 +1,33 @@
 from contextlib import contextmanager
 
 from ..base import StorageModel
-from infi.pyutils.lazy import cached_method
+from infi.pyutils.lazy import cached_method, cached_function
 
 POSSIBLE_SCRIPT_NAMES = [
                           "rescan-scsi-bus",
                           "rescan-scsi-bus.sh",
                         ]
 
+CHMOD_777 = 33261
+
+def _write_an_executable_copy_of_builtin_rescan_script():
+    from os import chmod, write, close
+    from pkg_resources import resource_stream
+    from tempfile import mkstemp
+    fd, path = mkstemp(prefix='rescan-scsi-bus.sh_', text=True)
+    write(fd, resource_stream(__name__, 'rescan-scsi-bus.sh').read())
+    close(fd)
+    chmod(path, CHMOD_777)
+    return path
+
+@cached_function
 def _locate_rescan_script():
-    from os import access, environ, X_OK
+    from os import access, environ, X_OK, chmod
     from os.path import exists, join
+    if _is_ubuntu():
+        # The script in ubuntu waits to long (hard-coded 11 seconds) on each failed device
+        # We use a modified version of the script that does not wait that long
+        return _write_an_executable_copy_of_builtin_rescan_script()
     for script in POSSIBLE_SCRIPT_NAMES:
         for base in environ["PATH"].split(':'):
             for name in POSSIBLE_SCRIPT_NAMES:
@@ -24,6 +41,10 @@ def _call_partprobe(env=None):
     from infi.execute import execute
     execute(["partprobe", ]).wait()
 
+def _is_ubuntu():
+    from platform import linux_distribution
+    distname = linux_distribution()[0].lower()
+    return distname in ["ubuntu", ]
 
 def _call_rescan_script(env=None):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
