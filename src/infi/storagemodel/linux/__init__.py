@@ -31,9 +31,9 @@ def _call_partprobe(env=None):
     execute(["partprobe", ]).wait()
 
 def _is_ubuntu():
-    from platform import system, linux_distribution
-    distname, _, _ = linux_distribution()
-    return system() == "Linux" and distname == "debian"
+    from platform import linux_distribution
+    distname = linux_distribution()[0].lower()
+    return distname in ["ubuntu", ]
 
 def _call_rescan_script(env=None):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
