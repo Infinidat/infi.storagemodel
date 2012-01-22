@@ -1,22 +1,33 @@
 from contextlib import contextmanager
 
 from ..base import StorageModel
-from infi.pyutils.lazy import cached_method
+from infi.pyutils.lazy import cached_method, cached_function
 
 POSSIBLE_SCRIPT_NAMES = [
                           "rescan-scsi-bus",
                           "rescan-scsi-bus.sh",
                         ]
 
-def _locate_rescan_script():
-    from os import access, environ, X_OK
-    from os.path import exists, join
-    from pkg_resources import resource_filename
+CHMOD_777 = 33261
+
+def _write_an_executable_copy_of_builtin_rescan_script():
+    from os import chmod
+    from pkg_resources import resource_stream
     from tempfile import mkstemp
+    fd, path = mkstemp(prefix='rescan-scsi-bus', text=True)
+    fd.write(resource_stream(__name__, 'rescan-scsi-bus.sh').read())
+    fd.close()
+    chmod(path, CHMOD_777)
+    return path
+
+@cached_function
+def _locate_rescan_script():
+    from os import access, environ, X_OK, chmod
+    from os.path import exists, join
     if _is_ubuntu():
         # The script in ubuntu waits to long (hard-coded 11 seconds) on each failed device
         # We use a modified version of the script that does not wait that long
-        return resource_filename(__name__, 'rescan-scsi-bus.sh')
+        return _write_an_executable_copy_of_builtin_rescan_script()
     for script in POSSIBLE_SCRIPT_NAMES:
         for base in environ["PATH"].split(':'):
             for name in POSSIBLE_SCRIPT_NAMES:
