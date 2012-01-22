@@ -11,12 +11,12 @@ POSSIBLE_SCRIPT_NAMES = [
 CHMOD_777 = 33261
 
 def _write_an_executable_copy_of_builtin_rescan_script():
-    from os import chmod
+    from os import chmod, write, close
     from pkg_resources import resource_stream
     from tempfile import mkstemp
     fd, path = mkstemp(prefix='rescan-scsi-bus', text=True)
-    fd.write(resource_stream(__name__, 'rescan-scsi-bus.sh').read())
-    fd.close()
+    write(fd, resource_stream(__name__, 'rescan-scsi-bus.sh').read())
+    close(fd)
     chmod(path, CHMOD_777)
     return path
 
