@@ -11,6 +11,12 @@ POSSIBLE_SCRIPT_NAMES = [
 def _locate_rescan_script():
     from os import access, environ, X_OK
     from os.path import exists, join
+    from pkg_resources import resource_filename
+    from tempfile import mkstemp
+    if _is_ubuntu():
+        # The script in ubuntu waits to long (hard-coded 11 seconds) on each failed device
+        # We use a modified version of the script that does not wait that long
+        return resource_filename(__name__, 'rescan-scsi-bus.sh')
     for script in POSSIBLE_SCRIPT_NAMES:
         for base in environ["PATH"].split(':'):
             for name in POSSIBLE_SCRIPT_NAMES:
@@ -24,6 +30,10 @@ def _call_partprobe(env=None):
     from infi.execute import execute
     execute(["partprobe", ]).wait()
 
+def _is_ubuntu():
+    from platform import system, linux_distribution
+    distname, _, _ = linux_distribution()
+    return system() == "Linux" and distname == "debian"
 
 def _call_rescan_script(env=None):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
