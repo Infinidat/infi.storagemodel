@@ -85,6 +85,8 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
             raise SysfsError(msg.format(self.sysfs_dev_path, block_dev_names))
         self.block_device_name = block_dev_names[0].split(':')[-1]
         self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)
+	if not os.path.exists(self.sysfs_block_device_path):
+		self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
 
 from logging import getLogger
 log = getLogger()
