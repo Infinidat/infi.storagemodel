@@ -34,16 +34,6 @@ class SCSIDevice(InquiryInformationMixin, object):
         raise NotImplementedError()
 
     @cached_method
-    def get_block_access_path(self): # pragma: no cover
-        """:returns: a string path for the device
-                    
-                    - In Windows, its something under globalroot
-                    - In linux, its /dev/sdX"""
-
-        # platform implementation
-        raise NotImplementedError()
-
-    @cached_method
     def get_scsi_access_path(self): # pragma: no cover
         """:returns: a string path for the device
         
@@ -67,6 +57,17 @@ class SCSIBlockDevice(SCSIDevice):
         model = get_storage_model().get_disk()
         return model.find_disk_drive_by_block_access_path(self.get_block_access_path())
 
+    @cached_method
+    def get_block_access_path(self): # pragma: no cover
+        """:returns: a string path for the device
+                    
+                    - In Windows, its something under globalroot
+                    - In linux, its /dev/sdX"""
+
+        # platform implementation
+        raise NotImplementedError()
+
+ 
     #############################
     # Platform Specific Methods #
     #############################
