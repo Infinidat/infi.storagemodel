@@ -11,10 +11,6 @@ class WindowsSCSIDevice(WindowsDeviceMixin, scsi.SCSIDevice):
         self._device_object = device_object
 
     @cached_method
-    def get_block_access_path(self):
-        return self.get_pdo()
-
-    @cached_method
     def get_scsi_access_path(self):
         return self.get_pdo()
 
@@ -23,7 +19,9 @@ class WindowsSCSIDevice(WindowsDeviceMixin, scsi.SCSIDevice):
         return self.get_scsi_access_path().split('\\')[-1]
 
 class WindowsSCSIBlockDevice(WindowsDiskDeviceMixin, WindowsSCSIDevice, scsi.SCSIBlockDevice):
-    pass
+    @cached_method
+    def get_block_access_path(self):
+        return self.get_pdo()
 
 class WindowsSCSIStorageController(WindowsSCSIDevice, scsi.SCSIStorageController):
     pass
