@@ -10,6 +10,9 @@ class PredicateList(object):
     def __call__(self):
         return all([predicate() for predicate in self._list_of_predicates])
 
+    def __repr__(self):
+        return "<PredicateList: {!r}>".format(self._list_of_predicates)
+
 class DiskExists(object):
     """:returns: True if a disk was discovered with scsi_serial_number"""
 
@@ -26,11 +29,17 @@ class DiskExists(object):
         return any([device.get_scsi_serial_number() == self.scsi_serial_number \
                     for device in mp_devices + non_mp_devices])
 
+    def __repr__(self):
+        return "<DiskExists: {}>".format(self.scsi_serial_number)
+
 class DiskNotExists(DiskExists):
     """:returns: True if a disk with scsi_serial_number has gone away"""
 
     def __call__(self):
         return not super(DiskNotExists, self).__call__()
+
+    def __repr__(self):
+        return "<DiskNotExists: {}>".format(self.scsi_serial_number)
 
 class FiberChannelMappingExists(object):
     """:returns: True if a lun mapping was discovered"""
@@ -66,11 +75,20 @@ class FiberChannelMappingExists(object):
                     return True
         return False
 
+    def __repr__(self):
+        return "<FiberChannelMappingExists: {!r}>".format(self.connectivity)
+
 class FiberChannelMappingNotExists(FiberChannelMappingExists):
     """:returns: True if a lun un-mapping was discovered"""
     def __call__(self):
         return not super(FiberChannelMappingNotExists, self).__call__()
 
+    def __repr__(self):
+        return "<FiberChannelMappingNotExists: {!r}>".format(self.connectivity)
+
 class WaitForNothing(object):
     def __call__(self):
         return True
+
+    def __repr__(self):
+        return "<WaitForNothing>"
