@@ -72,7 +72,7 @@ class SCSIBlockDevice(SCSIDevice):
 
     def __repr__(self):
         return "<SCSIBlockDevice: {} for {}>".format(self.get_block_access_path(),
-                                                     super(SCSIBlockDevice, self).__repr__)
+                                                     super(SCSIBlockDevice, self).__repr__())
 
     #############################
     # Platform Specific Methods #
@@ -94,8 +94,7 @@ class SCSIStorageController(SCSIDevice):
         return VendorFactory.create_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     def __repr__(self):
-        return "<SCSIStorageController: {} for {}>".format(self.get_block_access_path(),
-                                                           super(SCSIStorageController, self).__repr__)
+        return "<SCSIStorageController: for {}>".format(super(SCSIStorageController, self).__repr__())
 
 class SCSIModel(object):
     def find_scsi_block_device_by_block_access_path(self, path):
