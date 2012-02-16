@@ -42,6 +42,9 @@ class SCSIDevice(InquiryInformationMixin, object):
         # platform implementation        
         raise NotImplementedError()
 
+    def __repr__(self):
+        return "<SCSIDevice {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
+
 class SCSIBlockDevice(SCSIDevice):
     @cached_method
     def get_vendor(self):
@@ -67,7 +70,10 @@ class SCSIBlockDevice(SCSIDevice):
         # platform implementation
         raise NotImplementedError()
 
- 
+    def __repr__(self):
+        return "<SCSIBlockDevice: {} for {}>".format(self.get_block_access_path(),
+                                                     super(SCSIBlockDevice, self).__repr__)
+
     #############################
     # Platform Specific Methods #
     #############################
@@ -86,6 +92,10 @@ class SCSIStorageController(SCSIDevice):
         """ :returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
         return VendorFactory.create_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
+
+    def __repr__(self):
+        return "<SCSIStorageController: {} for {}>".format(self.get_block_access_path(),
+                                                           super(SCSIStorageController, self).__repr__)
 
 class SCSIModel(object):
     def find_scsi_block_device_by_block_access_path(self, path):
