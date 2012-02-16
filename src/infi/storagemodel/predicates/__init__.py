@@ -1,6 +1,9 @@
 
 from infi.pyutils.lazy import cached_method, clear_cache
 
+from logging import getLogger
+logger = getLogger()
+
 class PredicateList(object):
     """:returns: True if all predicates in a given list return True"""
     def __init__(self, list_of_predicates):
@@ -59,6 +62,7 @@ class FiberChannelMappingExists(object):
         self.connectivity = FCConnectivity(None, i_port, t_port)
 
     def _is_fc_connectivity_a_match(self, device):
+        logger.debug("Connectivity details: {!r}".format(device.get_connectivity()))
         if device.get_connectivity() == self.connectivity and device.get_hctl().get_lun() == self.lun_number:
             return True
         return False
@@ -66,7 +70,10 @@ class FiberChannelMappingExists(object):
     def __call__(self):
         from .. import get_storage_model
         model = get_storage_model()
+        logger.debug("Working on: {!r}".format(self))
+        logger.debug("Looking for all scsi block devices")
         for device in model.get_scsi().get_all_scsi_block_devices():
+            logger.debug("Found device: {!r}".format(device))
             if self._is_fc_connectivity_a_match(device):
                 return True
         for device in model.get_native_multipath().get_all_multipath_devices():
