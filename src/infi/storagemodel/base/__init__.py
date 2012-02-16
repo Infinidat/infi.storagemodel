@@ -1,6 +1,9 @@
 
 from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
 
+from logging import getLogger
+logger = getLogger()
+
 class StorageModel(object):
     """StorageModel provides layered view of the storage stack.
     The layers currently offered by the model are the SCSI layer and the Multipath layer.
@@ -75,13 +78,17 @@ class StorageModel(object):
         if predicate is None:
             from ..predicates import WaitForNothing
             predicate = WaitForNothing()
+        logger.debug("Initiaing rescan")
         self.initiate_rescan()
         self.refresh()
         start_time = time()
         while not predicate():
+            logger.debug("Predicate did not return True")
             if time() - start_time >= timeout_in_seconds:
+                logger.debug("Rescan did not complete before timeout")
                 raise TimeoutError() # pylint: disable=W0710
             sleep(1)
+            logger.debug("Initiaing rescan")
             self.initiate_rescan()
             self.refresh()
 

@@ -3,6 +3,9 @@ from contextlib import contextmanager
 from ..base import StorageModel
 from infi.pyutils.lazy import cached_method, cached_function
 
+from logging import getLogger
+logger = getLogger()
+
 POSSIBLE_SCRIPT_NAMES = [
                           "rescan-scsi-bus",
                           "rescan-scsi-bus.sh",
@@ -56,7 +59,9 @@ def _call_rescan_script(env=None):
     if rescan_script is None:
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
+        logger.info("Calling rescan-scsi-bus.sh")
         _ = execute_async([rescan_script, "--remove"], env=env)
+        logger.info("rescan-scsi-bus.sh finished with return code 0")
     except Exception:
         raise chain(StorageModelError("failed to initiate rescan"))
 
