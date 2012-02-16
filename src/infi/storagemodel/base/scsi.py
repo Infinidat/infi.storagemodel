@@ -43,7 +43,8 @@ class SCSIDevice(InquiryInformationMixin, object):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<SCSIDevice {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
+        return "<SCSIDevice {} for {} on {!r}>".format(self.get_scsi_access_path(), self.get_display_name(),
+                                                       self.get_hctl())
 
 class SCSIBlockDevice(SCSIDevice):
     @cached_method
