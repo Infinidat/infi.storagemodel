@@ -12,9 +12,16 @@ SCSI_TYPE_STORAGE_CONTROLLER = 0x0C
 class SysfsError(StorageModelError):
     pass
 
+from logging import getLogger
+log = getLogger()
+
 def _sysfs_read_field(device_path, field):
-    with open(os.path.join(device_path, field), "rb") as f:
-        return f.read()
+    try:
+        with open(os.path.join(device_path, field), "rb") as f:
+            return f.read()
+    except IOError:
+        log.debug("{} disappeared".format(device_path))
+        return None
 
 def _sysfs_read_devno(device_path):
     return tuple([ int(n) for n in _sysfs_read_field(device_path, "dev").strip().split(":") ])
@@ -88,9 +95,6 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         if not os.path.exists(self.sysfs_block_device_path):
             self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
 
-from logging import getLogger
-log = getLogger()
-
 class Sysfs(object):
     def __init__(self):
         self.disks = []
@@ -107,7 +111,8 @@ class Sysfs(object):
                     self.disks.append(SysfsSCSIDisk(dev_path, HCTL.from_string(hctl_str)))
                 except SysfsError, e:
                     log.error(e)
-
+            else:
+                log.debug("no device type for hctl {}".format(hctl_str))
         for name, path in self._get_sysfs_block_devices_pathnames().items():
             dev = SysfsBlockDevice(name, path)
             devno = dev.get_block_devno()
