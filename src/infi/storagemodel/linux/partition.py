@@ -74,7 +74,7 @@ class LinuxPartitionTable(object):
         return self._disk_drive
 
     def create_partition_for_whole_table(self, file_system_object):
-        self._disk_drive._get_parted_disk_drive().create_partition_for_whole_drive(file_system_object.get_name())
+        return self._disk_drive._get_parted_disk_drive().create_partition_for_whole_drive(file_system_object.get_name())
 
 class LinuxMBRPartitionTable(LinuxPartitionTable, partition.MBRPartitionTable):
     @classmethod
