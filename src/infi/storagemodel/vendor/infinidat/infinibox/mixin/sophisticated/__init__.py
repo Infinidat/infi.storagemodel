@@ -54,8 +54,8 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_system_serial(self):
-        return self._get_system_serial_from_json_page() or \
-            self._get_system_serial_from_naa() or \
+        return self._get_system_serial_from_naa() or \
+            self._get_system_serial_from_json_page() or \
             self._get_system_serial_from_management()
 
     def _get_system_name_from_json_page(self):
