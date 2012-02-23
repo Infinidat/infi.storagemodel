@@ -12,6 +12,9 @@ SCSI_TYPE_STORAGE_CONTROLLER = 0x0C
 class SysfsError(StorageModelError):
     pass
 
+from logging import getLogger
+log = getLogger()
+
 def _sysfs_read_field(device_path, field):
     with open(os.path.join(device_path, field), "rb") as f:
         return f.read()
@@ -80,16 +83,11 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
             block_dev_names = os.listdir(basepath)
         else:
             block_dev_names = glob.glob(os.path.join(self.sysfs_dev_path, "block*"))
-        if len(block_dev_names) != 1:
-            msg = "{} doesn't have a single device/block/sg* path ({!r})"
-            raise SysfsError(msg.format(self.sysfs_dev_path, block_dev_names))
+
         self.block_device_name = block_dev_names[0].split(':')[-1]
         self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)
-	if not os.path.exists(self.sysfs_block_device_path):
-		self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
-
-from logging import getLogger
-log = getLogger()
+        if not os.path.exists(self.sysfs_block_device_path):
+            self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
 
 class Sysfs(object):
     def __init__(self):
@@ -99,20 +97,23 @@ class Sysfs(object):
 
         for hctl_str in os.listdir(SYSFS_CLASS_SCSI_DEVICE_PATH):
             dev_path = os.path.join(SYSFS_CLASS_SCSI_DEVICE_PATH, hctl_str, "device")
-            scsi_type = int(_sysfs_read_field(dev_path, "type"))
-            if scsi_type == SCSI_TYPE_STORAGE_CONTROLLER:
-                self.controllers.append(SysfsSCSIDevice(dev_path, HCTL.from_string(hctl_str)))
-            elif scsi_type == SCSI_TYPE_DISK:
-                try:
-                    self.disks.append(SysfsSCSIDisk(dev_path, HCTL.from_string(hctl_str)))
-                except SysfsError, e:
-                    log.error(e)
+            try:
+                scsi_type = int(_sysfs_read_field(dev_path, "type"))
+                self._append_device_by_type(hctl_str, dev_path, scsi_type)
+            except IOError:
+                log.debug("no device type for hctl {}".format(hctl_str))
 
         for name, path in self._get_sysfs_block_devices_pathnames().items():
             dev = SysfsBlockDevice(name, path)
             devno = dev.get_block_devno()
             assert devno not in self.block_devno_to_device
             self.block_devno_to_device[devno] = dev
+
+    def _append_device_by_type(self, hctl_str, dev_path, scsi_type):
+        if scsi_type == SCSI_TYPE_STORAGE_CONTROLLER:
+            self.controllers.append(SysfsSCSIDevice(dev_path, HCTL.from_string(hctl_str)))
+        elif scsi_type == SCSI_TYPE_DISK:
+            self.disks.append(SysfsSCSIDisk(dev_path, HCTL.from_string(hctl_str)))
 
     def _get_sysfs_block_devices_pathnames(self):
         """:returns a dict of name:path"""

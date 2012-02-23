@@ -5,6 +5,9 @@ from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 import itertools
 
+from logging import getLogger
+logger = getLogger()
+
 class LinuxNativeMultipathDevice(LinuxBlockDeviceMixin, multipath.MultipathDevice):
     def __init__(self, sysfs, sysfs_device, multipath_object):
         super(LinuxNativeMultipathDevice, self).__init__()
@@ -28,8 +31,13 @@ class LinuxNativeMultipathDevice(LinuxBlockDeviceMixin, multipath.MultipathDevic
 
     @cached_method
     def get_paths(self):
-        return list(LinuxPath(self.sysfs, path) for path in \
-                    itertools.chain.from_iterable(group.paths for group in self.multipath_object.path_groups))
+        paths = list()
+        for path in itertools.chain.from_iterable(group.paths for group in self.multipath_object.path_groups):
+            try:
+                paths.append(LinuxPath(self.sysfs, path))
+            except ValueError:
+                logger.debug("LinuxPath sysfs device disappeared for {}".format(path))
+        return paths
 
     @cached_method
     def get_policy(self):

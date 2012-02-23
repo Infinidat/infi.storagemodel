@@ -33,9 +33,8 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_host_name(self):
-        # in v0.3.0 json is a mock page
-        # return self._get_host_name_from_json_page() or \
-        return    self._get_host_name_from_management()
+        return self._get_host_name_from_json_page() or \
+            self._get_host_name_from_management()
 
     def _get_system_serial_from_naa(self):
         return self.get_naa().get_system_serial()
@@ -55,9 +54,8 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_system_serial(self):
-        # in v0.3.0 json is a mock page
-        # self._get_system_serial_from_json_page() or \
-        return self._get_system_serial_from_naa() or \
+        return self._get_system_serial_from_json_page() or \
+            self._get_system_serial_from_naa() or \
             self._get_system_serial_from_management()
 
     def _get_system_name_from_json_page(self):
@@ -75,6 +73,5 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_system_name(self):
-        # in v0.3.0 json is a mock page
-        # return self._get_system_name_from_json_page() or \
-        return    self._get_system_name_from_management()
+        return self._get_system_name_from_json_page() or \
+            self._get_system_name_from_management()

@@ -51,6 +51,15 @@ class WindowsDiskDrive(disk.DiskDrive):
     def offline(self):
         return self._disk_object.offline()
 
+    def has_read_only_attribute(self):
+        return self._disk_object.is_read_only()
+
+    def unset_read_only_attribute(self):
+        self._disk_object.read_write()
+
+    def set_read_only_attribute(self):
+        self._disk_object.read_only()
+
 class WindowsDiskModel(disk.DiskModel):
     def find_disk_drive_by_block_access_path(self, path):
         from infi.storagemodel import get_storage_model
