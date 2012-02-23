@@ -10,10 +10,18 @@ from .volume import InfiniBoxVolumeMixin
 from .sophisticated import SophisticatedMixin
 
 class block_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBoxVolumeMixin, VendorSCSIBlockDevice):
-    pass
+    def __repr__(self):
+        msg = "<Block device for volume {} of system {}, mapped to host {}, address {}>"
+        return msg.format(self.get_volume_id(), self.get_system_serial(),
+                          self.get_host_id(), self.get_management_address())
 
 class controller_class(InfiniBoxInquiryMixin, SophisticatedMixin, VendorSCSIStorageController):
-    pass
+    def __repr__(self):
+        msg = "<Controller for system {}, mapped to host {}, address {} >"
+        return msg.format(self.get_system_serial(), self.get_host_id(), self.get_management_address())
 
 class multipath_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBoxVolumeMixin, VendorMultipathDevice):
-    pass
+    def __repr__(self):
+        msg = "<Multipath device for volume {} of system {}, mapped to host {}, address {}>"
+        return msg.format(self.get_volume_id(), self.get_system_serial(),
+                          self.get_host_id(), self.get_management_address())
