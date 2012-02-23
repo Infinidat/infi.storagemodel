@@ -49,6 +49,15 @@ class WindowsMountManager(mount.MountManager):
     def get_available_drive_letters(self):
         return MountManager().get_avaialable_drive_letters()
 
+    def disable_auto_mount(self):
+        MountManager().disable_auto_mount()
+
+    def enable_auto_mount(self):
+        MountManager().enable_auto_mount()
+
+    def is_auto_mount(self):
+        return MountManager().is_auto_mount()
+
 class WindowsMountRepository(mount.MountRepository):
     def get_all_persistent_mounts(self):
         return [WindowsPersistentMount(mount) for mount in WindowsMountManager().get_mounts()]
