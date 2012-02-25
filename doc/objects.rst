@@ -154,7 +154,7 @@ Vendor Information
 Infinidat
 ---------
 
-.. module:: infi.storagemodel.vendor.infinibox
+.. module:: infi.storagemodel.vendor.infinidat.infinibox
 
 .. autoclass:: InfiniBoxMixin
 
