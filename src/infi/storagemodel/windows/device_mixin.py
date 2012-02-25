@@ -1,7 +1,7 @@
 
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
-
+from infi.wioctl.api import WindowsException
 # pylint: disable=W0212,E1002
 
 class WindowsDeviceMixin(object):
@@ -48,8 +48,11 @@ class WindowsDiskDeviceMixin(object):
         """returns the drive number of the disk.
         if the disk is hidden (i.e. part of MPIODisk), it returns -1
         """
-        number = self.get_ioctl_interface().storage_get_device_number()
-        return -1 if number == 0xffffffff else number
+        try:
+            number = self.get_ioctl_interface().storage_get_device_number()
+            return -1 if number == 0xffffffff else number
+        except WindowsException:
+            return -1
 
     @cached_method
     def get_display_name(self):
