@@ -1,11 +1,16 @@
 
+from infi.exceptools import InfiException, chain
 from infi.pyutils.lazy import cached_method
+from infi.asi import AsiCheckConditionError
 import binascii
 from infi.instruct import SBInt64
 from logging import getLogger
-log = getLogger()
+logger = getLogger()
 
 DEFAULT_PORT = 80
+
+class JSONInquiryException(InfiException):
+    pass
 
 class DeviceIdentificationPage(object):
     def __init__(self, page):
@@ -110,18 +115,33 @@ class InfiniBoxInquiryMixin(object):
         return InfinidatFiberChannelPort(self.get_relative_target_port_group(),
                                          self.get_target_port_group())
 
-    def _get_json_inquiry_page(self):
+    def _send_and_receive_json_inquiry_page_command(self):
         from infi.asi.coroutines.sync_adapter import sync_wait
         from ...json_page import JSONInquiryPageCommand
         with self.device.asi_context() as asi:
             inquiry_command = JSONInquiryPageCommand()
             return sync_wait(inquiry_command.execute(asi))
 
+    def _get_json_inquiry_page(self):
+        try:
+            return self._send_and_receive_json_inquiry_page_command()
+        except AsiCheckConditionError, error:
+            if _is_exception_of_unsupported_inquiry_page(error):
+                raise chain(JSONInquiryException("JSON Inquiry command error"))
+
+    def _get_json_inquiry_data(self):
+        return self._get_json_inquiry_page().json_serialized_data
+
     @cached_method
     def get_json_data(self):
         """:returns: the json inquiry data from the system
         :rtype: dict"""
         from json import loads
-        inquiry_page = self._get_json_inquiry_page()
-        raw_data = inquiry_page.json_serialized_data
-        return loads(raw_data)
+        raw_data = self._get_json_inquiry_data()
+        try:
+            logger.debug("Got JSON Inquiry data: {}".format(raw_data))
+            return loads(raw_data)
+        except ValueError:
+            logger.debug("Inquiry response is invalid JSON format")
+            raise chain(JSONInquiryException("ValueError"))
+
