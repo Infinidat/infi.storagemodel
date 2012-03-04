@@ -57,10 +57,10 @@ class StorageModel(object):
         clear_cache(ConnectivityFactory)
 
     def _try_predicate(self, predicate):
-        from from infi.storagemodel.errors import DeviceDisappeared
+        from from infi.storagemodel.errors import RescanIsNeeded
         try:
             return predicate()
-        except (DeviceDisappeared, IOError, OSError), error:
+        except RescanIsNeeded, error:
             logger.debug("Predicate {!r} raised {} during rescan".format(predicate, error))
             return False
 
