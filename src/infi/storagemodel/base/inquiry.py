@@ -69,7 +69,7 @@ class InquiryInformationMixin(object):
             else:
                 raise
         except (IOError, OSError, AsiOSError), error:
-            raise chain(DeviceDisappeared("device {!r} disappeared during SUPPORTED VPD PAGES".format(device)))
+            raise chain(DeviceDisappeared("device {!r} disappeared during SUPPORTED VPD PAGES".format(self)))
         return SupportedVPDPagesDict(page_dict, self)
 
     @cached_method
@@ -93,4 +93,4 @@ class InquiryInformationMixin(object):
                 command = StandardInquiryCommand()
                 return sync_wait(command.execute(asi))
         except (IOError, OSError, AsiOSError), error:
-            raise chain(DeviceDisappeared("device {!r} disappeared during STANDARD INQUIRY".format(device)))
+            raise chain(DeviceDisappeared("device {!r} disappeared during STANDARD INQUIRY".format(self)))

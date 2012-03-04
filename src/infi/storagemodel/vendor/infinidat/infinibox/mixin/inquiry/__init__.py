@@ -126,7 +126,7 @@ class InfiniBoxInquiryMixin(object):
                 return sync_wait(inquiry_command.execute(asi))
         except (IOError, OSError, AsiOSError), error:
             msg = "device {!r} disappeared during inquiry Infinidat C5 INQIURY"
-            raise chain(DeviceDisappeared(msg.format(device)))
+            raise chain(DeviceDisappeared(msg.format(self.device)))
 
     def _get_json_inquiry_page(self):
         try:
