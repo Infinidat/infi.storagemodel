@@ -56,6 +56,13 @@ class StorageModel(object):
         clear_cache(self)
         clear_cache(ConnectivityFactory)
 
+    def _try_predicate(self, predicate):
+        try:
+            return predicate()
+        except (IOError, OSError), error:
+            logger.debug("Predicate {!r} raised {} during rescan".format(predicate, error))
+            return False
+
     def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60):
         """Rescan devices and polls the prediate until either it returns True or a timeout is reached.
         
@@ -82,7 +89,7 @@ class StorageModel(object):
         self.initiate_rescan()
         self.refresh()
         start_time = time()
-        while not predicate():
+        while not self._try_predicate(predicate):
             logger.debug("Predicate did not return True")
             if time() - start_time >= timeout_in_seconds:
                 logger.debug("Rescan did not complete before timeout")
