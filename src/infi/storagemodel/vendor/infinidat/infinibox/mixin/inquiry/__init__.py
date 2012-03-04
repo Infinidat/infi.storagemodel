@@ -3,6 +3,7 @@ from infi.storagemodel.errors import DeviceDisappeared
 from infi.exceptools import InfiException, chain
 from infi.pyutils.lazy import cached_method
 from infi.asi import AsiCheckConditionError
+from infi.asi.errors import AsiOSError
 import binascii
 from infi.instruct import SBInt64
 from logging import getLogger
@@ -123,7 +124,7 @@ class InfiniBoxInquiryMixin(object):
             try:
                 inquiry_command = JSONInquiryPageCommand()
                 return sync_wait(inquiry_command.execute(asi))
-            except (IOError, OSError), error:
+            except (IOError, OSError, AsiOSError), error:
                 msg = "device {!r} disappeared during inquiry Infinidat C5 INQIURY"
                 raise chain(DeviceDisappeared(msg.format(device)))
 

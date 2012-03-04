@@ -11,11 +11,12 @@ class SupportedVPDPagesDict(LazyImmutableDict):
     def _create_value(self, page_code):
         from infi.asi.cdb.inquiry.vpd_pages import SUPPORTED_VPD_PAGES_COMMANDS
         from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.errors import AsiOSError
         inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
         with self.device.asi_context() as asi:
             try:
                 return sync_wait(inquiry_command.execute(asi))
-            except (IOError, OSError), error:
+            except (IOError, OSError, AsiOSError), error:
                 msg = "device {!r} disappeared during inquiry EVPD page {}"
                 raise chain(DeviceDisappeared(msg.format(device, page_code)))
 
@@ -48,6 +49,7 @@ class InquiryInformationMixin(object):
         from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
         from infi.asi.cdb.inquiry.vpd_pages import SupportedVPDPagesCommand
         from infi.asi import AsiCheckConditionError
+        from infi.asi.errors import AsiOSError
         from infi.asi.coroutines.sync_adapter import sync_wait
         command = SupportedVPDPagesCommand()
 
@@ -66,7 +68,7 @@ class InquiryInformationMixin(object):
                     pass
                 else:
                     raise
-            except (IOError, OSError), error:
+            except (IOError, OSError, AsiOSError), error:
                 raise chain(DeviceDisappeared("device {!r} disappeared during SUPPORTED VPD PAGES".format(device)))
         return SupportedVPDPagesDict(page_dict, self)
 
@@ -85,9 +87,10 @@ class InquiryInformationMixin(object):
         """:returns: the standard inquiry data"""
         from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.errors import AsiOSError
         with self.asi_context() as asi:
             command = StandardInquiryCommand()
             try:
                 return sync_wait(command.execute(asi))
-            except (IOError, OSError), error:
+            except (IOError, OSError, AsiOSError), error:
                 raise chain(DeviceDisappeared("device {!r} disappeared during STANDARD INQUIRY".format(device)))
