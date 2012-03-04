@@ -57,7 +57,7 @@ class StorageModel(object):
         clear_cache(ConnectivityFactory)
 
     def _try_predicate(self, predicate):
-        from from infi.storagemodel.errors import RescanIsNeeded
+        from infi.storagemodel.errors import RescanIsNeeded
         try:
             return predicate()
         except RescanIsNeeded, error:
