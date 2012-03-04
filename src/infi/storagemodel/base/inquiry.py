@@ -1,5 +1,6 @@
 from infi.pyutils.lazy import cached_method, LazyImmutableDict
-
+from infi.exceptools import chain
+from infi.storagemodel.errors import DeviceDisappeared
 #pylint: disable=E1002,W0622
 
 class SupportedVPDPagesDict(LazyImmutableDict):
@@ -12,7 +13,11 @@ class SupportedVPDPagesDict(LazyImmutableDict):
         from infi.asi.coroutines.sync_adapter import sync_wait
         inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
         with self.device.asi_context() as asi:
-            return sync_wait(inquiry_command.execute(asi))
+            try:
+                return sync_wait(inquiry_command.execute(asi))
+            except (IOError, OSError), error:
+                msg = "device {!r} disappeared during inquiry EVPD page {}"
+                raise chain(DeviceDisappeared(msg.format(device, page_code)))
 
 class InquiryInformationMixin(object):
     @cached_method
@@ -61,6 +66,8 @@ class InquiryInformationMixin(object):
                     pass
                 else:
                     raise
+            except (IOError, OSError), error:
+                raise chain(DeviceDisappeared("device {!r} disappeared during SUPPORTED VPD PAGES".format(device)))
         return SupportedVPDPagesDict(page_dict, self)
 
     @cached_method
@@ -80,4 +87,7 @@ class InquiryInformationMixin(object):
         from infi.asi.coroutines.sync_adapter import sync_wait
         with self.asi_context() as asi:
             command = StandardInquiryCommand()
-            return sync_wait(command.execute(asi))
+            try:
+                return sync_wait(command.execute(asi))
+            except (IOError, OSError), error:
+                raise chain(DeviceDisappeared("device {!r} disappeared during STANDARD INQUIRY".format(device)))

@@ -1,6 +1,9 @@
 
 from infi.exceptools import InfiException
 
+# pylint: disable=E1002
+# InfiException inherits from Exception
+
 class StorageModelError(InfiException):
     """Base Exception class for this module """
     pass
@@ -9,12 +12,17 @@ class StorageModelFindError(StorageModelError):
     """Find error"""
     pass
 
+class RescanIsNeeded(StorageModelError):
+    pass
+
+class DeviceDisappeared(StorageModelError):
+    def __init__(self, *args, **kwargs):
+        StorageModelError.__init__(self, *args, **kwargs)
+    pass
+
 class TimeoutError(StorageModelError):
     """Timeout error"""
     pass
-
-# pylint: disable=E1002
-# InfiException inherits from Exception
 
 class NotMounted(StorageModelError):
     def __init__(self, mount_point):
