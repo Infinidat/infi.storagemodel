@@ -13,12 +13,12 @@ class SupportedVPDPagesDict(LazyImmutableDict):
         from infi.asi.coroutines.sync_adapter import sync_wait
         from infi.asi.errors import AsiOSError
         inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
-        with self.device.asi_context() as asi:
-            try:
+        try:
+            with self.device.asi_context() as asi:
                 return sync_wait(inquiry_command.execute(asi))
-            except (IOError, OSError, AsiOSError), error:
-                msg = "device {!r} disappeared during inquiry EVPD page {}"
-                raise chain(DeviceDisappeared(msg.format(device, page_code)))
+        except (IOError, OSError, AsiOSError), error:
+            msg = "device {!r} disappeared during inquiry EVPD page {}"
+            raise chain(DeviceDisappeared(msg.format(device, page_code)))
 
 class InquiryInformationMixin(object):
     @cached_method
@@ -54,22 +54,22 @@ class InquiryInformationMixin(object):
         command = SupportedVPDPagesCommand()
 
         page_dict = {}
-        with self.asi_context() as asi:
-            try:
+        try:
+            with self.asi_context() as asi:
                 data = sync_wait(command.execute(asi))
                 page_dict[INQUIRY_PAGE_SUPPORTED_VPD_PAGES] = data
                 for page_code in data.vpd_parameters:
                     page_dict[page_code] = None
-            except AsiCheckConditionError, e:
-                # There are devices such as virtual USB disk controllers (bladecenter stuff) that don't support this
-                # (mandatory!) command. In this case we simply return an empty dict.
-                if e.sense_obj.sense_key == 'ILLEGAL_REQUEST' \
-                   and e.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB':
-                    pass
-                else:
-                    raise
-            except (IOError, OSError, AsiOSError), error:
-                raise chain(DeviceDisappeared("device {!r} disappeared during SUPPORTED VPD PAGES".format(device)))
+        except AsiCheckConditionError, e:
+            # There are devices such as virtual USB disk controllers (bladecenter stuff) that don't support this
+            # (mandatory!) command. In this case we simply return an empty dict.
+            if e.sense_obj.sense_key == 'ILLEGAL_REQUEST' \
+               and e.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB':
+                pass
+            else:
+                raise
+        except (IOError, OSError, AsiOSError), error:
+            raise chain(DeviceDisappeared("device {!r} disappeared during SUPPORTED VPD PAGES".format(device)))
         return SupportedVPDPagesDict(page_dict, self)
 
     @cached_method
@@ -88,9 +88,9 @@ class InquiryInformationMixin(object):
         from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
         from infi.asi.errors import AsiOSError
-        with self.asi_context() as asi:
-            command = StandardInquiryCommand()
-            try:
+        try:
+            with self.asi_context() as asi:
+                command = StandardInquiryCommand()
                 return sync_wait(command.execute(asi))
-            except (IOError, OSError, AsiOSError), error:
-                raise chain(DeviceDisappeared("device {!r} disappeared during STANDARD INQUIRY".format(device)))
+        except (IOError, OSError, AsiOSError), error:
+            raise chain(DeviceDisappeared("device {!r} disappeared during STANDARD INQUIRY".format(device)))

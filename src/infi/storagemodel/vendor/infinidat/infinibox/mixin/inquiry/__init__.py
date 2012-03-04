@@ -120,13 +120,13 @@ class InfiniBoxInquiryMixin(object):
     def _send_and_receive_json_inquiry_page_command(self):
         from infi.asi.coroutines.sync_adapter import sync_wait
         from ...json_page import JSONInquiryPageCommand
-        with self.device.asi_context() as asi:
-            try:
+        try:
+            with self.device.asi_context() as asi:
                 inquiry_command = JSONInquiryPageCommand()
                 return sync_wait(inquiry_command.execute(asi))
-            except (IOError, OSError, AsiOSError), error:
-                msg = "device {!r} disappeared during inquiry Infinidat C5 INQIURY"
-                raise chain(DeviceDisappeared(msg.format(device)))
+        except (IOError, OSError, AsiOSError), error:
+            msg = "device {!r} disappeared during inquiry Infinidat C5 INQIURY"
+            raise chain(DeviceDisappeared(msg.format(device)))
 
     def _get_json_inquiry_page(self):
         try:
