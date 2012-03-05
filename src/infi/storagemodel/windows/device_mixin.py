@@ -4,6 +4,20 @@ from contextlib import contextmanager
 from infi.wioctl.api import WindowsException
 # pylint: disable=W0212,E1002
 
+from infi.wioctl.errors import InvalidHandle
+from infi.pyutils.decorators import wraps
+from infi.exceptools import chain
+from infi.storagemodel.errors import DeviceDisappeared
+
+def replace_invalid_handle_with_device_disappeared(func):
+    @wraps(func)
+    def catcher(*args, **kwargs):
+        try:
+            return func(*args, **kwarg)
+        except InvalidHandle:
+            raise chain(DeviceDisappeared())
+    return catcher
+
 class WindowsDeviceMixin(object):
     @cached_method
     def get_pdo(self):
@@ -21,6 +35,7 @@ class WindowsDeviceMixin(object):
             handle.close()
 
     @cached_method
+    @replace_invalid_handle_with_device_disappeared
     def get_ioctl_interface(self):
         from infi.devicemanager.ioctl import DeviceIoControl
         return DeviceIoControl(self.get_pdo())
@@ -30,6 +45,7 @@ class WindowsDeviceMixin(object):
         return self._device_object._instance_id
 
     @cached_method
+    @replace_invalid_handle_with_device_disappeared
     def get_hctl(self):
         from infi.dtypes.hctl import HCTL
         return HCTL(*self.get_ioctl_interface().scsi_get_address())
@@ -40,6 +56,7 @@ class WindowsDeviceMixin(object):
 
 class WindowsDiskDeviceMixin(object):
     @cached_method
+    @replace_invalid_handle_with_device_disappeared
     def get_size_in_bytes(self):
         return self.get_ioctl_interface().disk_get_drive_geometry_ex()
 
