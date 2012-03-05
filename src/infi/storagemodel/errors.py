@@ -15,7 +15,7 @@ class StorageModelFindError(StorageModelError):
 class RescanIsNeeded(StorageModelError):
     pass
 
-class DeviceDisappeared(StorageModelError):
+class DeviceDisappeared(RescanIsNeeded):
     def __init__(self, *args, **kwargs):
         StorageModelError.__init__(self, *args, **kwargs)
     pass
