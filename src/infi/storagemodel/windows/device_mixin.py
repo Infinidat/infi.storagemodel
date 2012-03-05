@@ -13,7 +13,7 @@ def replace_invalid_handle_with_device_disappeared(func):
     @wraps(func)
     def catcher(*args, **kwargs):
         try:
-            return func(*args, **kwarg)
+            return func(*args, **kwargs)
         except InvalidHandle:
             raise chain(DeviceDisappeared())
     return catcher
