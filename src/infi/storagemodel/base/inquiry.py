@@ -59,7 +59,7 @@ class InquiryInformationMixin(object):
                 for page_code in data.vpd_parameters:
                     page_dict[page_code] = None
         except AsiCheckConditionError, e:
-            (key, code) = (e.sense_obj.sense_key, e.sense_object.additional_sense_code.code_name)
+            (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
             if (key, code) == ('ILLEGAL_REQUEST', 'INVALID FIELD IN CDB'):
                 # There are devices such as virtual USB disk controllers (bladecenter stuff) that don't support this
                 # (mandatory!) command. In this case we simply return an empty dict.
