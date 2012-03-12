@@ -1,6 +1,5 @@
 from infi.pyutils.lazy import cached_method, LazyImmutableDict
-from infi.exceptools import chain
-from infi.storagemodel.errors import DeviceDisappeared, RescanIsNeeded
+from infi.storagemodel.errors import check_for_scsi_errors
 #pylint: disable=E1002,W0622
 
 class SupportedVPDPagesDict(LazyImmutableDict):
@@ -8,6 +7,7 @@ class SupportedVPDPagesDict(LazyImmutableDict):
         super(SupportedVPDPagesDict, self).__init__(dict.copy())
         self.device = device
 
+    @check_for_scsi_errors
     def _create_value(self, page_code):
         from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page
         from infi.asi.coroutines.sync_adapter import sync_wait
@@ -17,7 +17,7 @@ class SupportedVPDPagesDict(LazyImmutableDict):
             return sync_wait(inquiry_command.execute(asi))
 
     def __repr__(self):
-        return "<Supported VPD Pages {!r}: {!r}>".format(self.device, self.keys())
+        return "<Supported VPD Pages for {!r}: {!r}>".format(self.device, self.keys())
 
 class InquiryInformationMixin(object):
     @cached_method
@@ -42,13 +42,12 @@ class InquiryInformationMixin(object):
     def get_scsi_inquiry_pages(self):
         """Returns an immutable dict-like object of available inquiry pages from this device.
         For example:
-        
+
             >>> dev.scsi_inquiry_pages[0x80].product_serial_number
         """
         from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
         from infi.asi.cdb.inquiry.vpd_pages import SupportedVPDPagesCommand
         from infi.asi import AsiCheckConditionError
-        from infi.asi.errors import AsiOSError
         from infi.asi.coroutines.sync_adapter import sync_wait
         command = SupportedVPDPagesCommand()
 
@@ -60,15 +59,13 @@ class InquiryInformationMixin(object):
                 for page_code in data.vpd_parameters:
                     page_dict[page_code] = None
         except AsiCheckConditionError, e:
-            # There are devices such as virtual USB disk controllers (bladecenter stuff) that don't support this
-            # (mandatory!) command. In this case we simply return an empty dict.
-            if e.sense_obj.sense_key == 'ILLEGAL_REQUEST' \
-               and e.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB':
+            (key, code) = (e.sense_obj.sense_key, e.sense_object.additional_sense_code.code_name)
+            if (key, code) == ('ILLEGAL_REQUEST', 'INVALID FIELD IN CDB'):
+                # There are devices such as virtual USB disk controllers (bladecenter stuff) that don't support this
+                # (mandatory!) command. In this case we simply return an empty dict.
                 pass
             else:
                 raise
-        except (IOError, OSError, AsiOSError), error:
-            raise chain(DeviceDisappeared("device {!r} disappeared during SUPPORTED VPD PAGES".format(self)))
         return SupportedVPDPagesDict(page_dict, self)
 
     @cached_method
@@ -82,33 +79,22 @@ class InquiryInformationMixin(object):
         return serial
 
     @cached_method
+    @check_for_scsi_errors
     def get_scsi_standard_inquiry(self):
         """:returns: the standard inquiry data"""
         from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
-        from infi.asi.errors import AsiOSError
-        try:
-            with self.asi_context() as asi:
-                command = StandardInquiryCommand()
-                return sync_wait(command.execute(asi))
-        except (IOError, OSError, AsiOSError), error:
-            raise chain(DeviceDisappeared("device {!r} disappeared during STANDARD INQUIRY".format(self)))
+        with self.asi_context() as asi:
+            command = StandardInquiryCommand()
+            return sync_wait(command.execute(asi))
 
+    @check_for_scsi_errors
     def get_scsi_test_unit_ready(self):
-        """If the method returns, the device is ready, else raises an exception"""
+        """:returns: True if the device is ready
+        """
         from infi.asi.cdb.tur import TestUnitReadyCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
-        from infi.asi.errors import AsiOSError
-        from infi.asi import AsiCheckConditionError
-        try:
-            with self.asi_context() as asi:
-                command = TestUnitReadyCommand()
-                return sync_wait(command.execute(asi))
-        except (IOError, OSError, AsiOSError), error:
-            raise chain(DeviceDisappeared("device {!r} disappeared during TEST UNIT READY".format(self)))
-        except AsiCheckConditionError, e:
-            if e.sense_obj.sense_key == 'UNIT_ATTENTION' \
-               and e.sense_obj.additional_sense_code.code_name == 'REPORTED LUNS DATA HAS CHANGED':
-                raise chain(RescanIsNeeded("Reported LUNS data has changed"))
-            else:
-                raise
+        with self.asi_context() as asi:
+            command = TestUnitReadyCommand()
+            return sync_wait(command.execute(asi))
+

@@ -2,8 +2,6 @@
 from infi.storagemodel.errors import DeviceDisappeared
 from infi.exceptools import InfiException, chain
 from infi.pyutils.lazy import cached_method
-from infi.asi import AsiCheckConditionError
-from infi.asi.errors import AsiOSError
 import binascii
 from infi.instruct import SBInt64
 from logging import getLogger
@@ -117,20 +115,11 @@ class InfiniBoxInquiryMixin(object):
         return InfinidatFiberChannelPort(self.get_relative_target_port_group(),
                                          self.get_target_port_group())
 
-    def _send_and_receive_json_inquiry_page_command(self):
-        from infi.asi.coroutines.sync_adapter import sync_wait
-        from ...json_page import JSONInquiryPageCommand
-        try:
-            with self.device.asi_context() as asi:
-                inquiry_command = JSONInquiryPageCommand()
-                return sync_wait(inquiry_command.execute(asi))
-        except (IOError, OSError, AsiOSError), error:
-            msg = "device {!r} disappeared during inquiry Infinidat C5 INQIURY"
-            raise chain(DeviceDisappeared(msg.format(self.device)))
-
     def _get_json_inquiry_page(self):
         try:
-            return self._send_and_receive_json_inquiry_page_command()
+            from ...json_page import JSONInquiryPageData
+            page = self.get_scsi_inquiry_pages()[0xc5]
+            return JSONInquiryPageData.crate_from_string(page.write_to_string(page))
         except AsiCheckConditionError, error:
             if _is_exception_of_unsupported_inquiry_page(error):
                 raise chain(JSONInquiryException("JSON Inquiry command error"))
