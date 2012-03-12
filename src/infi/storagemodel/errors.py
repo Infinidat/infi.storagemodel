@@ -53,6 +53,8 @@ def check_for_scsi_errors(func):
             raise chain(DeviceDisappeared("device {!r} disappeared during {!r}".format(device, func)))
         except AsiCheckConditionError, e:
             (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
+            if (key, code) == ('UNIT_ATTENTION', 'POWER ON OCCURRED'):
+                raise chain(RescanIsNeeded("device {!r} got {} {}".format(device, key, code)))
             if (key, code) == ('UNIT_ATTENTION', 'REPORTED LUNS DATA HAS CHANGED'):
                 raise chain(RescanIsNeeded("device {!r} got {} {}".format(device, key, code)))
             if (key, code) == ('UNIT_ATTENTION', 'LOGICAL UNIT NOT SUPPORTED'):
@@ -60,3 +62,4 @@ def check_for_scsi_errors(func):
             else:
                 raise
     return callable
+
