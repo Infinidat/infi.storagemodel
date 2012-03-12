@@ -1,6 +1,6 @@
 from infi.pyutils.lazy import cached_method, LazyImmutableDict
 from infi.exceptools import chain
-from infi.storagemodel.errors import DeviceDisappeared
+from infi.storagemodel.errors import DeviceDisappeared, RescanIsNeeded
 #pylint: disable=E1002,W0622
 
 class SupportedVPDPagesDict(LazyImmutableDict):
@@ -94,3 +94,22 @@ class InquiryInformationMixin(object):
                 return sync_wait(command.execute(asi))
         except (IOError, OSError, AsiOSError), error:
             raise chain(DeviceDisappeared("device {!r} disappeared during STANDARD INQUIRY".format(self)))
+
+    def get_scsi_test_unit_ready(self):
+        """If the method returns, the device is ready, else raises an exception"""
+        from infi.asi.cdb.tur import TestUnitReadyCommand
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.errors import AsiOSError
+        from infi.asi import AsiCheckConditionError
+        try:
+            with self.asi_context() as asi:
+                command = TestUnitReadyCommand()
+                return sync_wait(command.execute(asi))
+        except (IOError, OSError, AsiOSError), error:
+            raise chain(DeviceDisappeared("device {!r} disappeared during TEST UNIT READY".format(self)))
+        except AsiCheckConditionError, e:
+            if e.sense_obj.sense_key == 'UNIT_ATTENTION' \
+               and e.sense_obj.additional_sense_code.code_name == 'REPORTED LUNS DATA HAS CHANGED':
+                raise chain(RescanIsNeeded("Reported LUNS data has changed"))
+            else:
+                raise

@@ -14,6 +14,7 @@ class InfinidatVolumeExists(object):
         devices_to_query = get_infinidat_block_devices()
         log.debug("Looking for Infinidat volume id {} from system id {}".format(self.volume_id, self.system_serial))
         for device in devices_to_query:
+            device.get_scsi_test_unit_ready()
             volume_id = device.get_vendor().get_naa().get_volume_serial()
             system_serial = device.get_vendor().get_naa().get_system_serial()
             log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))

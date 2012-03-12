@@ -60,6 +60,9 @@ class Disk(object):
     def get_connectivity(self):
         return self.connectivity
 
+    def get_scsi_test_unit_ready(self):
+        return None
+
 class FCConectivityMock(connectivity.FCConnectivity):
     def __init__(self, i_wwn, t_wwn):
         from infi.hbaapi import Port
