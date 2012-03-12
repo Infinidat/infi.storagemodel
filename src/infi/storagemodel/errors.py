@@ -1,5 +1,5 @@
 
-from infi.exceptools import InfiException
+from infi.exceptools import InfiException, chain
 from infi.pyutils.decorators import wraps
 
 # pylint: disable=E1002
