@@ -9,16 +9,15 @@ class SupportedVPDPagesDict(LazyImmutableDict):
         self.device = device
 
     def _create_value(self, page_code):
-        from infi.asi.cdb.inquiry.vpd_pages import SUPPORTED_VPD_PAGES_COMMANDS
+        from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page
         from infi.asi.coroutines.sync_adapter import sync_wait
         from infi.asi.errors import AsiOSError
-        inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
-        try:
-            with self.device.asi_context() as asi:
-                return sync_wait(inquiry_command.execute(asi))
-        except (IOError, OSError, AsiOSError), error:
-            msg = "device {!r} disappeared during inquiry EVPD page {}"
-            raise chain(DeviceDisappeared(msg.format(device, page_code)))
+        with self.device.asi_context() as asi:
+            inquiry_command = get_vpd_page(page_code)()
+            return sync_wait(inquiry_command.execute(asi))
+
+    def __repr__(self):
+        return "<Supported VPD Pages {!r}: {!r}>".format(self.device, self.keys())
 
 class InquiryInformationMixin(object):
     @cached_method
