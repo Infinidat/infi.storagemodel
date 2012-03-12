@@ -1,4 +1,6 @@
+import os
 from contextlib import contextmanager
+from daemon import basic_daemonize
 
 from ..base import StorageModel
 from infi.pyutils.lazy import cached_method, cached_function
@@ -53,18 +55,26 @@ def _call_rescan_script(env=None):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
     that the script does not exist"""
     from infi.exceptools import chain
-    from infi.execute import execute_async
+    from infi.execute import execute
     from ..errors import StorageModelError
     rescan_script = _locate_rescan_script()
     if rescan_script is None:
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
         logger.info("Calling rescan-scsi-bus.sh")
-        _ = execute_async([rescan_script, "--remove"], env=env)
+        _daemonize_and_run([rescan_script, "--remove"], env=env)
         logger.info("rescan-scsi-bus.sh finished with return code 0")
     except Exception:
         raise chain(StorageModelError("failed to initiate rescan"))
 
+def _daemonize_and_run(command, env):
+    first_child_pid = os.fork()
+    if first_child_pid != 0:
+        os.waitpid(first_child_pid, 0)
+    else:
+        basic_daemonize()
+        execute([rescan_script, "--remove"], env=env)
+    
 class LinuxStorageModel(StorageModel):
     @cached_method
     def _get_sysfs(self):
@@ -102,4 +112,3 @@ class LinuxStorageModel(StorageModel):
 
 def is_rescan_script_exists():
     return _locate_rescan_script() is not None
-
