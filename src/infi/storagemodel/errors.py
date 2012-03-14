@@ -41,6 +41,14 @@ class MountPointInUse(StorageModelError):
     def __init__(self, mount_point):
         super(MountPointInUse, self).__init__("mount point {!r} is already in use".format(mount_point))
 
+CHECK_CONDITIONS_TO_CHECK = [
+    # 2-tuple of (sense_key, additional_sense_code)
+    ('UNIT_ATTENTION', 'POWER ON OCCURRED')
+    ('UNIT_ATTENTION', 'REPORTED LUNS DATA HAS CHANGED'),
+    ('UNIT_ATTENTION', 'INQUIRY DATA HAS CHANGED'),
+    ('ILLEGAL_REQUEST', 'LOGICAL UNIT NOT SUPPORTED'),
+]
+
 def check_for_scsi_errors(func):
     from infi.asi.errors import AsiOSError
     from infi.asi import AsiCheckConditionError
@@ -52,14 +60,9 @@ def check_for_scsi_errors(func):
         except (IOError, OSError, AsiOSError), error:
             raise chain(DeviceDisappeared("device {!r} disappeared during {!r}".format(device, func)))
         except AsiCheckConditionError, e:
-            (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
-            if (key, code) == ('UNIT_ATTENTION', 'POWER ON OCCURRED'):
+            actual = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
+            if actual in CHECK_CONDITIONS_TO_CHECK:
                 raise chain(RescanIsNeeded("device {!r} got {} {}".format(device, key, code)))
-            if (key, code) == ('UNIT_ATTENTION', 'REPORTED LUNS DATA HAS CHANGED'):
-                raise chain(RescanIsNeeded("device {!r} got {} {}".format(device, key, code)))
-            if (key, code) == ('UNIT_ATTENTION', 'LOGICAL UNIT NOT SUPPORTED'):
-                raise chain(DeviceDisappeared("device {!r} got {} {}".format(device, key, code)))
-            else:
-                raise
+            raise
     return callable
 
