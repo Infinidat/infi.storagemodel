@@ -66,8 +66,8 @@ def check_for_scsi_errors(func):
             logger.debug(msg)
             raise chain(DeviceDisappeared(msg))
         except AsiCheckConditionError, e:
-            actual = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
-            if actual in CHECK_CONDITIONS_TO_CHECK:
+            (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
+            if (key, code) in CHECK_CONDITIONS_TO_CHECK:
                 msg = "device {!r} got {} {}".format(device, key, code)
                 logger.debug(msg)
                 raise chain(RescanIsNeeded(msg))
