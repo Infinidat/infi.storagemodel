@@ -63,18 +63,19 @@ def _call_rescan_script(env=None):
     try:
         logger.info("Calling rescan-scsi-bus.sh")
         _daemonize_and_run([rescan_script, "--remove"], env=env)
-        logger.info("rescan-scsi-bus.sh finished with return code 0")
     except Exception:
         raise chain(StorageModelError("failed to initiate rescan"))
 
 def _daemonize_and_run(command, env):
+    from infi.execute import execute
     first_child_pid = os.fork()
     if first_child_pid != 0:
         os.waitpid(first_child_pid, 0)
     else:
         basic_daemonize()
-        execute([rescan_script, "--remove"], env=env)
-    
+        script = execute(command, env=env)
+        logger.info("rescan-scsi-bus.sh finished with return code {}".format(script.get_returncode()))
+
 class LinuxStorageModel(StorageModel):
     @cached_method
     def _get_sysfs(self):

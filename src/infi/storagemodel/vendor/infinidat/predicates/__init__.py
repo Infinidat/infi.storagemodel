@@ -34,3 +34,4 @@ class InfinidatVolumeDoesNotExist(InfinidatVolumeExists):
     def __repr__(self):
         return "<InfinidatVolumeDoesNotExist(system_serial={!r}, volume_id={!r})>".format(self.system_serial,
                                                                                           self.volume_id)
+
