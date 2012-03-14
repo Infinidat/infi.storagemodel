@@ -59,7 +59,7 @@ def check_for_scsi_errors(func):
     def callable(*args, **kwargs):
         try:
             device = args[0]
-            logger.debug("Sending SCSI command {!r} for device".format(func))
+            logger.debug("Sending SCSI command {!r}".format(func))
             return func(*args, **kwargs)
         except (IOError, OSError, AsiOSError), error:
             msg = "device {!r} disappeared during {!r}".format(device, func)
