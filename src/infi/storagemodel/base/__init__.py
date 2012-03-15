@@ -86,18 +86,16 @@ class StorageModel(object):
         if predicate is None:
             from ..predicates import WaitForNothing
             predicate = WaitForNothing()
-        logger.debug("Initiaing rescan")
-        self.initiate_rescan()
         self.refresh()
         start_time = time()
+        logger.debug("Initiating rescan")
+        self.initiate_rescan()
         while not self._try_predicate(predicate):
             logger.debug("Predicate did not return True")
             if time() - start_time >= timeout_in_seconds:
                 logger.debug("Rescan did not complete before timeout")
                 raise TimeoutError() # pylint: disable=W0710
             sleep(1)
-            logger.debug("Initiaing rescan")
-            self.initiate_rescan()
             self.refresh()
 
     #############################
