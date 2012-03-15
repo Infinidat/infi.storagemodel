@@ -75,6 +75,7 @@ def _daemonize_and_run(command, env):
         basic_daemonize()
         script = execute(command, env=env)
         logger.info("rescan-scsi-bus.sh finished with return code {}".format(script.get_returncode()))
+        os._exit(0)
 
 class LinuxStorageModel(StorageModel):
     @cached_method
