@@ -154,13 +154,19 @@ Vendor Information
 Infinidat
 ---------
 
-.. module:: infi.storagemodel.vendor.infinibox
+.. module:: infi.storagemodel.vendor.infinidat.infinibox.mixin
 
-.. autoclass:: InfiniBoxMixin
+.. autoclass:: InfiniBoxInquiryMixin
 
 .. autoclass:: InfiniBoxVolumeMixin
 
+.. autoclass:: SophisticatedMixin
+
+.. module:: infi.storagemodel.vendor.infinidat.infinibox.naa
+
 .. autoclass:: InfinidatNAA
+
+.. module:: infi.storagemodel.vendor.infinidat.infinibox.fc_port
 
 .. autoclass:: InfinidatFiberChannelPort
 

@@ -1,0 +1,2 @@
+recursive-include src rescan-scsi-bus.sh
+include MANIFEST.in

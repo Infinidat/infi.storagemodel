@@ -1,11 +1,16 @@
 
+from infi.storagemodel.errors import DeviceDisappeared
+from infi.exceptools import InfiException, chain
 from infi.pyutils.lazy import cached_method
 import binascii
 from infi.instruct import SBInt64
 from logging import getLogger
-log = getLogger()
+logger = getLogger()
 
 DEFAULT_PORT = 80
+
+class JSONInquiryException(InfiException):
+    pass
 
 class DeviceIdentificationPage(object):
     def __init__(self, page):
@@ -111,17 +116,27 @@ class InfiniBoxInquiryMixin(object):
                                          self.get_target_port_group())
 
     def _get_json_inquiry_page(self):
-        from infi.asi.coroutines.sync_adapter import sync_wait
-        from ...json_page import JSONInquiryPageCommand
-        with self.device.asi_context() as asi:
-            inquiry_command = JSONInquiryPageCommand()
-            return sync_wait(inquiry_command.execute(asi))
+        try:
+            from ...json_page import JSONInquiryPageData
+            page = self.get_scsi_inquiry_pages()[0xc5]
+            return JSONInquiryPageData.crate_from_string(page.write_to_string(page))
+        except AsiCheckConditionError, error:
+            if _is_exception_of_unsupported_inquiry_page(error):
+                raise chain(JSONInquiryException("JSON Inquiry command error"))
+
+    def _get_json_inquiry_data(self):
+        return self._get_json_inquiry_page().json_serialized_data
 
     @cached_method
     def get_json_data(self):
         """:returns: the json inquiry data from the system
         :rtype: dict"""
         from json import loads
-        inquiry_page = self._get_json_inquiry_page()
-        raw_data = inquiry_page.json_serialized_data
-        return loads(raw_data)
+        raw_data = self._get_json_inquiry_data()
+        try:
+            logger.debug("Got JSON Inquiry data: {}".format(raw_data))
+            return loads(raw_data)
+        except ValueError:
+            logger.debug("Inquiry response is invalid JSON format")
+            raise chain(JSONInquiryException("ValueError"))
+

@@ -10,10 +10,14 @@ from .volume import InfiniBoxVolumeMixin
 from .sophisticated import SophisticatedMixin
 
 class block_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBoxVolumeMixin, VendorSCSIBlockDevice):
-    pass
+    def __repr__(self):
+        return "<Infinibox Mixin for {!r}>".format(self.device)
 
 class controller_class(InfiniBoxInquiryMixin, SophisticatedMixin, VendorSCSIStorageController):
-    pass
+    def __repr__(self):
+        return "<Infinibox Mixin for {!r}>".format(self.device)
 
 class multipath_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBoxVolumeMixin, VendorMultipathDevice):
-    pass
+    def __repr__(self):
+        return "<Infinibox Mixin for {!r}>".format(self.device)
+

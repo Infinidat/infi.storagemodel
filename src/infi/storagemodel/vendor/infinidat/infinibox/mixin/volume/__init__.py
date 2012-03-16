@@ -1,5 +1,8 @@
 from infi.pyutils.lazy import cached_method
-from ..sophisticated import _is_exception_of_unsupported_inquiry_page, AsiCheckConditionError
+from ..inquiry import JSONInquiryException
+
+from logging import getLogger
+logger = getLogger()
 
 class InfiniBoxVolumeMixin(object):
     @cached_method
@@ -19,18 +22,17 @@ class InfiniBoxVolumeMixin(object):
 
     @cached_method
     def get_volume_name(self):
-        return self._get_volume_name_from_json_page() or self._get_volume_name_from_management()
+        """:returns: A string if the host is defined in the system, or None if it is Not"""
+        try:
+            return self._get_volume_name_from_json_page()
+        except JSONInquiryException:
+            return self._get_volume_name_from_management()
 
     def _get_volume_name_from_json_page(self):
-        try:
-            return self.get_json_data()['volume_name']
-        except KeyError:
-            return None
-        except AsiCheckConditionError, error:
-            if _is_exception_of_unsupported_inquiry_page(error):
-                return None
+        return self._get_key_from_json_page('vol')
 
     def _get_volume_name_from_management(self):
         volume_id = self.get_volume_id()
         sender = self._get_management_json_sender()
-        return '' if volume_id == -1 else sender.get('volumes/{}'.format(volume_id))['name']
+        return None if volume_id == -1 or volume_id == 0 else sender.get('volumes/{}'.format(volume_id))['name']
+

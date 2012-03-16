@@ -1,5 +1,5 @@
 from infi.pyutils.lazy import cached_method, LazyImmutableDict
-
+from infi.storagemodel.errors import check_for_scsi_errors
 #pylint: disable=E1002,W0622
 
 class SupportedVPDPagesDict(LazyImmutableDict):
@@ -7,12 +7,16 @@ class SupportedVPDPagesDict(LazyImmutableDict):
         super(SupportedVPDPagesDict, self).__init__(dict.copy())
         self.device = device
 
+    @check_for_scsi_errors
     def _create_value(self, page_code):
-        from infi.asi.cdb.inquiry.vpd_pages import SUPPORTED_VPD_PAGES_COMMANDS
+        from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page
         from infi.asi.coroutines.sync_adapter import sync_wait
-        inquiry_command = SUPPORTED_VPD_PAGES_COMMANDS[page_code]()
         with self.device.asi_context() as asi:
+            inquiry_command = get_vpd_page(page_code)()
             return sync_wait(inquiry_command.execute(asi))
+
+    def __repr__(self):
+        return "<Supported VPD Pages for {!r}: {!r}>".format(self.device, self.keys())
 
 class InquiryInformationMixin(object):
     @cached_method
@@ -37,7 +41,7 @@ class InquiryInformationMixin(object):
     def get_scsi_inquiry_pages(self):
         """Returns an immutable dict-like object of available inquiry pages from this device.
         For example:
-        
+
             >>> dev.scsi_inquiry_pages[0x80].product_serial_number
         """
         from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
@@ -47,20 +51,20 @@ class InquiryInformationMixin(object):
         command = SupportedVPDPagesCommand()
 
         page_dict = {}
-        with self.asi_context() as asi:
-            try:
+        try:
+            with self.asi_context() as asi:
                 data = sync_wait(command.execute(asi))
                 page_dict[INQUIRY_PAGE_SUPPORTED_VPD_PAGES] = data
                 for page_code in data.vpd_parameters:
                     page_dict[page_code] = None
-            except AsiCheckConditionError, e:
+        except AsiCheckConditionError, e:
+            (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
+            if (key, code) == ('ILLEGAL_REQUEST', 'INVALID FIELD IN CDB'):
                 # There are devices such as virtual USB disk controllers (bladecenter stuff) that don't support this
                 # (mandatory!) command. In this case we simply return an empty dict.
-                if e.sense_obj.sense_key == 'ILLEGAL_REQUEST' \
-                   and e.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB':
-                    pass
-                else:
-                    raise
+                pass
+            else:
+                raise
         return SupportedVPDPagesDict(page_dict, self)
 
     @cached_method
@@ -74,6 +78,7 @@ class InquiryInformationMixin(object):
         return serial
 
     @cached_method
+    @check_for_scsi_errors
     def get_scsi_standard_inquiry(self):
         """:returns: the standard inquiry data"""
         from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
@@ -81,3 +86,14 @@ class InquiryInformationMixin(object):
         with self.asi_context() as asi:
             command = StandardInquiryCommand()
             return sync_wait(command.execute(asi))
+
+    @check_for_scsi_errors
+    def get_scsi_test_unit_ready(self):
+        """:returns: True if the device is ready
+        """
+        from infi.asi.cdb.tur import TestUnitReadyCommand
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        with self.asi_context() as asi:
+            command = TestUnitReadyCommand()
+            return sync_wait(command.execute(asi))
+

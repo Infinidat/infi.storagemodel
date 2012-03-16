@@ -29,8 +29,11 @@ class DiskExists(object):
         block_devices = model.get_scsi().get_all_scsi_block_devices()
         mp_devices = model.get_native_multipath().get_all_multipath_devices()
         non_mp_devices = model.get_native_multipath().filter_non_multipath_scsi_block_devices(block_devices)
+        devices = mp_devices + non_mp_devices
+        for device in devices:
+            device.get_scsi_test_unit_ready()
         return any([device.get_scsi_serial_number() == self.scsi_serial_number \
-                    for device in mp_devices + non_mp_devices])
+                    for device in devices])
 
     def __repr__(self):
         return "<DiskExists: {}>".format(self.scsi_serial_number)
@@ -73,6 +76,7 @@ class FiberChannelMappingExists(object):
         logger.debug("Working on: {!r}".format(self))
         logger.debug("Looking for all scsi block devices")
         for device in model.get_scsi().get_all_scsi_block_devices():
+            device.get_scsi_test_unit_ready()
             logger.debug("Found device: {!r}".format(device))
             if self._is_fc_connectivity_a_match(device):
                 return True
@@ -99,3 +103,4 @@ class WaitForNothing(object):
 
     def __repr__(self):
         return "<WaitForNothing>"
+

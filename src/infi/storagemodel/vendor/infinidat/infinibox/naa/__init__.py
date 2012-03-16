@@ -17,3 +17,6 @@ class InfinidatNAA(object):
     def get_volume_serial(self):
         """:returns: the volume entity ID"""
         return self._data.vendor_specific_identifier_extension
+
+    def __repr__(self):
+        return "<Infinidat NAA system {} volume {}".format(self.get_system_serial(), self.get_volume_serial())

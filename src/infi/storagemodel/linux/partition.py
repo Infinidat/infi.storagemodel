@@ -1,4 +1,4 @@
-from infi.pyutils.lazy import cached_method
+from infi.pyutils.lazy import cached_method, clear_cache
 from ..base import partition
 
 # pylint: disable=W0212
@@ -74,7 +74,9 @@ class LinuxPartitionTable(object):
         return self._disk_drive
 
     def create_partition_for_whole_table(self, file_system_object):
-        return self._disk_drive._get_parted_disk_drive().create_partition_for_whole_drive(file_system_object.get_name())
+        self._disk_drive._get_parted_disk_drive().create_partition_for_whole_drive(file_system_object.get_name())
+        clear_cache(self)
+        return self.get_partitions()[0]
 
 class LinuxMBRPartitionTable(LinuxPartitionTable, partition.MBRPartitionTable):
     @classmethod
