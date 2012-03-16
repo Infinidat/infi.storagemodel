@@ -116,6 +116,7 @@ class InfiniBoxInquiryMixin(object):
                                          self.get_target_port_group())
 
     def _get_json_inquiry_page(self):
+        from infi.asi import AsiCheckConditionError
         try:
             from ...json_page import JSONInquiryPageData
             page = self.get_scsi_inquiry_pages()[0xc5]
