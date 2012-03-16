@@ -52,6 +52,12 @@ CHECK_CONDITIONS_TO_CHECK = [
     ('ILLEGAL_REQUEST', 'LOGICAL UNIT NOT SUPPORTED'),
 ]
 
+def safe_repr(obj):
+    try:
+        return repr(obj)
+    except:
+        return object.__repr__(obj)
+
 def check_for_scsi_errors(func):
     from infi.asi.errors import AsiOSError
     from infi.asi import AsiCheckConditionError
@@ -59,10 +65,12 @@ def check_for_scsi_errors(func):
     def callable(*args, **kwargs):
         try:
             device = args[0]
-            logger.debug("Sending SCSI command {!r}".format(func))
+            logger.debug("Sending SCSI command {!r} for device {!r}".format(func, safe_repr(device)))
+            response = func(*args, **kwargs)
+            logger.debug("Got response {!r}".format(response))
             return func(*args, **kwargs)
         except (IOError, OSError, AsiOSError), error:
-            msg = "device {!r} disappeared during {!r}".format(device, func)
+            msg = "device {!r} disappeared during {!r}".format(safe_repr(device), func)
             logger.debug(msg)
             raise chain(DeviceDisappeared(msg))
         except AsiCheckConditionError, e:
