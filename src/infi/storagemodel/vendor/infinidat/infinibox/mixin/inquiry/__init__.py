@@ -63,6 +63,10 @@ def translate_hex_repr_string(hex_repr):
     binary_string = binascii.unhexlify(hex_repr)
     return SBInt64.create_from_string(binary_string)
 
+def _is_exception_of_unsupported_inquiry_page(error):
+    return error.sense_obj.sense_key == 'ILLEGAL_REQUEST' and \
+        error.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB'
+
 class InfiniBoxInquiryMixin(object):
 
     @cached_method

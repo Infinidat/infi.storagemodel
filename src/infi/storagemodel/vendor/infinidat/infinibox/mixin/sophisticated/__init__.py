@@ -5,10 +5,6 @@ from infi.exceptools import chain
 from logging import getLogger
 logger = getLogger()
 
-def _is_exception_of_unsupported_inquiry_page(error):
-    return error.sense_obj.sense_key == 'ILLEGAL_REQUEST' and \
-        error.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB'
-
 class SophisticatedMixin(object):
     def _get_management_address_and_port(self):
         address = self.get_management_address()
