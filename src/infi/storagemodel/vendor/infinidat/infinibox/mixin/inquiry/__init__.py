@@ -63,6 +63,10 @@ def translate_hex_repr_string(hex_repr):
     binary_string = binascii.unhexlify(hex_repr)
     return SBInt64.create_from_string(binary_string)
 
+def _is_exception_of_unsupported_inquiry_page(error):
+    return error.sense_obj.sense_key == 'ILLEGAL_REQUEST' and \
+        error.sense_obj.additional_sense_code.code_name == 'INVALID FIELD IN CDB'
+
 class InfiniBoxInquiryMixin(object):
 
     @cached_method
@@ -116,10 +120,11 @@ class InfiniBoxInquiryMixin(object):
                                          self.get_target_port_group())
 
     def _get_json_inquiry_page(self):
+        from infi.asi import AsiCheckConditionError
         try:
             from ...json_page import JSONInquiryPageData
-            page = self.get_scsi_inquiry_pages()[0xc5]
-            return JSONInquiryPageData.crate_from_string(page.write_to_string(page))
+            page = self.device.get_scsi_inquiry_pages()[0xc5]
+            return JSONInquiryPageData.create_from_string(page.write_to_string(page))
         except AsiCheckConditionError, error:
             if _is_exception_of_unsupported_inquiry_page(error):
                 raise chain(JSONInquiryException("JSON Inquiry command error"))

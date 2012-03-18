@@ -42,16 +42,17 @@ def _locate_rescan_script():
     # no script found
     return None
 
-def _call_partprobe(env=None):
+def _call_partprobe(env=None, sync=False):
     from infi.execute import execute
-    execute(["partprobe", ]).wait()
+    command = ["partprobe", ]
+    execute(command, env=env) if sync else _daemonize_and_run(command, env)
 
 def _is_ubuntu():
     from platform import linux_distribution
     distname = linux_distribution()[0].lower()
     return distname in ["ubuntu", ]
 
-def _call_rescan_script(env=None):
+def _call_rescan_script(env=None, sync=False):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
     that the script does not exist"""
     from infi.exceptools import chain
@@ -62,7 +63,8 @@ def _call_rescan_script(env=None):
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
         logger.info("Calling rescan-scsi-bus.sh")
-        _daemonize_and_run([rescan_script, "--remove"], env=env)
+        command = [rescan_script, '--remove']
+        execute(command, env=env) if sync else _daemonize_and_run(command, env)
     except Exception:
         raise chain(StorageModelError("failed to initiate rescan"))
 
@@ -103,14 +105,14 @@ class LinuxStorageModel(StorageModel):
         from .mount import LinuxMountRepository
         return LinuxMountRepository()
 
-    def initiate_rescan(self):
+    def initiate_rescan(self, wait_for_completion=False):
         """the first attempt will be to use rescan-scsi-bus.sh, which comes out-of-the-box in redhat distributions,
         and from the debian packager scsitools.
         If and when we'll encounter a case in which this script doesn't work as expected, we will port it to Python
         and modify it accordingly.
         """
-        _call_rescan_script()
-        _call_partprobe()
+        _call_rescan_script(sync=wait_for_completion)
+        _call_partprobe(sync=wait_for_completion)
 
 def is_rescan_script_exists():
     return _locate_rescan_script() is not None

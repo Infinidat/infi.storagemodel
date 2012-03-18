@@ -12,6 +12,10 @@ class TestModel(unittest.TestCase):
         from infi.storagemodel import get_storage_model
         get_storage_model().rescan_and_wait_for()
 
+    def test_rescan__wait_for_completion(self):
+        from infi.storagemodel import get_storage_model
+        get_storage_model().rescan_and_wait_for(wait_on_rescan=True)
+
     def test_rescan__timeout(self):
         from infi.storagemodel import get_storage_model
         from infi.storagemodel.errors import TimeoutError
