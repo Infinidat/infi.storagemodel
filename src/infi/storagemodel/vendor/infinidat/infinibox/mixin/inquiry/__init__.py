@@ -123,8 +123,8 @@ class InfiniBoxInquiryMixin(object):
         from infi.asi import AsiCheckConditionError
         try:
             from ...json_page import JSONInquiryPageData
-            page = self.get_scsi_inquiry_pages()[0xc5]
-            return JSONInquiryPageData.crate_from_string(page.write_to_string(page))
+            page = self.device.get_scsi_inquiry_pages()[0xc5]
+            return JSONInquiryPageData.create_from_string(page.write_to_string(page))
         except AsiCheckConditionError, error:
             if _is_exception_of_unsupported_inquiry_page(error):
                 raise chain(JSONInquiryException("JSON Inquiry command error"))
