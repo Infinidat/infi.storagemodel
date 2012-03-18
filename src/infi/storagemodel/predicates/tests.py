@@ -30,7 +30,7 @@ MultipathModel = MultipathModelImpl()
 SCSIModel = SCSIMockImpl()
 
 class MockModel(StorageModel):
-    def initiate_rescan(self):
+    def initiate_rescan(self, wait_for_completion=False):
         pass
 
     def _create_native_multipath_model(self):

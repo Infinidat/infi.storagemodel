@@ -103,7 +103,7 @@ class LinuxStorageModel(StorageModel):
         from .mount import LinuxMountRepository
         return LinuxMountRepository()
 
-    def initiate_rescan(self):
+    def initiate_rescan(self, wait_for_completion=False):
         """the first attempt will be to use rescan-scsi-bus.sh, which comes out-of-the-box in redhat distributions,
         and from the debian packager scsitools.
         If and when we'll encounter a case in which this script doesn't work as expected, we will port it to Python

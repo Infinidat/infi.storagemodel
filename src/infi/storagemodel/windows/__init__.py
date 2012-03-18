@@ -26,7 +26,7 @@ class WindowsStorageModel(StorageModel):
         from .mount import WindowsMountRepository
         return WindowsMountRepository()
 
-    def initiate_rescan(self):
+    def initiate_rescan(self, wait_for_completion=False):
         from infi.devicemanager import DeviceManager
         dm = DeviceManager()
         for controller in dm.storage_controllers:

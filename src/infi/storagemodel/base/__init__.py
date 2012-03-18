@@ -102,7 +102,7 @@ class StorageModel(object):
     # Platform Specific Methods #
     #############################
 
-    def initiate_rescan(self): # pragma: no cover
+    def initiate_rescan(self, wait_for_completion=False): # pragma: no cover
         """A premitive rescan method, if you do not wish to use the waiting mechanism"""
         # platform implementation
         raise NotImplementedError()
