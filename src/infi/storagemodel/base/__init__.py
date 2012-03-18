@@ -64,7 +64,7 @@ class StorageModel(object):
             logger.debug("Predicate {!r} raised {} during rescan".format(predicate, error))
             return False
 
-    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60):
+    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60, wait_on_rescan=False):
         """Rescan devices and polls the prediate until either it returns True or a timeout is reached.
         
         The model is refreshed automatically, there is no need to refresh() after calling this method or in the
@@ -75,6 +75,8 @@ class StorageModel(object):
         :param predicate: a callable object that returns either True or False. 
         
         :param timeout_in_seconds: time in seconds to poll the predicate.
+        
+        :param wait_on_rescan: waits until the rescan process is completed before checking the predicates
         
         :raises: :exc:`infi.storagemodel.errors.TimeoutError` exception.
         """
@@ -89,7 +91,7 @@ class StorageModel(object):
         self.refresh()
         start_time = time()
         logger.debug("Initiating rescan")
-        self.initiate_rescan()
+        self.initiate_rescan(wait_on_rescan)
         while not self._try_predicate(predicate):
             logger.debug("Predicate did not return True")
             if time() - start_time >= timeout_in_seconds:
