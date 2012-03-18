@@ -97,6 +97,10 @@ class StorageModel(object):
             if time() - start_time >= timeout_in_seconds:
                 logger.debug("Rescan did not complete before timeout")
                 raise TimeoutError() # pylint: disable=W0710
+            if wait_on_rescan:
+                # Rescan finished and the predicate did not return True
+                # We will try to rescan again
+                self.initiate_rescan(wait_on_rescan)
             sleep(1)
             self.refresh()
 
