@@ -10,6 +10,7 @@ logger = getLogger()
 
 POSSIBLE_RESCAN_SCSI_BUS_FILENAMES = ["rescan-scsi-bus", "rescan-scsi-bus.sh"]
 POSSIBLE_PATH_LOCATIONS = ["/sbin", "/bin", "/usr/bin", "/usr/sbin"]
+POSSIBLE_PARTPROBE_FILENAME = ['partprobe']
 
 CHMOD_777 = 33261
 
@@ -44,7 +45,7 @@ def _locate_rescan_script():
 
 def _call_partprobe(env=None, sync=False):
     from infi.execute import execute
-    command = [_locate_file_in_path(["partprobe]"]), ]
+    command = [_locate_file_in_path(POSSIBLE_PARTPROBE_FILENAME), ]
     execute(command, env=env) if sync else _daemonize_and_run(command, env)
 
 def _is_ubuntu():
