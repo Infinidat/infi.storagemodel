@@ -8,7 +8,7 @@ from infi.pyutils.lazy import cached_method, cached_function
 from logging import getLogger
 logger = getLogger()
 
-POSSIBLE_RESCAN_SCSI_BUS_FILENAMES = ["rescan-scsi-bus", "rescan-scsi-bus,sh"]
+POSSIBLE_RESCAN_SCSI_BUS_FILENAMES = ["rescan-scsi-bus", "rescan-scsi-bus.sh"]
 POSSIBLE_PATH_LOCATIONS = ["/sbin", "/bin", "/usr/bin", "/usr/sbin"]
 
 CHMOD_777 = 33261
