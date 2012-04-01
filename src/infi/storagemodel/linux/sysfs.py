@@ -1,6 +1,7 @@
 import os
 import glob
 from infi.dtypes.hctl import HCTL
+from infi.pyutils.lazy import cached_method
 from ..errors import StorageModelError
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
@@ -90,11 +91,7 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
             self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
 
 class Sysfs(object):
-    def __init__(self):
-        self.disks = []
-        self.controllers = []
-        self.block_devno_to_device = dict()
-
+    def _populate(self):
         for hctl_str in os.listdir(SYSFS_CLASS_SCSI_DEVICE_PATH):
             dev_path = os.path.join(SYSFS_CLASS_SCSI_DEVICE_PATH, hctl_str, "device")
             try:
@@ -108,6 +105,11 @@ class Sysfs(object):
             devno = dev.get_block_devno()
             assert devno not in self.block_devno_to_device
             self.block_devno_to_device[devno] = dev
+
+    def __init__(self):
+        self.disks = []
+        self.controllers = []
+        self.block_devno_to_device = dict()
 
     def _append_device_by_type(self, hctl_str, dev_path, scsi_type):
         if scsi_type == SCSI_TYPE_STORAGE_CONTROLLER:
@@ -127,19 +129,29 @@ class Sysfs(object):
                     return os.path.join(base, src)
                 return {link:readlink(link) for link in os.listdir(base)}
 
+    @cached_method
     def get_all_scsi_disks(self):
+        self._populate()
         return self.disks
 
+    @cached_method
     def get_all_scsi_storage_controllers(self):
+        self._populate()
         return self.controllers
 
+    @cached_method
     def get_all_block_devices(self):
+        self._populate()
         return self.block_devices.values()
 
     def find_block_device_by_devno(self, devno):
+        if len(self.block_devno_to_device.keys()) == 0:
+            self._populate()
         return self.block_devno_to_device.get(devno, None)
 
     def find_scsi_disk_by_hctl(self, hctl):
+        if len(self.disks) == 0:
+            self._populate()
         disk = [ disk for disk in self.disks if disk.get_hctl() == hctl ]
         if len(disk) != 1:
             raise ValueError("cannot find a disk with HCTL %s" % (str(hctl),))
