@@ -14,7 +14,7 @@ class SysfsError(StorageModelError):
     pass
 
 from logging import getLogger
-log = getLogger()
+log = getLogger(__name__)
 
 def _sysfs_read_field(device_path, field):
     with open(os.path.join(device_path, field), "rb") as f:
@@ -78,17 +78,19 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
 
         # on ubuntu: /sys/class/scsi_device/0:0:1:0/device/block/sdb/
         # on redhat: /sys/class/scsi_device/0:0:1:0/device/block:sdb/
-
         basepath = os.path.join(self.sysfs_dev_path, "block")
+        log.debug("basepath = {!r}".format(basepath))
         if os.path.exists(basepath):
             block_dev_names = os.listdir(basepath)
         else:
             block_dev_names = glob.glob(os.path.join(self.sysfs_dev_path, "block*"))
-
+        log.debug("block_dev_names = {!r}".format(block_dev_names))
         self.block_device_name = block_dev_names[0].split(':')[-1]
+        log.debug("block_device_name = {!r}".format(self.block_device_name))
         self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)
         if not os.path.exists(self.sysfs_block_device_path):
             self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
+        log.debug("sysfs_block_device_path = {!r}".format(self.sysfs_block_device_path))
 
 class Sysfs(object):
     def _populate(self):
