@@ -111,7 +111,7 @@ class Sysfs(object):
             try:
                 scsi_type = int(_sysfs_read_field(dev_path, "type"))
                 self._append_device_by_type(hctl_str, dev_path, scsi_type)
-            except IOError:
+            except (IOError, OSError):
                 log.debug("no device type for hctl {}".format(hctl_str))
 
         for name, path in self._get_sysfs_block_devices_pathnames().items():
