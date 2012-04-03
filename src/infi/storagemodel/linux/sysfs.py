@@ -129,7 +129,7 @@ class Sysfs(object):
                     if os.path.islink(src):
                         return os.path.abspath(os.path.join(base, os.readlink(os.path.join(base, src))))
                     return os.path.join(base, src)
-                return {link:readlink(link) for link in os.listdir(base)}
+                return {link:readlink(link) for filter(lambda link: link.startswith('sd'), os.listdir(base))}
 
     @cached_method
     def get_all_scsi_disks(self):
