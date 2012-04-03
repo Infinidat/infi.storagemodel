@@ -2,16 +2,13 @@ import os
 import glob
 from infi.dtypes.hctl import HCTL
 from infi.pyutils.lazy import cached_method
-from ..errors import StorageModelError
+from ..errors import DeviceDisappeared
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
 SYSFS_CLASS_BLOCK_DEVICE_PATH = "/sys/class/block"
 
 SCSI_TYPE_DISK = 0x00
 SCSI_TYPE_STORAGE_CONTROLLER = 0x0C
-
-class SysfsError(StorageModelError):
-    pass
 
 from logging import getLogger
 log = getLogger(__name__)
@@ -52,7 +49,7 @@ class SysfsSCSIDevice(object):
             sg_dev_names = glob.glob(os.path.join(self.sysfs_dev_path, "scsi_generic*"))
         if len(sg_dev_names) != 1:
             msg = "{} doesn't have a single device/scsi_generic/sg* path ({!r})"
-            raise SysfsError(msg.format(self.sysfs_dev_path, sg_dev_names))
+            raise DeviceDisappeared(msg.format(self.sysfs_dev_path, sg_dev_names))
         self.scsi_generic_device_name = sg_dev_names[0].split(':')[-1]
         self.sysfs_scsi_generic_device_path = os.path.join(self.sysfs_dev_path, "scsi_generic",
                                                            self.scsi_generic_device_name)
@@ -85,6 +82,8 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         else:
             block_dev_names = glob.glob(os.path.join(self.sysfs_dev_path, "block*"))
         log.debug("block_dev_names = {!r}".format(block_dev_names))
+        if block_dev_names == []:
+            raise DeviceDisappeared("No block dev names for {}".format(self.sysfs_dev_path))
         self.block_device_name = block_dev_names[0].split(':')[-1]
         log.debug("block_device_name = {!r}".format(self.block_device_name))
         self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)
