@@ -35,6 +35,10 @@ class SysfsBlockDevice(SysfsBlockDeviceMixin):
         self.block_device_name = block_device_name
         self.sysfs_block_device_path = block_device_path
 
+    def __repr__(self):
+        _repr = "<SysfsBlockDevice(block_device_name={!r}, block_device_path={!r}>"
+        return _repr.format(self.block_device_name, self.block_device_path)
+
 class SysfsSCSIDevice(object):
     def __init__(self, sysfs_dev_path, hctl):
         super(SysfsSCSIDevice, self).__init__()
@@ -69,6 +73,10 @@ class SysfsSCSIDevice(object):
     def get_scsi_generic_devno(self):
         return _sysfs_read_devno(self.sysfs_scsi_generic_device_path)
 
+    def __repr__(self):
+        _repr = "<SysfsSCSIDevice(sysfs_dev_path={!r}, hctl={!r})>"
+        return _repr.format(self.sysfs_dev_path, self.hctl)
+
 class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
     def __init__(self, sysfs_dev_path, hctl):
         super(SysfsSCSIDisk, self).__init__(sysfs_dev_path, hctl)
@@ -91,6 +99,10 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
             self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
         log.debug("sysfs_block_device_path = {!r}".format(self.sysfs_block_device_path))
 
+    def __repr__(self):
+        _repr = "<SysfsBlockDeviceMixin(sysfs_dev_path={!r}, hctl={!r})>"
+        return _repr.format(self.sysfs_dev_path, self.hctl)
+
 class Sysfs(object):
     @cached_method
     def _populate(self):
@@ -112,6 +124,10 @@ class Sysfs(object):
         self.disks = []
         self.controllers = []
         self.block_devno_to_device = dict()
+
+    def __repr__(self):
+        _repr = "<Sysfs: disks={!r}, controllers={!r}, block_devno_to_device={!r}>"
+        return _repr.format(self.disks, self.controllers, self.block_devno_to_device)
 
     def _append_device_by_type(self, hctl_str, dev_path, scsi_type):
         if scsi_type == SCSI_TYPE_STORAGE_CONTROLLER:
