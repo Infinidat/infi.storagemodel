@@ -93,6 +93,7 @@ class SysfsSCSIDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         log.debug("sysfs_block_device_path = {!r}".format(self.sysfs_block_device_path))
 
 class Sysfs(object):
+    @cached_method
     def _populate(self):
         for hctl_str in os.listdir(SYSFS_CLASS_SCSI_DEVICE_PATH):
             dev_path = os.path.join(SYSFS_CLASS_SCSI_DEVICE_PATH, hctl_str, "device")
