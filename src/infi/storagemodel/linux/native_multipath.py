@@ -23,11 +23,11 @@ class LinuxNativeMultipathDevice(LinuxBlockDeviceMixin, multipath.MultipathDevic
 
     @cached_method
     def get_display_name(self):
-        return self.multipath_object.device_name
+        return self.sysfs_device.block_device_name
 
     @cached_method
     def get_block_access_path(self):
-        return "/dev/{}".format(self.multipath_object.device_name)
+        return "/dev/{}".format(self.sysfs_device.block_device_name)
 
     @cached_method
     def get_paths(self):

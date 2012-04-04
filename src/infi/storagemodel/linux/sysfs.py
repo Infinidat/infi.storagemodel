@@ -37,7 +37,7 @@ class SysfsBlockDevice(SysfsBlockDeviceMixin):
 
     def __repr__(self):
         _repr = "<SysfsBlockDevice(block_device_name={!r}, block_device_path={!r}>"
-        return _repr.format(self.block_device_name, self.block_device_path)
+        return _repr.format(self.block_device_name, self.sysfs_block_device_path)
 
 class SysfsSCSIDevice(object):
     def __init__(self, sysfs_dev_path, hctl):
