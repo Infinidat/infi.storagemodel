@@ -27,7 +27,7 @@ class LinuxNativeMultipathDevice(LinuxBlockDeviceMixin, multipath.MultipathDevic
 
     @cached_method
     def get_block_access_path(self):
-        return self.get_block_access_path()
+        return "/dev/{}".format(self.multipath_object.device_name)
 
     @cached_method
     def get_paths(self):
