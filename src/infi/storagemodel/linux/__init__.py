@@ -8,10 +8,9 @@ from infi.pyutils.lazy import cached_method, cached_function
 from logging import getLogger
 logger = getLogger()
 
-POSSIBLE_SCRIPT_NAMES = [
-                          "rescan-scsi-bus",
-                          "rescan-scsi-bus.sh",
-                        ]
+POSSIBLE_RESCAN_SCSI_BUS_FILENAMES = ["rescan-scsi-bus", "rescan-scsi-bus.sh"]
+POSSIBLE_PATH_LOCATIONS = ["/sbin", "/bin", "/usr/bin", "/usr/sbin"]
+POSSIBLE_PARTPROBE_FILENAME = ['partprobe']
 
 CHMOD_777 = 33261
 
@@ -25,6 +24,15 @@ def _write_an_executable_copy_of_builtin_rescan_script():
     chmod(path, CHMOD_777)
     return path
 
+def _locate_file_in_path(possible_filenames):
+    for filename in possible_filenames:
+        for base in (POSSIBLE_PATH_LOCATIONS + os.environ["PATH"].split(':')):
+            script = os.path.join(base, filename)
+            if os.path.exists(script) and os.access(script, os.X_OK):
+                return script
+    # no script found
+    return None
+
 @cached_function
 def _locate_rescan_script():
     from os import access, environ, X_OK, chmod
@@ -33,18 +41,11 @@ def _locate_rescan_script():
         # The script in ubuntu waits to long (hard-coded 11 seconds) on each failed device
         # We use a modified version of the script that does not wait that long
         return _write_an_executable_copy_of_builtin_rescan_script()
-    for script in POSSIBLE_SCRIPT_NAMES:
-        for base in environ["PATH"].split(':'):
-            for name in POSSIBLE_SCRIPT_NAMES:
-                script = join(base, name)
-                if exists(script) and access(script, X_OK):
-                    return script
-    # no script found
-    return None
+    return _locate_file_in_path(POSSIBLE_RESCAN_SCSI_BUS_FILENAMES)
 
 def _call_partprobe(env=None, sync=False):
     from infi.execute import execute
-    command = ["partprobe", ]
+    command = [_locate_file_in_path(POSSIBLE_PARTPROBE_FILENAME), ]
     execute(command, env=env) if sync else _daemonize_and_run(command, env)
 
 def _is_ubuntu():
