@@ -21,7 +21,7 @@ class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
         from infi.wmpio import get_load_balace_policies
         return get_load_balace_policies(self.wmi_client)
 
-MPIO_BUS_DRIVER_INSTANCE_ID = u"Root\\MPIO\\0000"
+MPIO_BUS_DRIVER_INSTANCE_ID = u"Root\\MPIO\\0000".lower()
 
 class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
@@ -32,7 +32,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         device_manager = DeviceManager()
         wmi_client = WmiClient()
 
-        devices = filter(lambda device: device.parent._instance_id == MPIO_BUS_DRIVER_INSTANCE_ID,
+        devices = filter(lambda device: device.parent._instance_id.lower() == MPIO_BUS_DRIVER_INSTANCE_ID,
                          device_manager.disk_drives)
         multipath_dict = get_multipath_devices(wmi_client)
         policies_dict = LazyLoadBalancingInfomrationDict(wmi_client)
