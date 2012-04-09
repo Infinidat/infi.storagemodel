@@ -38,6 +38,7 @@ class InquiryInformationMixin(object):
         return (self.get_scsi_vendor_id(), self.get_scsi_product_id())
 
     @cached_method
+    @check_for_scsi_errors
     def get_scsi_inquiry_pages(self):
         """Returns an immutable dict-like object of available inquiry pages from this device.
         For example:
