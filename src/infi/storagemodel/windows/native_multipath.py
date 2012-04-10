@@ -1,6 +1,7 @@
 
 from infi.pyutils.lazy import cached_method, cached_property, LazyImmutableDict
 from ..base import multipath
+from ..errors import RescanIsNeeded
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
 # pylint: disable=W0212,E1002
 
@@ -36,9 +37,17 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
                          device_manager.disk_drives)
         multipath_dict = get_multipath_devices(wmi_client)
         policies_dict = LazyLoadBalancingInfomrationDict(wmi_client)
-        return [WindowsNativeMultipathDevice(device_object,
-                                       multipath_dict[u"%s_0" % device_object._instance_id],
-                                       policies_dict) for device_object in devices]
+
+        def _get_multipath_object(device_object):
+            key = u"%s_0" % device_object._instance_id
+            if not multipath_dict.haskey(key):
+                raise RescanIsNeeded()
+            return multipath_dict[key]
+
+        def _get_multipath_device(device_object):
+            return WindowsNativeMultipathDevice(device_object, _get_multipath_object(device_object), policies_dict)
+
+        return map(_get_multipath_device, devices)
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         return filter(lambda device: device.get_parent()._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
