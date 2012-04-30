@@ -91,6 +91,9 @@ class MultipathDevice(InquiryInformationMixin, object):
         # platform implementation
         raise NotImplementedError()
 
+    def __repr__(self):
+        return "<MultipathDevice {} for {}>".format(self.get_block_access_path(), self.get_display_name())
+
 class LoadBalancePolicy(object):
     name = None
     def __init__(self):

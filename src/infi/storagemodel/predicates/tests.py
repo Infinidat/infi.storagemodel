@@ -26,6 +26,9 @@ class SCSIMockImpl(scsi.SCSIModel):
     def get_all_scsi_block_devices(self):
         return self._devices
 
+    def get_all_storage_controller_devices(self):
+        return []
+
 MultipathModel = MultipathModelImpl()
 SCSIModel = SCSIMockImpl()
 
