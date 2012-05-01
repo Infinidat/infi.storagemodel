@@ -80,16 +80,6 @@ def _daemonize_and_run(command, env):
         logger.info("rescan-scsi-bus.sh finished with return code {}".format(script.get_returncode()))
         os._exit(0)
 
-SCAN_GLOB = '/sys/class/scsi_host/host*/scan'
-SCAN_WORD = '- - -'
-
-def _scan_sysfs_scsi_hosts():
-    from glob import glob
-    for scan_file in glob(SCAN_GLOB):
-        logger.info('Rescanning {}'.format(scan_file))
-        with open(scan_file, 'w') as fd:
-            fd.write(SCAN_WORD)
-
 class LinuxStorageModel(StorageModel):
     @cached_method
     def _get_sysfs(self):
@@ -116,15 +106,14 @@ class LinuxStorageModel(StorageModel):
         from .mount import LinuxMountRepository
         return LinuxMountRepository()
 
-    def initiate_rescan(self, wait_for_completion=False):
+    def initiate_rescan(self, wait_for_completion=True):
         """the first attempt will be to use rescan-scsi-bus.sh, which comes out-of-the-box in redhat distributions,
         and from the debian packager scsitools.
         If and when we'll encounter a case in which this script doesn't work as expected, we will port it to Python
         and modify it accordingly.
         """
-        #_call_rescan_script(sync=wait_for_completion)
-        #_call_partprobe(sync=wait_for_completion)
-        _scan_sysfs_scsi_hosts()
+        _call_rescan_script(sync=wait_for_completion)
+        _call_partprobe(sync=wait_for_completion)
 
 def is_rescan_script_exists():
     return _locate_rescan_script() is not None
