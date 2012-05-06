@@ -22,6 +22,5 @@ def get_storage_model():
     # pylint: disable=W0603,C0103
     global __storage_model
     if __storage_model is None:
-        PlatformStorageModel = _get_platform_specific_storagemodel()
-        __storage_model = PlatformStorageModel()
+        __storage_model = _get_platform_specific_storagemodel()
     return __storage_model
