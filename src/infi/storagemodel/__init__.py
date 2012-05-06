@@ -14,11 +14,14 @@ def _get_platform_specific_storagemodel_class():
     PlatformStorageModel = getattr(platform_module, "{}StorageModel".format(plat.capitalize()))
     return PlatformStorageModel
 
+def _get_platform_specific_storagemodel():
+    return _get_platform_specific_storagemodel_class()()
+
 def get_storage_model():
     """returns a global instance of a StorageModel"""
     # pylint: disable=W0603,C0103
     global __storage_model
     if __storage_model is None:
-        PlatformStorageModel = _get_platform_specific_storagemodel_class()
+        PlatformStorageModel = _get_platform_specific_storagemodel()
         __storage_model = PlatformStorageModel()
     return __storage_model
