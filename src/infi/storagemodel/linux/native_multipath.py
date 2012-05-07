@@ -8,9 +8,9 @@ import itertools
 from logging import getLogger
 logger = getLogger()
 
-class LinuxNativeMultipathDevice(LinuxBlockDeviceMixin, multipath.MultipathDevice):
+class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.MultipathBlockDevice):
     def __init__(self, sysfs, sysfs_device, multipath_object):
-        super(LinuxNativeMultipathDevice, self).__init__()
+        super(LinuxNativeMultipathBlockDevice, self).__init__()
         self.sysfs = sysfs
         self.sysfs_device = sysfs_device
         self.multipath_object = multipath_object
@@ -83,7 +83,7 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         self.sysfs = sysfs
 
     @cached_method
-    def get_all_multipath_devices(self):
+    def get_all_multipath_block_devices(self):
         from infi.multipathtools import MultipathClient
         client = MultipathClient()
         if not client.is_running():
@@ -94,6 +94,10 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         for mpath_device in devices:
             block_dev = self.sysfs.find_block_device_by_devno(mpath_device.major_minor)
             if block_dev is not None:
-                result.append(LinuxNativeMultipathDevice(self.sysfs, block_dev, mpath_device))
+                result.append(LinuxNativeMultipathBlockDevice(self.sysfs, block_dev, mpath_device))
 
         return result
+
+    @cached_method
+    def get_all_multipath_storage_controller_devices(self):
+        return []

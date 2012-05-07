@@ -56,5 +56,5 @@ class LinuxDiskModel(disk.DiskModel):
         scsi = get_storage_model().get_scsi()
         multipath = get_storage_model().get_native_multipath()
         storage_device = filter(lambda device: device.get_block_access_path() == path,
-                                scsi.get_all_scsi_block_devices() + multipath.get_all_multipath_devices())[0]
+                                scsi.get_all_scsi_block_devices() + multipath.get_all_multipath_block_devices())[0]
         return LinuxDiskDrive(storage_device, path)

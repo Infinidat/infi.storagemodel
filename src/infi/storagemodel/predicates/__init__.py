@@ -27,7 +27,7 @@ class DiskExists(object):
         from .. import get_storage_model
         model = get_storage_model()
         block_devices = model.get_scsi().get_all_scsi_block_devices()
-        mp_devices = model.get_native_multipath().get_all_multipath_devices()
+        mp_devices = model.get_native_multipath().get_all_multipath_block_devices()
         non_mp_devices = model.get_native_multipath().filter_non_multipath_scsi_block_devices(block_devices)
         devices = mp_devices + non_mp_devices
         for device in devices:
@@ -82,7 +82,7 @@ class FiberChannelMappingExists(object):
             logger.debug("Found device: {!r}".format(device))
             if self._is_fc_connectivity_a_match(device):
                 return True
-        for device in model.get_native_multipath().get_all_multipath_devices():
+        for device in model.get_native_multipath().get_all_multipath_block_devices():
             for path in device.get_paths():
                 if self._is_fc_connectivity_a_match(path):
                     return True

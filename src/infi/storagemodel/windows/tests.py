@@ -49,7 +49,7 @@ class ModelTestCase(unittest.TestCase):
 
     def test_get_multipath_devices(self):
         model = self._get_model()
-        multipath_devices = model.get_native_multipath().get_all_multipath_devices()
+        multipath_devices = model.get_native_multipath().get_all_multipath_block_devices()
         for device in multipath_devices:
             self._assert_multipath_device(device)
         return multipath_devices
