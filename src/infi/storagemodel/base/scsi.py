@@ -50,7 +50,7 @@ class SCSIBlockDevice(SCSIDevice):
     def get_vendor(self):
         """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
-        return VendorFactory.create_scsiblock_by_vid_pid(self.get_scsi_vid_pid(), self)
+        return VendorFactory.create_scsi_block_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     @cached_method
     def get_disk_drive(self):
