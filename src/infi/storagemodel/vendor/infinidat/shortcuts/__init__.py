@@ -32,7 +32,7 @@ def get_infinidat_block_devices():
     return get_infinidat_native_multipath_block_devices() + get_infinidat_non_multiathed_scsi_block_devices()
 
 def get_infinidat_storage_controller_devices():
-    return get_infinidat_scsi_storage_controller_devices() + get_infinidat_non_multiathed_scsi_storage_controller_devices()
+    return get_infinidat_native_multipath_storage_controller_devices() + get_infinidat_non_multiathed_scsi_storage_controller_devices()
 
 def get_infinidat_scsi_devices():
     return get_infinidat_scsi_block_devices() + get_infinidat_scsi_storage_controller_devices()
