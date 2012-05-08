@@ -2,7 +2,7 @@
 from infi.pyutils.lazy import cached_method, clear_cache
 
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 class PredicateList(object):
     """:returns: True if all predicates in a given list return True"""

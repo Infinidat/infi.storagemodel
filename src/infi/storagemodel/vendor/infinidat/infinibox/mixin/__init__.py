@@ -4,7 +4,7 @@ from infi.storagemodel.vendor import VendorSCSIBlockDevice, VendorSCSIStorageCon
 from infi.storagemodel.vendor import VendorMultipathBlockDevice, VendorMultipathStorageController
 
 from logging import getLogger
-log = getLogger()
+log = getLogger(__name__)
 
 from .inquiry import InfiniBoxInquiryMixin
 from .volume import InfiniBoxVolumeMixin

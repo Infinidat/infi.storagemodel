@@ -3,7 +3,7 @@ from ..inquiry import JSONInquiryException
 from infi.exceptools import chain
 
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 class SophisticatedMixin(object):
     def _get_management_address_and_port(self):

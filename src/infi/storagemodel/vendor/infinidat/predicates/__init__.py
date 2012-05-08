@@ -1,6 +1,6 @@
 
 from logging import getLogger
-log = getLogger()
+log = getLogger(__name__)
 
 class InfinidatVolumeExists(object):
     """A predicate that checks if an Infinidat volume exists"""

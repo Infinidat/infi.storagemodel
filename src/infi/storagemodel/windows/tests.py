@@ -4,7 +4,7 @@ import mock
 from contextlib import nested
 
 from logging import getLogger
-log = getLogger()
+log = getLogger(__name__)
 
 # pylint: disable=R0904,C0103,R0922
 

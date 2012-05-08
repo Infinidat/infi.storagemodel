@@ -6,7 +6,7 @@ from .block import LinuxBlockDeviceMixin
 import itertools
 
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.MultipathBlockDevice):
     def __init__(self, sysfs, sysfs_device, multipath_object):

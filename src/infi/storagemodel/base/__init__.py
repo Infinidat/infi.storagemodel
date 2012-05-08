@@ -2,7 +2,7 @@
 from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
 
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 class StorageModel(object):
     """StorageModel provides layered view of the storage stack.

@@ -5,7 +5,7 @@ from infi.pyutils.lazy import cached_method
 import binascii
 import infi.instruct
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 DEFAULT_PORT = 80
 
