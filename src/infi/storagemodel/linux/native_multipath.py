@@ -87,10 +87,12 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         from infi.multipathtools import MultipathClient
         client = MultipathClient()
         if not client.is_running():
+            logger.info("MultipathD is not running")
             return []
         devices = client.get_list_of_multipath_devices()
 
         result = []
+        logger.debug("Got {} devices from multipath client".format(len(devices)))
         for mpath_device in devices:
             block_dev = self.sysfs.find_block_device_by_devno(mpath_device.major_minor)
             if block_dev is not None:
