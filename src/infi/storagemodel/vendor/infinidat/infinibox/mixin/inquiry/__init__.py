@@ -3,9 +3,9 @@ from infi.storagemodel.errors import DeviceDisappeared
 from infi.exceptools import InfiException, chain
 from infi.pyutils.lazy import cached_method
 import binascii
-from infi.instruct import SBInt64
+import infi.instruct
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 DEFAULT_PORT = 80
 
@@ -61,7 +61,7 @@ class DeviceIdentificationPage(object):
 
 def translate_hex_repr_string(hex_repr):
     binary_string = binascii.unhexlify(hex_repr)
-    return SBInt64.create_from_string(binary_string)
+    return getattr(infi.instruct, "SBInt64").create_from_string(binary_string)
 
 def _is_exception_of_unsupported_inquiry_page(error):
     return error.sense_obj.sense_key == 'ILLEGAL_REQUEST' and \

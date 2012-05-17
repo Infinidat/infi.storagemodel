@@ -8,7 +8,7 @@ def devlist():
     model = get_storage_model()
 
     scsi_block_devices = model.get_scsi().get_all_scsi_block_devices()
-    mp_devices = model.get_native_multipath().get_all_multipath_devices()
+    mp_devices = model.get_native_multipath().get_all_multipath_block_devices()
     non_mp_devices = model.get_native_multipath().filter_non_multipath_scsi_block_devices(scsi_block_devices)
 
     def print_header(header):

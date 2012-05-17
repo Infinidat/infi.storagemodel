@@ -2,7 +2,7 @@ from infi.pyutils.lazy import cached_method
 from ..inquiry import JSONInquiryException
 
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 class InfiniBoxVolumeMixin(object):
     @cached_method

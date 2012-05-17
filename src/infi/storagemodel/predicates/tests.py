@@ -12,7 +12,7 @@ class MultipathModelImpl(multipath.MultipathFrameworkModel):
         multipath.MultipathFrameworkModel.__init__(self, *args, **kwargs)
         self._devices = []
 
-    def get_all_multipath_devices(self):
+    def get_all_multipath_block_devices(self):
         return self._devices
 
     def filter_non_multipath_scsi_block_devices(self, scsi_devices):

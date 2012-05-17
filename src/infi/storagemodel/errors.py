@@ -3,7 +3,7 @@ from infi.exceptools import InfiException, chain
 from infi.pyutils.decorators import wraps
 
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 # pylint: disable=E1002
 # InfiException inherits from Exception

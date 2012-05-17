@@ -8,17 +8,23 @@ class MultipathFrameworkModel(object):
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """:returns: items from the list that are not part of multipath devices claimed by this framework"""
         hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()  \
-                                                                     for multipath in self.get_all_multipath_devices())]
+                                                                     for multipath in self.get_all_multipath_block_devices())]
         return filter(lambda device: device.get_hctl() not in hctl_list, scsi_block_devices)
+
+    def filter_non_multipath_scsi_storage_controller_devices(self, scsi_controller_devices):
+        """:returns: items from the list that are not part of multipath devices claimed by this framework"""
+        hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()  \
+                                                                     for multipath in self.get_all_multipath_storage_controller_devices())]
+        return filter(lambda device: device.get_hctl() not in hctl_list, scsi_controller_devices)
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """:returns: only the items from the devices list that are of the specific type"""
         return filter(lambda device: device.get_scsi_vid_pid() == vid_pid_tuple, devices)
 
     def find_multipath_device_by_block_access_path(self, path):
-        """:returns: :class:`MultipathDevice` object that matches the given path. 
+        """:returns: :class:`MultipathBlockDevice` object that matches the given path. 
         :raises: KeyError if no such device is found"""
-        devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_multipath_devices()])
+        devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_multipath_block_devices()])
         return devices_dict[path]
 
     #############################
@@ -26,8 +32,14 @@ class MultipathFrameworkModel(object):
     #############################
 
     @cached_method
-    def get_all_multipath_devices(self): # pragma: no cover
-        """:returns: all multipath devices claimed by this framework"""
+    def get_all_multipath_block_devices(self): # pragma: no cover
+        """:returns: all multipath block devices claimed by this framework"""
+        # platform implementation
+        raise NotImplementedError()
+
+    @cached_method
+    def get_all_multipath_storage_controller_devices(self): # pragma: no cover
+        """:returns: all multipath storage controller devices claimed by this framework"""
         # platform implementation
         raise NotImplementedError()
 
@@ -36,12 +48,56 @@ class NativeMultipathModel(MultipathFrameworkModel):
     # This methods below are overriden by platform-specific implementations
     pass
 
-class MultipathDevice(InquiryInformationMixin, object):
+class MultipathStorageController(InquiryInformationMixin, object):
     @cached_method
     def get_vendor(self):
         """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor  import VendorFactory
-        return VendorFactory.create_multipath_by_vid_pid(self.get_scsi_vid_pid(), self)
+        return VendorFactory.create_multipath_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
+
+    #############################
+    # Platform Specific Methods #
+    #############################
+
+    @contextmanager
+    def asi_context(self): # pragma: no cover
+        """:returns: an infi.asi context"""
+        # platform implementation
+        raise NotImplementedError()
+
+    @cached_method
+    def get_multipath_access_path(self): # pragma: no cover
+        """:returns: a path for the device"""
+        # platform implementation
+        raise NotImplementedError()
+
+    @cached_method
+    def get_display_name(self): # pragma: no cover
+        """:returns: a string represtation for the device"""
+        # platform implementation
+        raise NotImplementedError()
+
+    @cached_method
+    def get_paths(self): # pragma: no cover
+        """:rtype: list of :class:`.Path` instances"""
+        # platform implementation
+        raise NotImplementedError()
+
+    @cached_method
+    def get_policy(self): # pragma: no cover
+        """:rtype: an instance of :class:`.LoadBalancePolicy`"""
+        # platform implementation
+        raise NotImplementedError()
+
+    def __repr__(self):
+        return "<MultipathStorageController {} for {}>".format(self.get_multipath_access_path(), self.get_display_name())
+
+class MultipathBlockDevice(InquiryInformationMixin, object):
+    @cached_method
+    def get_vendor(self):
+        """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        from ..vendor  import VendorFactory
+        return VendorFactory.create_multipath_block_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     @cached_method
     def get_disk_drive(self): # pragma: no cover
@@ -92,7 +148,7 @@ class MultipathDevice(InquiryInformationMixin, object):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<MultipathDevice {} for {}>".format(self.get_block_access_path(), self.get_display_name())
+        return "<MultipathBlockDevice {} for {}>".format(self.get_block_access_path(), self.get_display_name())
 
 class LoadBalancePolicy(object):
     name = None

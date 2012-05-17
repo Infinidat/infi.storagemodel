@@ -11,7 +11,7 @@ STORAGE_ARRAY_CONTROLLER_DEVICE = 12
 from infi.instruct import Struct, UBInt8, UBInt16
 from logging import getLogger
 
-log = getLogger()
+log = getLogger(__name__)
 
 class PageCode(Struct):
     _fields_ = [UBInt8("page_code"),

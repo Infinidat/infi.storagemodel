@@ -2,7 +2,7 @@
 from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
 
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 class StorageModel(object):
     """StorageModel provides layered view of the storage stack.
@@ -64,6 +64,9 @@ class StorageModel(object):
         except RescanIsNeeded, error:
             logger.debug("Predicate {!r} raised {} during rescan".format(predicate, error))
             return None
+        except:
+            logger.exception("An un-expected exception was raised by predicate {!r}".format(predicate))
+            raise
 
     def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60, wait_on_rescan=False):
         """Rescan devices and polls the prediate until either it returns True or a timeout is reached.

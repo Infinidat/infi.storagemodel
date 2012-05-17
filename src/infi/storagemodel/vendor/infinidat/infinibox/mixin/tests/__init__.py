@@ -1,8 +1,8 @@
 from json import dumps
 from infi import unittest
-from .. import block_class, controller_class
+from .. import scsi_block_class, scsi_controller_class
 
-class UnauthenticatedController(controller_class):
+class UnauthenticatedController(scsi_controller_class):
     def get_device_identification_page(self):
         return self
 
@@ -24,7 +24,7 @@ class UnauthenticatedController(controller_class):
     def get_system_serial(self):
         return 20011
 
-class MappedVolumed(block_class):
+class MappedVolumed(scsi_block_class):
     def get_device_identification_page(self):
         return self
 

@@ -6,7 +6,7 @@ from ..base import StorageModel
 from infi.pyutils.lazy import cached_method, cached_function
 
 from logging import getLogger
-logger = getLogger()
+logger = getLogger(__name__)
 
 POSSIBLE_RESCAN_SCSI_BUS_FILENAMES = ["rescan-scsi-bus", "rescan-scsi-bus.sh"]
 POSSIBLE_PATH_LOCATIONS = ["/sbin", "/bin", "/usr/bin", "/usr/sbin"]
@@ -106,7 +106,7 @@ class LinuxStorageModel(StorageModel):
         from .mount import LinuxMountRepository
         return LinuxMountRepository()
 
-    def initiate_rescan(self, wait_for_completion=False):
+    def initiate_rescan(self, wait_for_completion=True):
         """the first attempt will be to use rescan-scsi-bus.sh, which comes out-of-the-box in redhat distributions,
         and from the debian packager scsitools.
         If and when we'll encounter a case in which this script doesn't work as expected, we will port it to Python

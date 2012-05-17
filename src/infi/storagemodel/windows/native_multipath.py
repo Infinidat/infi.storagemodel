@@ -26,7 +26,7 @@ MPIO_BUS_DRIVER_INSTANCE_ID = u"Root\\MPIO\\0000".lower()
 
 class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
-    def get_all_multipath_devices(self):
+    def get_all_multipath_block_devices(self):
         from infi.devicemanager import DeviceManager
         from infi.wmpio import WmiClient, get_multipath_devices
 
@@ -45,13 +45,17 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
             return multipath_dict[key]
 
         def _get_multipath_device(device_object):
-            return WindowsNativeMultipathDevice(device_object, _get_multipath_object(device_object), policies_dict)
+            return WindowsNativeMultipathBlockDevice(device_object, _get_multipath_object(device_object), policies_dict)
 
         return map(_get_multipath_device, devices)
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         return filter(lambda device: device.get_parent()._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
                          scsi_block_devices)
+
+    @cached_method
+    def get_all_multipath_storage_controller_devices(self):
+        return []
 
 class WindowsFailoverOnly(multipath.FailoverOnly):
     def __init__(self, policy):
@@ -81,9 +85,9 @@ class WindowsLeastBlocks(multipath.LeastBlocks):
 class WindowsLeastQueueDepth(multipath.LeastQueueDepth):
     pass
 
-class WindowsNativeMultipathDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, multipath.MultipathDevice):
+class WindowsNativeMultipathBlockDevice(WindowsDiskDeviceMixin, WindowsDeviceMixin, multipath.MultipathBlockDevice):
     def __init__(self, device_object, multipath_object, policies_dict):
-        super(WindowsNativeMultipathDevice, self).__init__()
+        super(WindowsNativeMultipathBlockDevice, self).__init__()
         self._device_object = device_object
         self._multipath_object = multipath_object
         self._policies_dict = policies_dict
