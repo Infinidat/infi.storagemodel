@@ -43,13 +43,19 @@ class LinuxSCSIGenericDevice(LinuxSCSIDeviceMixin, scsi.SCSIDevice):
     def get_display_name(self):
         return self.sysfs_device.get_scsi_generic_device_name()
 
-class LinuxSCSIBlockDevice(LinuxSCSIBlockDeviceMixin, scsi.SCSIBlockDevice, LinuxSCSIGenericDevice):
+class LinuxSCSIBlockDevice(LinuxSCSIBlockDeviceMixin, scsi.SCSIBlockDevice):
+    def __init__(self, sysfs_device):
+        super(LinuxSCSIBlockDevice, self).__init__()
+        self.sysfs_device = sysfs_device
+
     @cached_method
     def get_display_name(self):
         return self.sysfs_device.get_block_device_name()
 
 class LinuxSCSIStorageController(LinuxSCSIDeviceMixin, scsi.SCSIStorageController):
-    pass
+    def __init__(self, sysfs_device):
+        super(LinuxSCSIStorageController, self).__init__()
+        self.sysfs_device = sysfs_device
 
 class LinuxSCSIModel(scsi.SCSIModel):
     def __init__(self, sysfs):
