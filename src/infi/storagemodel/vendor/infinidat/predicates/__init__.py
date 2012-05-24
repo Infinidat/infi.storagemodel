@@ -35,3 +35,20 @@ class InfinidatVolumeDoesNotExist(InfinidatVolumeExists):
         return "<InfinidatVolumeDoesNotExist(system_serial={!r}, volume_id={!r})>".format(self.system_serial,
                                                                                           self.volume_id)
 
+from infi.storagemodel.predicates import FiberChannelMappingExists, FiberChannelMappingNotExists
+
+class FiberChannelMappingExistsUsingLinuxSG(FiberChannelMappingExists):
+    def _get_chain_of_devices(self, model):
+        from itertools import chain
+        return chain(model.get_scsi().get_all_linux_scsi_generic_disk_devices(),
+                     model.get_scsi().get_all_storage_controller_devices())
+
+    def __repr__(self):
+        return "<FiberChannelMappingExistsUsingLinuxSG: {!r}>".format(self.connectivity)
+
+class FiberChannelMappingNotExistsUsingLinuxSG(FiberChannelMappingExistsUsingLinuxSG):
+    def __call__(self):
+        return not super(FiberChannelMappingNotExistsUsingLinuxSG, self).__call__()
+
+    def __repr__(self):
+        return "<FiberChannelMappingNotExistsUsingLinuxSG: {!r}>".format(self.connectivity)

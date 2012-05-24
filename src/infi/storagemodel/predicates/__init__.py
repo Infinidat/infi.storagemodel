@@ -70,14 +70,17 @@ class FiberChannelMappingExists(object):
             return True
         return False
 
+    def _get_chain_of_devices(self, model):
+        from itertools import chain
+        return chain(model.get_scsi().get_all_scsi_block_devices(),
+                     model.get_scsi().get_all_storage_controller_devices())
+
     def __call__(self):
         from .. import get_storage_model
-        from itertools import chain
         model = get_storage_model()
         logger.debug("Working on: {!r}".format(self))
         logger.debug("Looking for all scsi block devices")
-        for device in chain(model.get_scsi().get_all_scsi_block_devices(),
-                            model.get_scsi().get_all_storage_controller_devices()):
+        for device in self._get_chain_of_devices(model):
             device.get_scsi_test_unit_ready()
             logger.debug("Found device: {!r}".format(device))
             if self._is_fc_connectivity_a_match(device):
