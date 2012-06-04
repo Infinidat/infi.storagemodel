@@ -57,6 +57,10 @@ class LinuxSCSIStorageController(LinuxSCSIDeviceMixin, scsi.SCSIStorageControlle
         super(LinuxSCSIStorageController, self).__init__()
         self.sysfs_device = sysfs_device
 
+    @cached_method
+    def get_display_name(self):
+        return self.sysfs_device.get_scsi_generic_device_name()
+
 class LinuxSCSIModel(scsi.SCSIModel):
     def __init__(self, sysfs):
         self.sysfs = sysfs
