@@ -97,6 +97,7 @@ class StorageModel(object):
         logger.debug("Initiating rescan")
         self.initiate_rescan(wait_on_rescan)
         while True:
+            logger.debug("Trying predicate: {!r}".format(predicate))
             result = self._try_predicate(predicate)
             if result is True:
                 logger.debug("Predicate returned True, finished rescanning")
