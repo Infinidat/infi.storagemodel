@@ -1,9 +1,10 @@
 from contextlib import contextmanager
 from ..base import scsi
-from ..errors import StorageModelFindError
+from ..errors import StorageModelFindError, DeviceDisappeared
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 from infi.storagemodel.base.scsi import SCSIBlockDevice
+from infi.exceptools import chain
 
 class LinuxSCSIDeviceMixin(object):
     @contextmanager
@@ -78,7 +79,10 @@ class LinuxSCSIModel(scsi.SCSIModel):
 
     @cached_method
     def get_all_storage_controller_devices(self):
-        return [ LinuxSCSIStorageController(sysfs_dev) for sysfs_dev in self.sysfs.get_all_scsi_storage_controllers() ]
+        try:
+            return [ LinuxSCSIStorageController(sysfs_dev) for sysfs_dev in self.sysfs.get_all_scsi_storage_controllers() ]
+        except (IOError, OSerror), error:
+            raise chain(DeviceDisappeared())
 
     def find_scsi_block_device_by_block_devno(self, devno):
         devices = [ dev for dev in self.get_all_scsi_block_devices() if dev.get_unix_block_devno() == devno ]
@@ -90,5 +94,9 @@ class LinuxSCSIModel(scsi.SCSIModel):
     def get_all_linux_scsi_generic_disk_devices(self):
         """Linux specific: returns a list of ScsiDisk objects that do not rely on SD"""
         from .sysfs import SysfsSDDisk
-        return [LinuxSCSIBlockDevice(disk) if isinstance(disk, SysfsSDDisk) else LinuxSCSIGenericDevice(disk)
-                for disk in self.sysfs.get_all_sg_disks()]
+        try:
+            return [LinuxSCSIBlockDevice(disk) if isinstance(disk, SysfsSDDisk) else LinuxSCSIGenericDevice(disk)
+                    for disk in self.sysfs.get_all_sg_disks()]
+        except (IOError, OSerror), error:
+            raise chain(DeviceDisappeared())
+
