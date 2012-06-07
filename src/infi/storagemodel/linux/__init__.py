@@ -67,6 +67,7 @@ def _call_rescan_script(env=None, sync=False):
         command = [rescan_script, '--remove']
         execute(command, env=env) if sync else _daemonize_and_run(command, env)
     except Exception:
+        logger.exception("failed to initiate rescan")
         raise chain(StorageModelError("failed to initiate rescan"))
 
 def _daemonize_and_run(command, env):
