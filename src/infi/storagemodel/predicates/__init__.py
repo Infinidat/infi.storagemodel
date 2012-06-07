@@ -11,7 +11,13 @@ class PredicateList(object):
         self._list_of_predicates = list_of_predicates
 
     def __call__(self):
-        return all([predicate() for predicate in self._list_of_predicates])
+        results = []
+        for predicate in self._list_of_predicates:
+            result = predicate()
+            logger.debug("Predicate {!r} returned {}".format(predicate, result))
+            results.append(result)
+        logger.debug("Returning {}".format(all(results)))
+        return all(results)
 
     def __repr__(self):
         return "<PredicateList: {!r}>".format(self._list_of_predicates)
@@ -70,22 +76,29 @@ class FiberChannelMappingExists(object):
             return True
         return False
 
+    def _get_chain_of_devices(self, model):
+        from itertools import chain
+        return chain(model.get_scsi().get_all_scsi_block_devices(),
+                     model.get_scsi().get_all_storage_controller_devices())
+
     def __call__(self):
         from .. import get_storage_model
-        from itertools import chain
         model = get_storage_model()
         logger.debug("Working on: {!r}".format(self))
         logger.debug("Looking for all scsi block devices")
-        for device in chain(model.get_scsi().get_all_scsi_block_devices(),
-                            model.get_scsi().get_all_storage_controller_devices()):
+        for device in self._get_chain_of_devices(model):
             device.get_scsi_test_unit_ready()
             logger.debug("Found device: {!r}".format(device))
             if self._is_fc_connectivity_a_match(device):
+                logger.debug("Connectivity matches")
                 return True
         for device in model.get_native_multipath().get_all_multipath_block_devices():
+            logger.debug("Found device: {!r}".format(device))
             for path in device.get_paths():
                 if self._is_fc_connectivity_a_match(path):
+                    logger.debug("Connectivity matches")
                     return True
+        logger.debug("Did not find the requested connection")
         return False
 
     def __repr__(self):
