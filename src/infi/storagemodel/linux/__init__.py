@@ -53,7 +53,7 @@ def _is_ubuntu():
     distname = linux_distribution()[0].lower()
     return distname in ["ubuntu", ]
 
-def _call_rescan_script(env=None, sync=False):
+def _call_rescan_script(env=None, sync=False, shell=True):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
     that the script does not exist"""
     from infi.exceptools import chain
@@ -64,20 +64,23 @@ def _call_rescan_script(env=None, sync=False):
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
         logger.info("Calling rescan-scsi-bus.sh")
-        command = [rescan_script, '--remove']
-        execute(command, env=env) if sync else _daemonize_and_run(command, env)
+        if shell:
+            command = "{} --remove | logger".format(rescan_script)
+        else:
+            command = [rescan_script, '--remove']
+        execute(command, shell=shell, env=env) if sync else _daemonize_and_run(command, env, shell)
     except Exception:
         logger.exception("failed to initiate rescan")
         raise chain(StorageModelError("failed to initiate rescan"))
 
-def _daemonize_and_run(command, env):
+def _daemonize_and_run(command, env, shell):
     from infi.execute import execute
     first_child_pid = os.fork()
     if first_child_pid != 0:
         os.waitpid(first_child_pid, 0)
     else:
         basic_daemonize()
-        script = execute(command, env=env)
+        script = execute(command, env=env, shell=shell)
         logger.info("rescan-scsi-bus.sh finished with return code {}".format(script.get_returncode()))
         os._exit(0)
 
