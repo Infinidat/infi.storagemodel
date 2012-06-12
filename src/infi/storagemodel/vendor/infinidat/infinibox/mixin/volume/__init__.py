@@ -38,11 +38,11 @@ class InfiniBoxVolumeMixin(object):
 
     def _get_volume_name_from_management(self):
         volume = self._get_volume_name_from_management()
-        return None if volume is None else return volume['name']
+        return None if volume is None else volume['name']
 
     def _get_volume_type_from_management(self):
         volume = self._get_volume_name_from_management()
-        return None if volume is None else return volume['name']
+        return None if volume is None else volume['name']
 
     def _get_volume_from_management(self):
         volume_id = self.get_volume_id()
