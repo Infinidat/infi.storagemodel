@@ -22,17 +22,30 @@ class InfiniBoxVolumeMixin(object):
 
     @cached_method
     def get_volume_name(self):
-        """:returns: A string if the host is defined in the system, or None if it is Not"""
+        """:returns: A string if the volume name inside the Infinibox, or None if not a volume"""
         try:
             return self._get_volume_name_from_json_page()
         except JSONInquiryException:
             return self._get_volume_name_from_management()
 
+    @cached_method
+    def get_volume_type(self):
+        """:returns: A string of the volume type, or None if it is not a volume"""
+        return self._get_volume_type_from_management()
+
     def _get_volume_name_from_json_page(self):
         return self._get_key_from_json_page('vol')
 
     def _get_volume_name_from_management(self):
+        volume = self._get_volume_name_from_management()
+        return None if volume is None else return volume['name']
+
+    def _get_volume_type_from_management(self):
+        volume = self._get_volume_name_from_management()
+        return None if volume is None else return volume['name']
+
+    def _get_volume_from_management(self):
         volume_id = self.get_volume_id()
         sender = self._get_management_json_sender()
-        return None if volume_id == -1 or volume_id == 0 else sender.get('volumes/{}'.format(volume_id))['name']
+        return None if volume_id == -1 or volume_id == 0 else sender.get('volumes/{}'.format(volume_id))
 
