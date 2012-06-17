@@ -3,10 +3,15 @@ import unittest
 import mock
 
 from . import LinuxStorageModel
+from infi.storagemodel import get_platform_name
 
 # pylint: disable=W0312,W0212,W0710,R0904
 
 class InitiateRescan(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if get_platform_name() != 'linux':
+            raise unittest.SkipTest("This tests runs only on Linux")
 
     def test_for_real(self):
         from . import is_rescan_script_exists

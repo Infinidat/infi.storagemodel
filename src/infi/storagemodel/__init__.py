@@ -4,11 +4,16 @@ __all__ = [ 'get_storage_model' ]
 
 __storage_model = None
 
-def _get_platform_specific_storagemodel_class():
-    from platform import system # do platform-specific magic here.
+def get_platform_name():
+    from platform import system
     plat = system().lower().replace('-', '')
+    return plat
+
+def _get_platform_specific_storagemodel_class():
+    # do platform-specific magic here.
     from .base import StorageModel as PlatformStorageModel # helps IDEs
     from brownie.importing import import_string
+    plat = get_platform_name()
     platform_module_string = "{}.{}".format(__name__, plat)
     platform_module = import_string(platform_module_string)
     PlatformStorageModel = getattr(platform_module, "{}StorageModel".format(plat.capitalize()))
