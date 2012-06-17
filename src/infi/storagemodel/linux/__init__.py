@@ -51,6 +51,10 @@ def _is_ubuntu():
     distname = linux_distribution()[0].lower()
     return distname in ["ubuntu", ]
 
+def _get_all_host_bus_adapter_numbers():
+    from infi.hbaapi import get_ports_collection
+    return [port.hct[0] for port in get_ports_collection().get_ports()]
+
 def _call_rescan_script(env=None, sync=False, shell=True):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
     that the script does not exist"""
@@ -58,14 +62,15 @@ def _call_rescan_script(env=None, sync=False, shell=True):
     from infi.execute import execute
     from ..errors import StorageModelError
     rescan_script = _locate_rescan_script()
+    hba_numbers = self._get_all_host_bus_adapter_numbers()
     if rescan_script is None:
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
         logger.info("Calling rescan-scsi-bus.sh")
         if shell:
-            command = "{} --remove | logger".format(rescan_script)
+            command = "{} --remove {} | logger".format(rescan_script, ' '.join(hba_numbers))
         else:
-            command = [rescan_script, '--remove']
+            command = [rescan_script, '--remove'] + hba_numbers
         execute(command, shell=shell, env=env) if sync else _daemonize_and_run(command, env, shell)
     except Exception:
         logger.exception("failed to initiate rescan")
