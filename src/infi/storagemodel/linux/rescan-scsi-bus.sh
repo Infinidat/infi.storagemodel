@@ -401,9 +401,6 @@ dolunscan()
       echo -e "${norm}\e[B\e[B"
       if test -e /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device; then
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/delete
-	# FIXME: Can we skip udevadm settle for removal?
-	#udevadm_settle
-	usleep 20000
       else
         echo "scsi remove-single-device $devnr" > /proc/scsi/scsi
 	if test $RC -eq 1 -o $lun -eq 0 ; then
@@ -415,7 +412,6 @@ dolunscan()
     if test $RC = 0 -o "$forcerescan" ; then
       if test -e /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device; then
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/rescan
-	udevadm_settle
       fi
     fi
     printf "\r\e[A\e[A\e[A${yellow}OLD: $norm"
@@ -431,7 +427,6 @@ dolunscan()
     printf "\r${green}NEW: $norm"
     if test -e /sys/class/scsi_host/host${host}/scan; then
       echo "$channel $id $lun" > /sys/class/scsi_host/host${host}/scan 2> /dev/null
-      udevadm_settle
     else
       echo "scsi add-single-device $devnr" > /proc/scsi/scsi
     fi
@@ -465,7 +460,6 @@ doreportlun()
     #printf "\r${green}NEW: $norm"
     if test -e /sys/class/scsi_host/host${host}/scan; then
       echo "$channel $id $lun" > /sys/class/scsi_host/host${host}/scan 2> /dev/null
-      udevadm_settle
     else
       echo "scsi add-single-device $devnr" > /proc/scsi/scsi
     fi
@@ -499,7 +493,6 @@ doreportlun()
   if test "$REPLUNSTAT" = "1"; then
     if test -e /sys/class/scsi_host/host${host}/scan; then
       echo "$channel $id -" > /sys/class/scsi_host/host${host}/scan 2> /dev/null
-      udevadm_settle
     else
       echo "scsi add-single-device $host $channel $id $SCAN_WILD_CARD" > /proc/scsi/scsi
     fi
@@ -716,13 +709,11 @@ for host in $hosts; do
     # It's pointless to do a target scan on FC
     if test -n "$lipreset" ; then
       echo 1 > /sys/class/fc_host/host$host/issue_lip 2> /dev/null;
-      udevadm_settle
     fi
     # We used to always trigger a rescan for FC to update channels and targets
     # Commented out -- as discussed with Hannes we should rely
     # on the main loop doing the scan, no need to do it here.
     #echo "- - -" > /sys/class/scsi_host/host$host/scan 2> /dev/null;
-    #udevadm_settle
     channelsearch=
     idsearch=
   else
@@ -746,6 +737,7 @@ done
 if test -n "$OLD_SCANFLAGS"; then
   echo $OLD_SCANFLAGS > /sys/module/scsi_mod/parameters/default_dev_flags
 fi
+udevadm_settle
 echo "$found new device(s) found.               "
 echo "$rmvd device(s) removed.                 "
 
