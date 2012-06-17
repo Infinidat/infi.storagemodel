@@ -39,7 +39,7 @@ class InitiateRescan(unittest.TestCase):
 class RescanScript(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if get_platform_name() != 'windows':
+        if get_platform_name() == 'windows':
             raise unittest.SkipTest("This test does not run on Windows because there is no fork!")
 
     def test_locate(self):
