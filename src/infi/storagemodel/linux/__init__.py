@@ -37,11 +37,9 @@ def _locate_file_in_path(possible_filenames):
 def _locate_rescan_script():
     from os import access, environ, X_OK, chmod
     from os.path import exists, join
-    if _is_ubuntu():
-        # The script in ubuntu waits to long (hard-coded 11 seconds) on each failed device
-        # We use a modified version of the script that does not wait that long
-        return _write_an_executable_copy_of_builtin_rescan_script()
-    return _locate_file_in_path(POSSIBLE_RESCAN_SCSI_BUS_FILENAMES)
+    # The script in ubuntu waits to long (hard-coded 11 seconds) on each failed device
+    # We use a modified version of the script that does not wait that long
+    return _write_an_executable_copy_of_builtin_rescan_script()
 
 def _call_partprobe(env=None, sync=False):
     from infi.execute import execute
