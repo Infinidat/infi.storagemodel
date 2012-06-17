@@ -232,9 +232,7 @@ testonline ()
     print_and_scroll_back "$host:$channel:$id:$lun $SGDEV ($RMB) "
   fi
   while test $RC = 2 -o $RC = 6 && test $ctr -le 8; do
-    if test $RC = 2 -a "$RMB" != "1"; then echo -n "."; let $LN+=1; sleep 1
-    else usleep 20000; fi
-    let ctr+=1
+    let ctr+=9
     sg_turs /dev/$SGDEV >/dev/null 2>&1
     RC=$?
   done
