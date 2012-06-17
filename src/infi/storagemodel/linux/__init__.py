@@ -37,8 +37,7 @@ def _locate_file_in_path(possible_filenames):
 def _locate_rescan_script():
     from os import access, environ, X_OK, chmod
     from os.path import exists, join
-    # The script in ubuntu waits to long (hard-coded 11 seconds) on each failed device
-    # We use a modified version of the script that does not wait that long
+    # STORAGEMODEL-138 because the os-supplied rescan-scsi-bus.sh is too slow, we use a modified version of it
     return _write_an_executable_copy_of_builtin_rescan_script()
 
 def _call_partprobe(env=None, sync=False):
