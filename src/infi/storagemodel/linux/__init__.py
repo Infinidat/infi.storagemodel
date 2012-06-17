@@ -62,7 +62,7 @@ def _call_rescan_script(env=None, sync=False, shell=True):
     from infi.execute import execute
     from ..errors import StorageModelError
     rescan_script = _locate_rescan_script()
-    hba_numbers = self._get_all_host_bus_adapter_numbers()
+    hba_numbers = _get_all_host_bus_adapter_numbers()
     if rescan_script is None:
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
