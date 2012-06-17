@@ -37,6 +37,11 @@ class InitiateRescan(unittest.TestCase):
             self.assertTrue(patch.called)
 
 class RescanScript(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if get_platform_name() != 'windows':
+            raise unittest.SkipTest("This test does not run on Windows because there is no fork!")
+
     def test_locate(self):
         from . import _locate_rescan_script
         script = _locate_rescan_script()
