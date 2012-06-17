@@ -409,7 +409,7 @@ dolunscan()
 	fi
       fi
     fi
-    if test $RC = 0 -o "$forcerescan" ; then
+    if test -o "$forcerescan" ; then
       if test -e /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device; then
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/rescan
       fi
