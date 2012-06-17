@@ -1,6 +1,5 @@
 import os
 from contextlib import contextmanager
-from daemon import basic_daemonize
 
 from ..base import StorageModel
 from infi.pyutils.lazy import cached_method, cached_function
@@ -61,7 +60,7 @@ def _call_rescan_script(env=None, sync=False, shell=True):
     from infi.execute import execute
     from ..errors import StorageModelError
     rescan_script = _locate_rescan_script()
-    hba_numbers = _get_all_host_bus_adapter_numbers()
+    hba_numbers = [str(host_number) for host_number in _get_all_host_bus_adapter_numbers()]
     if rescan_script is None:
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
@@ -76,6 +75,7 @@ def _call_rescan_script(env=None, sync=False, shell=True):
         raise chain(StorageModelError("failed to initiate rescan"))
 
 def _daemonize_and_run(command, env, shell):
+    from daemon import basic_daemonize
     from infi.execute import execute
     first_child_pid = os.fork()
     if first_child_pid != 0:
