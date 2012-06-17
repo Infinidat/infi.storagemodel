@@ -380,7 +380,7 @@ dolunscan()
 {
   SCSISTR=
   devnr="$host $channel $id $lun"
-  echo -e " Scanning for device $devnr ... "
+  echo -e " Scanning (LUN Scan) for device $devnr ... "
   printf "${yellow}OLD: $norm"
   testexist
   # Special case: lun 0 just got added (for reportlunscan),
@@ -455,7 +455,7 @@ doreportlun()
   lun=0
   SCSISTR=
   devnr="$host $channel $id $lun"
-  echo -en " Scanning for device $devnr ...\r"
+  echo -en " Scanning (Report LUNs) for device $devnr ...\r"
   lun0added=
   #printf "${yellow}OLD: $norm"
   # Phase one: If LUN0 does not exist, try to add
