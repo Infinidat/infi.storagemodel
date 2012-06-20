@@ -37,12 +37,12 @@ class InfiniBoxVolumeMixin(object):
         return self._get_key_from_json_page('vol')
 
     def _get_volume_name_from_management(self):
-        volume = self._get_volume_name_from_management()
+        volume = self._get_volume_from_management()
         return None if volume is None else volume['name']
 
     def _get_volume_type_from_management(self):
-        volume = self._get_volume_name_from_management()
-        return None if volume is None else volume['name']
+        volume = self._get_volume_from_management()
+        return None if volume is None else volume['type']
 
     def _get_volume_from_management(self):
         volume_id = self.get_volume_id()
