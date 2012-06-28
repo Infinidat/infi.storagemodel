@@ -61,6 +61,7 @@ def safe_repr(obj):
 
 def check_for_scsi_errors(func):
     from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError
+    from sys import exc_info
     @wraps(func)
     def callable(*args, **kwargs):
         try:
@@ -78,7 +79,7 @@ def check_for_scsi_errors(func):
             raise
         except (IOError, OSError, AsiOSError, AsiSCSIError), error:
             msg = "device {!r} disappeared during {!r}".format(safe_repr(device), func)
-            logger.debug(msg)
+            logger.error(msg, exc_info=exc_info())
             raise chain(DeviceDisappeared(msg))
     return callable
 

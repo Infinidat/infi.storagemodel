@@ -81,7 +81,7 @@ class LinuxSCSIModel(scsi.SCSIModel):
     def get_all_storage_controller_devices(self):
         try:
             return [ LinuxSCSIStorageController(sysfs_dev) for sysfs_dev in self.sysfs.get_all_scsi_storage_controllers() ]
-        except (IOError, OSerror), error:
+        except (IOError, OSError), error:
             raise chain(DeviceDisappeared())
 
     def find_scsi_block_device_by_block_devno(self, devno):
@@ -97,6 +97,6 @@ class LinuxSCSIModel(scsi.SCSIModel):
         try:
             return [LinuxSCSIBlockDevice(disk) if isinstance(disk, SysfsSDDisk) else LinuxSCSIGenericDevice(disk)
                     for disk in self.sysfs.get_all_sg_disks()]
-        except (IOError, OSerror), error:
+        except (IOError, OSError), error:
             raise chain(DeviceDisappeared())
 

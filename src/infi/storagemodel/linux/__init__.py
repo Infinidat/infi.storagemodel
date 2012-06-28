@@ -1,6 +1,5 @@
 import os
 from contextlib import contextmanager
-from daemon import basic_daemonize
 
 from ..base import StorageModel
 from infi.pyutils.lazy import cached_method, cached_function
@@ -37,47 +36,53 @@ def _locate_file_in_path(possible_filenames):
 def _locate_rescan_script():
     from os import access, environ, X_OK, chmod
     from os.path import exists, join
-    if _is_ubuntu():
-        # The script in ubuntu waits to long (hard-coded 11 seconds) on each failed device
-        # We use a modified version of the script that does not wait that long
-        return _write_an_executable_copy_of_builtin_rescan_script()
-    return _locate_file_in_path(POSSIBLE_RESCAN_SCSI_BUS_FILENAMES)
+    # STORAGEMODEL-138 because the os-supplied rescan-scsi-bus.sh is too slow, we use a modified version of it
+    return _write_an_executable_copy_of_builtin_rescan_script()
 
 def _call_partprobe(env=None, sync=False):
     from infi.execute import execute
     command = [_locate_file_in_path(POSSIBLE_PARTPROBE_FILENAME), ]
-    execute(command, env=env) if sync else _daemonize_and_run(command, env)
+    execute(command, env=env) if sync else _daemonize_and_run(command, env, False)
 
 def _is_ubuntu():
     from platform import linux_distribution
     distname = linux_distribution()[0].lower()
     return distname in ["ubuntu", ]
 
-def _call_rescan_script(env=None, sync=False):
+def _get_all_host_bus_adapter_numbers():
+    from infi.hbaapi import get_ports_collection
+    return [port.hct[0] for port in get_ports_collection().get_ports()]
+
+def _call_rescan_script(env=None, sync=False, shell=True):
     """for testability purposes, we want to call execute with no environment variables, to mock the effect
     that the script does not exist"""
     from infi.exceptools import chain
     from infi.execute import execute
     from ..errors import StorageModelError
     rescan_script = _locate_rescan_script()
+    hba_numbers = [str(host_number) for host_number in _get_all_host_bus_adapter_numbers()]
     if rescan_script is None:
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
         logger.info("Calling rescan-scsi-bus.sh")
-        command = [rescan_script, '--remove']
-        execute(command, env=env) if sync else _daemonize_and_run(command, env)
+        if shell:
+            command = "{} --remove {} | logger".format(rescan_script, ' '.join(hba_numbers))
+        else:
+            command = [rescan_script, '--remove'] + hba_numbers
+        execute(command, shell=shell, env=env) if sync else _daemonize_and_run(command, env, shell)
     except Exception:
         logger.exception("failed to initiate rescan")
         raise chain(StorageModelError("failed to initiate rescan"))
 
-def _daemonize_and_run(command, env):
+def _daemonize_and_run(command, env, shell):
+    from daemon import basic_daemonize
     from infi.execute import execute
     first_child_pid = os.fork()
     if first_child_pid != 0:
         os.waitpid(first_child_pid, 0)
     else:
         basic_daemonize()
-        script = execute(command, env=env)
+        script = execute(command, env=env, shell=shell)
         logger.info("rescan-scsi-bus.sh finished with return code {}".format(script.get_returncode()))
         os._exit(0)
 
