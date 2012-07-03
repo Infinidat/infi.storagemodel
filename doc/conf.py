@@ -43,6 +43,23 @@ master_doc = 'index'
 project = u'infi.storagemodel'
 copyright = u'2011, Guy Rozendorn'
 
+###
+import os
+import sys
+curdir = os.path.abspath(os.curdir)
+pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+os.chdir(pardir)
+os.system("mkdir .cache")
+os.system("python bootstrap.py")
+os.system("bin/buildout -c buildout-version.cfg")
+os.system("bin/buildout -c buildout-doc.cfg")
+os.chdir(curdir)
+
+sys.path.append(os.path.join(pardir, "src"))
+for egg in os.listdir(os.path.join(pardir, "eggs")):
+  sys.path.append(os.path.join(pardir, "eggs", egg))
+###
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
