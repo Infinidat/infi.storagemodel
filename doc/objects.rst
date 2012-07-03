@@ -30,7 +30,7 @@ Multipath Objects
 Multipath Device
 ----------------
 
-.. autoclass:: MultipathBlockDevice
+.. autoclass:: MultipathDevice
     :inherited-members:
 
 Multipath Path
