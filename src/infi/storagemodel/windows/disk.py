@@ -16,11 +16,11 @@ class WindowsDiskDrive(disk.DiskDrive):
 
     @cached_method
     def get_storage_device(self):
-        disk.DiskDrive.get_storage_device(self)
+        return self._storage_device
 
     @cached_method
     def get_block_access_path(self):
-        self._disk_object._path
+        return self._disk_object._path
 
     def is_empty(self):
         return len(self._disk_object.get_partitions()) == 0
