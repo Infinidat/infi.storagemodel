@@ -97,6 +97,11 @@ class MountManager(object):
         raise NotImplementedError()
 
     @cached_method
+    def get_creatable_file_systems(self): # pragma: no cover
+        """:returns: a list of :class:`.FileSystem` objects"""
+        raise NotImplementedError()
+
+    @cached_method
     def get_recommended_file_system(self): # pragma: no cover
         """:returns: a :class:`.FileSystem` objects"""
         raise NotImplementedError()

@@ -41,6 +41,9 @@ class WindowsMountManager(mount.MountManager):
 
     def get_available_file_systems(self):
         return [self.get_recommended_file_system(), ]
+        
+    def get_creatable_file_systems(self):
+        return [self.get_recommended_file_system(), ]
 
     def get_recommended_file_system(self):
         from .filesystem import WindowsFileSystem
