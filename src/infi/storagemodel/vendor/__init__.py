@@ -14,9 +14,9 @@ class VendorMultipathBlockDevice(object):
         super(VendorMultipathBlockDevice, self).__init__()
         self.device = device
 
-class VendorMultipathStorageControllerDevice(object):
+class VendorMultipathStorageController(object):
     def __init__(self, device):
-        super(VendorMultipathStorageControllerDevice, self).__init__()
+        super(VendorMultipathStorageController, self).__init__()
         self.device = device
 
 class VendorFactoryImpl(object):
@@ -30,7 +30,7 @@ class VendorFactoryImpl(object):
         assert issubclass(scsi_block_class, VendorSCSIBlockDevice)
         assert issubclass(scsi_controller_class, VendorSCSIStorageController)
         assert issubclass(multipath_block_class, VendorMultipathBlockDevice)
-        assert issubclass(multipath_controller_class, VendorMultipathStorageControllerDevice)
+        assert issubclass(multipath_controller_class, VendorMultipathStorageController)
         self.vendor_mapping[vid_pid] = dict(scsi_block=scsi_block_class, scsi_controller=scsi_controller_class,
                                             multipath_block=multipath_block_class,
                                             multipath_controller=multipath_controller_class)
