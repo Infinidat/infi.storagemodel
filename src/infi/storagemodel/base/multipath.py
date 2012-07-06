@@ -48,7 +48,7 @@ class NativeMultipathModel(MultipathFrameworkModel):
     # This methods below are overriden by platform-specific implementations
     pass
 
-class MultipathStorageController(InquiryInformationMixin, object):
+class MultipathStorageControllerDevice(InquiryInformationMixin, object):
     @cached_method
     def get_vendor(self):
         """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
@@ -90,7 +90,7 @@ class MultipathStorageController(InquiryInformationMixin, object):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<MultipathStorageController {} for {}>".format(self.get_multipath_access_path(), self.get_display_name())
+        return "<MultipathStorageControllerDevice {} for {}>".format(self.get_multipath_access_path(), self.get_display_name())
 
 class MultipathBlockDevice(InquiryInformationMixin, object):
     @cached_method
