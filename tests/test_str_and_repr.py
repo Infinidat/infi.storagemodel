@@ -3,7 +3,10 @@ from infi.storagemodel import get_storage_model
 
 class ReprTestCase(unittest.TestCase):
     def setUp(self):
-        self.model = get_storage_model()
+        try:
+            self.model = get_storage_model()
+        except ImportError:
+            raise unittest.SkipTest()
         self.scsi = self.model.get_scsi()
     
     def test_repr(self):

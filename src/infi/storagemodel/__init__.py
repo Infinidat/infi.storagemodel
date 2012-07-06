@@ -4,6 +4,10 @@ __all__ = [ 'get_storage_model' ]
 
 __storage_model = None
 
+from logging import getLogger
+from infi.exceptools import chain
+logger = getLogger(__name__)
+
 def get_platform_name():
     from platform import system
     plat = system().lower().replace('-', '')
@@ -16,7 +20,12 @@ def _get_platform_specific_storagemodel_class():
     plat = get_platform_name()
     platform_module_string = "{}.{}".format(__name__, plat)
     platform_module = import_string(platform_module_string)
-    PlatformStorageModel = getattr(platform_module, "{}StorageModel".format(plat.capitalize()))
+    try:
+        PlatformStorageModel = getattr(platform_module, "{}StorageModel".format(plat.capitalize()))
+    except AttributeError:
+        msg = "Failed to import platform-specific storage mdodel"
+        logger.exception(msg)
+        raise chain(ImportError(msg))
     return PlatformStorageModel
 
 def _get_platform_specific_storagemodel():

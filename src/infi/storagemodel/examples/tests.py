@@ -8,7 +8,7 @@ class ExamplesTestCase(unittest.TestCase):
         try:
             _ = get_storage_model()
         except ImportError:
-            raise unittest.SkipTest
+            raise unittest.SkipTest()
 
     def test_devlist_runs(self):
         from . import devlist
