@@ -23,7 +23,7 @@ def _get_platform_specific_storagemodel_class():
     try:
         PlatformStorageModel = getattr(platform_module, "{}StorageModel".format(plat.capitalize()))
     except AttributeError:
-        msg = "Failed to import platform-specific storage mdodel"
+        msg = "Failed to import platform-specific storage model"
         logger.exception(msg)
         raise chain(ImportError(msg))
     return PlatformStorageModel
