@@ -1,5 +1,5 @@
 #!/bin/bash
-# Skript to rescan SCSI bus, using the 
+# Skript to rescan SCSI bus, using the
 # scsi add-single-device mechanism
 # (c) 1998--2010 Kurt Garloff <kurt@garloff.de>, GNU GPL v2 or v3
 # (c) 2006--2008 Hannes Reinecke, GNU GPL v2 or later
@@ -16,7 +16,7 @@ setcolor ()
   norm="\e[0;0m"
 }
 
-unsetcolor () 
+unsetcolor ()
 {
   red=""; green=""
   yellow=""; norm=""
@@ -49,9 +49,9 @@ white_out ()
 # Return hosts. sysfs must be mounted
 findhosts_26 ()
 {
-  hosts=`find /sys/class/scsi_host/host* -maxdepth 4 -type d -o -type l 2> /dev/null | awk -F'/' '{print $5}' | sed -e 's~host~~' | sort -nu` 
-  scsi_host_data=`echo "$hosts" | sed -e 's~^~/sys/class/scsi_host/host~'` 
-  for hostdir in $scsi_host_data; do 
+  hosts=`find /sys/class/scsi_host/host* -maxdepth 4 -type d -o -type l 2> /dev/null | awk -F'/' '{print $5}' | sed -e 's~host~~' | sort -nu`
+  scsi_host_data=`echo "$hosts" | sed -e 's~^~/sys/class/scsi_host/host~'`
+  for hostdir in $scsi_host_data; do
     hostno=${hostdir#/sys/class/scsi_host/host}
     if [ -f $hostdir/isp_name ] ; then
       hostname="qla2xxx"
@@ -62,7 +62,7 @@ findhosts_26 ()
     fi
     #hosts="$hosts $hostno"
     echo "Host adapter $hostno ($hostname) found."
-  done  
+  done
   if [ -z "$hosts" ] ; then
     echo "No SCSI host adapters found in sysfs"
     exit 1;
@@ -119,7 +119,7 @@ printtype ()
 
 print02i()
 {
-    if [ "$1" = "*" ] ; then 
+    if [ "$1" = "*" ] ; then
         echo "00"
     else
         printf "%02i" "$1"
@@ -127,10 +127,10 @@ print02i()
 }
 
 # Get /proc/scsi/scsi info for device $host:$channel:$id:$lun
-# Optional parameter: Number of lines after first (default = 2), 
+# Optional parameter: Number of lines after first (default = 2),
 # result in SCSISTR, return code 1 means empty.
 procscsiscsi ()
-{  
+{
   if test -z "$1"; then LN=2; else LN=$1; fi
   CHANNEL=`print02i "$channel"`
   ID=`print02i "$id"`
@@ -168,7 +168,7 @@ $SCSITMP"
 # Find sg device with 2.6 sysfs support
 sgdevice26 ()
 {
-  if test -e /sys/class/scsi_device/$host\:$channel\:$id\:$lun/device/generic; then	
+  if test -e /sys/class/scsi_device/$host\:$channel\:$id\:$lun/device/generic; then
     SGDEV=`readlink /sys/class/scsi_device/$host\:$channel\:$id\:$lun/device/generic`
     SGDEV=`basename $SGDEV`
   else
@@ -179,7 +179,7 @@ sgdevice26 ()
       fi
     done
     SGDEV=""
-  fi  
+  fi
 }
 
 # Find sg device with 2.4 report-devs extensions
@@ -197,7 +197,7 @@ sgdevice ()
   SGDEV=
   if test -d /sys/class/scsi_device; then
     sgdevice26
-  else  
+  else
     DRV=`grep 'Attached drivers:' /proc/scsi/scsi 2>/dev/null`
     repdevstat=$((1-$?))
     if [ $repdevstat = 0 ]; then
@@ -227,7 +227,7 @@ testonline ()
   RC=$?
   # Handle in progress of becoming ready and unit attention -- wait at max 11s
   declare -i ctr=0
-  if test $RC = 2 -o $RC = 6; then 
+  if test $RC = 2 -o $RC = 6; then
     RMB=`sg_inq /dev/$SGDEV | grep 'RMB=' | sed 's/^.*RMB=\(.\).*$/\1/'`
     print_and_scroll_back "$host:$channel:$id:$lun $SGDEV ($RMB) "
   fi
@@ -243,6 +243,8 @@ testonline ()
   RC=0
   # OK, device online, compare INQUIRY string
   INQ=`sg_inq $sg_len_arg /dev/$SGDEV 2>/dev/null`
+  echo "sg_inq output for /dev/$SGDEV:"
+  echo "$INQ"
   IVEND=`echo "$INQ" | grep 'Vendor identification:' | sed 's/^[^:]*: \(.*\)$/\1/'`
   IPROD=`echo "$INQ" | grep 'Product identification:' | sed 's/^[^:]*: \(.*\)$/\1/'`
   IPREV=`echo "$INQ" | grep 'Product revision level:' | sed 's/^[^:]*: \(.*\)$/\1/'`
@@ -348,7 +350,7 @@ getluns()
       # Swap LUN number
       l0=$(printf '%u' 0x$lun)
       l1=$(( ($l0 >> 48) & 0xffff ))
-      l2=$(( ($l0 >> 32) & 0xffff )) 
+      l2=$(( ($l0 >> 32) & 0xffff ))
       l3=$(( ($l0 >> 16) & 0xffff ))
       l4=$(( $l0 & 0xffff ))
       l0=$(( ( ( ($l4 * 0xffff) + $l3 ) * 0xffff + $l2 ) * 0xffff + $l1 ))
@@ -360,7 +362,7 @@ getluns()
 # Wait for udev to settle (create device nodes etc.)
 udevadm_settle()
 {
-  if test -x /sbin/udevadm; then 
+  if test -x /sbin/udevadm; then
     print_and_scroll_back " Calling udevadm settle (can take a while) "
     /sbin/udevadm settle
     white_out
@@ -433,11 +435,11 @@ dolunscan()
       # Device not present
       printf "\r\e[A";
       # Optimization: if lun==0, stop here (only if in non-remove mode)
-      if test $lun = 0 -a -z "$remove" -a $optscan = 1; then 
+      if test $lun = 0 -a -z "$remove" -a $optscan = 1; then
         break;
       fi
-    else 
-      let found+=1; 
+    else
+      let found+=1;
     fi
   fi
 }
@@ -486,7 +488,7 @@ doreportlun()
   # OK -- if we don't have a LUN to send a REPORT_LUNS to, we could
   # fall back to wildcard scanning. Same thing if the device does not
   # support REPORT_LUNS
-  # TODO: We might be better off to ALWAYS use wildcard scanning if 
+  # TODO: We might be better off to ALWAYS use wildcard scanning if
   # it works
   if test "$REPLUNSTAT" = "1"; then
     if test -e /sys/class/scsi_host/host${host}/scan; then
@@ -514,7 +516,7 @@ doreportlun()
 	newsearch="$newsearch $tmplun"
       fi
     done
-    # OK, we have now done a lunscan on $lun and 
+    # OK, we have now done a lunscan on $lun and
     # $newsearch is the old $targetluns without $lun
     if [ -z "$inlist" ]; then
       # Stale lun
@@ -550,14 +552,14 @@ dosearch ()
     done
   done
 }
- 
+
 expandlist ()
 {
   list=$1
   result=""
   first=${list%%,*}
   rest=${list#*,}
-  while test ! -z "$first"; do 
+  while test ! -z "$first"; do
     beg=${first%%-*};
     if test "$beg" = "$first"; then
       result="$result $beg";
@@ -591,7 +593,7 @@ if test @$1 = @--help -o @$1 = @-h -o @$1 = @-?; then
     echo "--hosts=LIST:    Scan only host(s) in LIST"
     echo "--channels=LIST: Scan only channel(s) in LIST"
     echo "--ids=LIST:      Scan only target ID(s) in LIST"
-    echo "--luns=LIST:     Scan only lun(s) in LIST"  
+    echo "--luns=LIST:     Scan only lun(s) in LIST"
     echo "--sync/nosync:   Issue a sync / no sync [default: sync if remove]"
     echo "--attachpq3:     Tell kernel to attach sg to LUN 0 that reports PQ=3"
     echo "--reportlun2:    Tell kernel to try REPORT_LUN even on SCSI2 devices"
@@ -607,7 +609,7 @@ fi
 if test ! -d /sys/class/scsi_host/ -a ! -d /proc/scsi/; then
   echo "Error: SCSI subsystem not active"
   exit 1
-fi	
+fi
 
 # Make sure sg is there
 modprobe sg >/dev/null 2>&1
@@ -623,8 +625,8 @@ if test -x /usr/bin/sg_inq; then
     fi
 else
     echo "WARN: /usr/bin/sg_inq not present -- please install sg3_utils"
-    echo " or rescan-scsi-bus.sh might not fully work."     
-fi    
+    echo " or rescan-scsi-bus.sh might not fully work."
+fi
 
 # defaults
 unsetcolor
@@ -636,11 +638,11 @@ forceremove=
 optscan=1
 sync=1
 declare -i scan_flags=0
-if test -d /sys/class/scsi_host; then 
+if test -d /sys/class/scsi_host; then
   findhosts_26
-else  
+else
   findhosts
-fi  
+fi
 
 # Scan options
 opt="$1"
@@ -657,9 +659,9 @@ while test ! -z "$opt" -a -z "${opt##-*}"; do
     -forcerescan) remove=1; forcerescan=1 ;;
     -forceremove) remove=1; forceremove=1 ;;
     -hosts=*)     arg=${opt#-hosts=};   hosts=`expandlist $arg` ;;
-    -channels=*)  arg=${opt#-channels=};opt_channelsearch=`expandlist $arg` ;; 
-    -ids=*)   arg=${opt#-ids=};         opt_idsearch=`expandlist $arg` ;; 
-    -luns=*)  arg=${opt#-luns=};        lunsearch=`expandlist $arg` ;; 
+    -channels=*)  arg=${opt#-channels=};opt_channelsearch=`expandlist $arg` ;;
+    -ids=*)   arg=${opt#-ids=};         opt_idsearch=`expandlist $arg` ;;
+    -luns=*)  arg=${opt#-luns=};        lunsearch=`expandlist $arg` ;;
     -color) setcolor ;;
     -nooptscan) optscan=0 ;;
     -issue-lip) lipreset=1 ;;
@@ -673,17 +675,17 @@ while test ! -z "$opt" -a -z "${opt##-*}"; do
   esac
   shift
   opt="$1"
-done    
+done
 
 # Hosts given ?
-if test "@$1" != "@"; then 
+if test "@$1" != "@"; then
   hosts=$*
 fi
 
 if [ -d /sys/class/scsi_host -a ! -w /sys/class/scsi_host ]; then
   echo "You need to run scsi-rescan-bus.sh as root"
   exit 2
-fi  
+fi
 if test "$sync" = 1 -a "$remove" = 1; then sync=2; fi
 if test "$sync" = 2; then echo "Syncing file systems"; sync; fi
 if test -w /sys/module/scsi_mod/parameters/default_dev_flags -a $scan_flags != 0; then
@@ -696,7 +698,7 @@ if test -w /sys/module/scsi_mod/parameters/default_dev_flags -a $scan_flags != 0
   else
     unset OLD_SCANFLAGS
   fi
-fi  
+fi
 echo "Scanning SCSI subsystem for new devices"
 test -z "$remove" || echo " and remove devices that have disappeared"
 declare -i found=0
