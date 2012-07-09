@@ -119,3 +119,14 @@ class WaitForNothing(object):
     def __repr__(self):
         return "<WaitForNothing>"
 
+class ScsiDevicesAreReady(object):
+    def __call__(self):
+        from infi.get_storage_model import get_storage_model
+        model = get_storage_model()
+        scsi = model.get_scsi()
+        [device.get_scsi_test_unit_ready() for device in scsi.get_all_storage_controller_devices()]
+        [device.get_scsi_test_unit_ready() for device in scsi.get_all_scsi_block_devices()]
+        return True
+
+    def __repr__(self):
+        return "<ScsiDevicesAreReady>"
