@@ -121,7 +121,7 @@ class WaitForNothing(object):
 
 class ScsiDevicesAreReady(object):
     def __call__(self):
-        from infi.get_storage_model import get_storage_model
+        from infi.storagemodel import get_storage_model
         model = get_storage_model()
         scsi = model.get_scsi()
         [device.get_scsi_test_unit_ready() for device in scsi.get_all_storage_controller_devices()]
