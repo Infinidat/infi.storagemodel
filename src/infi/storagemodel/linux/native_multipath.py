@@ -82,6 +82,9 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         super(LinuxNativeMultipathModel, self).__init__()
         self.sysfs = sysfs
 
+    def _device_active(self, multipath_device):
+        return any([any([path.state == 'active' for path in group.paths]) for group in multipath_device.path_groups])
+
     @cached_method
     def get_all_multipath_block_devices(self):
         from infi.multipathtools import MultipathClient
@@ -89,7 +92,7 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         if not client.is_running():
             logger.info("MultipathD is not running")
             return []
-        devices = client.get_list_of_multipath_devices()
+        devices = [device for device in client.get_list_of_multipath_devices() if self._device_active(device)]
 
         result = []
         logger.debug("Got {} devices from multipath client".format(len(devices)))

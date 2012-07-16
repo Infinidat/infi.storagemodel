@@ -95,6 +95,13 @@ class InfiniBoxInquiryMixin(object):
         return translate_hex_repr_string(vendor_specific_dict['host'])
 
     @cached_method
+    def get_cluster_id(self):
+        """:returns: the cluster id within the InfiniBox
+        :rtype: int"""
+        vendor_specific_dict = self.get_device_identification_page().get_vendor_specific_dict()
+        return translate_hex_repr_string(vendor_specific_dict['cluster'])
+
+    @cached_method
     def get_naa(self):
         """:returns: the infinidat naa
         :rtype: :class:`.InfinidatNAA`"""

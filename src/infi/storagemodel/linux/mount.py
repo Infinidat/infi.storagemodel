@@ -28,6 +28,11 @@ class LinuxMountManager(mount.MountManager):
     def get_available_file_systems(self):
         from infi.mountoolinux.mount.manager import MountManager
         return [self._translate_filesystem_object(name) for name in MountManager().get_supported_file_systems()]
+        
+    @cached_method
+    def get_creatable_file_systems(self):
+        from infi.mountoolinux.mount.manager import MountManager
+        return [self._translate_filesystem_object(name) for name in MountManager().get_creatable_file_systems()]
 
     @cached_method
     def get_recommended_file_system(self):
