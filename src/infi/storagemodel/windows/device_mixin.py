@@ -9,6 +9,9 @@ from infi.pyutils.decorators import wraps
 from infi.exceptools import chain
 from infi.storagemodel.errors import DeviceDisappeared
 
+from logging import getLogger
+logger = getLogger(__name__)
+
 def replace_invalid_handle_with_device_disappeared(func):
     @wraps(func)
     def catcher(*args, **kwargs):
@@ -21,7 +24,11 @@ def replace_invalid_handle_with_device_disappeared(func):
 class WindowsDeviceMixin(object):
     @cached_method
     def get_pdo(self):
-        return self._device_object.psuedo_device_object
+        try:
+            return self._device_object.psuedo_device_object
+        except KeyError:
+            logger.exception("Getting device pdo raised KeyError")
+            raise DeviceDisappeared()
 
     @contextmanager
     def asi_context(self):

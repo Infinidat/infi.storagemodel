@@ -37,7 +37,7 @@ class VendorFactoryImpl(object):
 
     def _create_device_by_vid_pid(self, vid_pid, device_type, device):
         mapping = self.vendor_mapping.get(vid_pid)
-        return None if map is None else mapping.get(device_type)(device)
+        return None if mapping is None else mapping.get(device_type)(device)
 
     def create_scsi_block_by_vid_pid(self, vid_pid, device):
         return self._create_device_by_vid_pid(vid_pid, 'scsi_block', device)

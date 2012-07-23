@@ -26,12 +26,12 @@ class LinuxDiskDrive(disk.DiskDrive):
         from .partition import LinuxGPTPartitionTable, LinuxMBRPartitionTable
         parted = self._get_parted_disk_drive()
         if not parted.has_partition_table():
-            raise ValueError()
+            raise disk.NoPartitionTable()
         if parted.get_partition_table_type() == "gpt":
             return LinuxGPTPartitionTable(self)
         elif parted.get_partition_table_type() == "msdos":
             return LinuxMBRPartitionTable(self)
-        raise ValueError()
+        raise disk.NoPartitionTable()
 
     def is_empty(self):
         return not self._get_parted_disk_drive().has_partition_table()
