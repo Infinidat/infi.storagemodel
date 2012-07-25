@@ -21,6 +21,9 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
                 return path.asi_context()
         raise StorageModelFindError("cannot find an active path to open SCSI generic device") # pylint: disable=W0710
 
+    def _is_there_atleast_one_path_up(self):
+        return bool(filter(lambda path: path.get_state() == "up", self.get_paths()))
+
     @cached_method
     def get_display_name(self):
         return self.sysfs_device.block_device_name
@@ -100,8 +103,8 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
             block_dev = self.sysfs.find_block_device_by_devno(mpath_device.major_minor)
             if block_dev is not None:
                 result.append(LinuxNativeMultipathBlockDevice(self.sysfs, block_dev, mpath_device))
-
-        return result
+        living_devices = filter(lambda device: device._is_there_atleast_one_path_up(), devices)
+        return living_devices
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
