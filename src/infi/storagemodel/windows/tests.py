@@ -101,6 +101,7 @@ class MockModelTestCase(ModelTestCase):
                     ) as (DeviceManager, Device, WindowsSCSIBlockDevice):
             Device.return_value.psuedo_device_object = r'\Device\00000000'
             Device.return_value.get_ioctl_interface = mock.Mock()
+            Device.return_value.is_hidden.return_value = False
             WindowsSCSIBlockDevice.return_value.get_ioctl_interface.storage_get_device_number.return_value = 1
             DeviceManager.return_value.disk_drives = [Device()]
             block_devices = super(MockModelTestCase, self).test_get_block_devices()
