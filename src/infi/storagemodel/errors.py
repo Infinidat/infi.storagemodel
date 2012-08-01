@@ -28,6 +28,9 @@ class TimeoutError(StorageModelError):
     """Timeout error"""
     pass
 
+class MultipathDaemonTimeoutError(TimeoutError):
+    pass
+
 class NotMounted(StorageModelError):
     def __init__(self, mount_point):
         super(NotMounted, self).__init__("path {!r} is not being used by any mount".format(mount_point))

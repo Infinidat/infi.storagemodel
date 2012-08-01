@@ -58,10 +58,13 @@ class StorageModel(object):
 
     def _try_predicate(self, predicate):
         """:returns: True/False if predicate returned, None on RescanIsNeeded exception"""
-        from infi.storagemodel.errors import RescanIsNeeded
+        from infi.storagemodel.errors import RescanIsNeeded, TimeoutError
         try:
             return predicate()
         except RescanIsNeeded, error:
+            logger.debug("Predicate {!r} raised {} during rescan".format(predicate, error))
+            return None
+        except TimeoutError, error:
             logger.debug("Predicate {!r} raised {} during rescan".format(predicate, error))
             return None
         except:
