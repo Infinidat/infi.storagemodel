@@ -36,8 +36,8 @@ class WindowsSCSIModel(scsi.SCSIModel):
     def get_all_scsi_block_devices(self):
         from .native_multipath import MPIO_BUS_DRIVER_INSTANCE_ID
         return filter(lambda disk: disk.get_physical_drive_number() != -1,
-                      map(lambda device: WindowsSCSIBlockDevice(device), 
-                          filter(lambda disk: disk.parent._instance_id.lower() != MPIO_BUS_DRIVER_INSTANCE_ID,
+                      map(lambda device: WindowsSCSIBlockDevice(device),
+                          filter(lambda disk: disk.parent._instance_id.lower() != MPIO_BUS_DRIVER_INSTANCE_ID and not disk.is_hidden(),
                                  self.get_device_manager().disk_drives)))
 
     @cached_method

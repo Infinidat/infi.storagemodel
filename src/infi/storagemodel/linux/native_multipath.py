@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from ..base import multipath
-from ..errors import StorageModelFindError
+from ..errors import StorageModelFindError, MultipathDaemonTimeoutError
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 import itertools
@@ -20,6 +20,9 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
             if path.get_state() == "up":
                 return path.asi_context()
         raise StorageModelFindError("cannot find an active path to open SCSI generic device") # pylint: disable=W0710
+
+    def _is_there_atleast_one_path_up(self):
+        return bool(filter(lambda path: path.get_state() == "up", self.get_paths()))
 
     @cached_method
     def get_display_name(self):
@@ -82,8 +85,19 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         super(LinuxNativeMultipathModel, self).__init__()
         self.sysfs = sysfs
 
-    def _device_active(self, multipath_device):
+    def _is_device_active(self, multipath_device):
         return any([any([path.state == 'active' for path in group.paths]) for group in multipath_device.path_groups])
+
+    def _get_list_of_active_devices(self):
+        from infi.multipathtools.errors import ConnectionError, TimeoutExpired
+        from infi.exceptools import chain
+        try:
+            devices = [device for device in client.get_list_of_multipath_devices() if self._device_active(device)]
+        except TimeoutExpired:
+            raise chain(MultipathDaemonTimeoutError())
+        except ConnectionError:
+            raise chain(StorageModelFindError())
+        return devices
 
     @cached_method
     def get_all_multipath_block_devices(self):
@@ -92,16 +106,16 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         if not client.is_running():
             logger.info("MultipathD is not running")
             return []
-        devices = [device for device in client.get_list_of_multipath_devices() if self._device_active(device)]
 
+        devices = self._get_list_of_active_devices()
         result = []
         logger.debug("Got {} devices from multipath client".format(len(devices)))
         for mpath_device in devices:
             block_dev = self.sysfs.find_block_device_by_devno(mpath_device.major_minor)
             if block_dev is not None:
                 result.append(LinuxNativeMultipathBlockDevice(self.sysfs, block_dev, mpath_device))
-
-        return result
+        living_devices = filter(lambda device: device._is_there_atleast_one_path_up(), devices)
+        return living_devices
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
