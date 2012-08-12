@@ -114,7 +114,7 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
             block_dev = self.sysfs.find_block_device_by_devno(mpath_device.major_minor)
             if block_dev is not None:
                 result.append(LinuxNativeMultipathBlockDevice(self.sysfs, block_dev, mpath_device))
-        living_devices = filter(lambda device: device._is_there_atleast_one_path_up(), devices)
+        living_devices = filter(lambda device: device._is_there_atleast_one_path_up(), result)
         return living_devices
 
     @cached_method
