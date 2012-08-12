@@ -92,7 +92,7 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         from infi.multipathtools.errors import ConnectionError, TimeoutExpired
         from infi.exceptools import chain
         try:
-            devices = [device for device in client.get_list_of_multipath_devices() if self._device_active(device)]
+            devices = [device for device in client.get_list_of_multipath_devices() if self._is_device_active(device)]
         except TimeoutExpired:
             raise chain(MultipathDaemonTimeoutError())
         except ConnectionError:
