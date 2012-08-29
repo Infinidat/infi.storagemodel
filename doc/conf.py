@@ -46,13 +46,14 @@ copyright = u'2011, Guy Rozendorn'
 ###
 import os
 import sys
+
 curdir = os.path.abspath(os.curdir)
 pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
 os.system("mkdir .cache")
 os.system("python bootstrap.py")
 os.system("bin/buildout -c buildout-version.cfg")
-os.system("bin/buildout -c buildout-doc.cfg")
+os.system("bin/buildout -c buildout.cfg")
 os.chdir(curdir)
 
 sys.path.append(os.path.join(pardir, "src"))
