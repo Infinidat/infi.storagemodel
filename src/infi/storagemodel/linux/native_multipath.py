@@ -88,11 +88,11 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
     def _is_device_active(self, multipath_device):
         return any([any([path.state == 'active' for path in group.paths]) for group in multipath_device.path_groups])
 
-    def _get_list_of_active_devices(self):
+    def _get_list_of_active_devices(self, client):
         from infi.multipathtools.errors import ConnectionError, TimeoutExpired
         from infi.exceptools import chain
         try:
-            devices = [device for device in client.get_list_of_multipath_devices() if self._device_active(device)]
+            devices = [device for device in client.get_list_of_multipath_devices() if self._is_device_active(device)]
         except TimeoutExpired:
             raise chain(MultipathDaemonTimeoutError())
         except ConnectionError:
@@ -107,14 +107,14 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
             logger.info("MultipathD is not running")
             return []
 
-        devices = self._get_list_of_active_devices()
+        devices = self._get_list_of_active_devices(client)
         result = []
         logger.debug("Got {} devices from multipath client".format(len(devices)))
         for mpath_device in devices:
             block_dev = self.sysfs.find_block_device_by_devno(mpath_device.major_minor)
             if block_dev is not None:
                 result.append(LinuxNativeMultipathBlockDevice(self.sysfs, block_dev, mpath_device))
-        living_devices = filter(lambda device: device._is_there_atleast_one_path_up(), devices)
+        living_devices = filter(lambda device: device._is_there_atleast_one_path_up(), result)
         return living_devices
 
     @cached_method
