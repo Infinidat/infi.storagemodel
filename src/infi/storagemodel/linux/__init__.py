@@ -58,6 +58,7 @@ def _call_rescan_script(env=None, sync=False, shell=True):
     that the script does not exist"""
     from infi.exceptools import chain
     from infi.execute import execute
+    from infi.execute.result import Result
     from ..errors import StorageModelError
     rescan_script = _locate_rescan_script()
     hba_numbers = [str(host_number) for host_number in _get_all_host_bus_adapter_numbers()]
@@ -69,7 +70,10 @@ def _call_rescan_script(env=None, sync=False, shell=True):
             command = "{} --remove {} | logger".format(rescan_script, ' '.join(hba_numbers))
         else:
             command = [rescan_script, '--remove'] + hba_numbers
-        execute(command, shell=shell, env=env) if sync else _daemonize_and_run(command, env, shell)
+        result = execute(command, shell=shell, env=env) if sync else _daemonize_and_run(command, env, shell)
+        if isinstance(result, Result):
+            logger.debug("rescan-scsi-bu.sh stdout: {}".format(result.get_stdout()))
+            logger.debug("rescan-scsi-bu.sh stderr: {}".format(result.get_stderr()))
     except Exception:
         logger.exception("failed to initiate rescan")
         raise chain(StorageModelError("failed to initiate rescan"))
