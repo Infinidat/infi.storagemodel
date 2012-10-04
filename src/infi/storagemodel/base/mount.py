@@ -71,7 +71,8 @@ class MountManager(object):
         :param mount_object: a :class:`.Mount` object
         """
         mount_point = mount_object.get_mount_point()
-        mount_object.get_filesystem().unmount(mount_point)
+        block_access_path = mount_object.get_block_access_path()
+        mount_object.get_filesystem().unmount(block_access_path, mount_point)
         clear_cache(self)
 
     #############################

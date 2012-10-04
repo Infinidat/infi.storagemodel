@@ -15,7 +15,7 @@ class LinuxFileSystem(filesystem.FileSystem):
         entry = MountEntry(block_access_path, mount_point, self.get_name(), mount_options_dict, 0, 0)
         MountManager().mount_entry(entry)
 
-    def unmount(self, mount_point):
+    def unmount(self, block_access_path, mount_point):
         from infi.mountoolinux.mount.manager import MountManager, MountEntry
         entry = MountEntry(None, mount_point, None, {}, 0, 0)
         MountManager().umount_entry(entry)

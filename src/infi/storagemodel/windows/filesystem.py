@@ -26,5 +26,5 @@ class WindowsFileSystem(filesystem.FileSystem):
         MountManager().add_volume_mount_point(block_access_path, mount_point)
         return WindowsMount(self, block_access_path, mount_point)
 
-    def unmount(self, mount_point):
-        MountManager().remove_mount_point(self, mount_point)
+    def unmount(self, block_access_path, mount_point):
+        MountManager().remove_mount_point(block_access_path, mount_point)
