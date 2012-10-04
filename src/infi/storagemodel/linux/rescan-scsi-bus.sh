@@ -405,11 +405,6 @@ dolunscan()
       else
         echo "scsi remove-single-device $devnr"
         echo "scsi remove-single-device $devnr" > /proc/scsi/scsi
-	if test $RC -eq 1 -o $lun -eq 0 ; then
-          # Try readding, should fail if device is gone
-          echo "scsi add-single-device $devnr"
-          echo "scsi add-single-device $devnr" > /proc/scsi/scsi
-	fi
       fi
     fi
     if test -o "$forcerescan" ; then
