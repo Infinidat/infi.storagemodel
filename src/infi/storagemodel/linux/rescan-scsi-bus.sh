@@ -238,7 +238,9 @@ testonline ()
   done
   if test $ctr != 0; then white_out; fi
   # echo -e "\e[A\e[A\e[A${yellow}Test existence of $SGDEV = $RC ${norm} \n\n\n"
-  if test $RC = 1; then return $RC; fi
+  if test $RC != 1; then
+    echo "sg_turs for /dev/$SGDEV returned $RC"
+    return $RC
   # Reset RC (might be !=0 for passive paths)
   RC=0
   # OK, device online, compare INQUIRY string
