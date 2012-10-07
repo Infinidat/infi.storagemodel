@@ -407,10 +407,11 @@ dolunscan()
       else
         echo "Deleting $devnr by echo scsi remove-single-device $devnr > /proc/scsi/scsi"
         echo "scsi remove-single-device $devnr" > /proc/scsi/scsi
-	if test $RC -eq 1 -o $lun -eq 0 ; then
-          # Try readding, should fail if device is gone
-          echo "scsi add-single-device $devnr" > /proc/scsi/scsi
-	fi
+        # STORAGEMODEL-171 I don't understand why this is needed.
+        # If the device has failed, why should we try to re-add it
+      	# if test $RC -eq 1 -o $lun -eq 0 ; then
+        #   echo "scsi add-single-device $devnr" > /proc/scsi/scsi
+      	# fi
       fi
     fi
     if test -o "$forcerescan" ; then
