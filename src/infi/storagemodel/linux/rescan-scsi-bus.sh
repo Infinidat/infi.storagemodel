@@ -31,7 +31,7 @@ print_and_scroll_back ()
   LN=${#STRG}
   BK=""
   declare -i cntr=0
-  while test $cntr -lt $LN; do BK="$BK\e[D"; let cntr+=1; done
+  while test $cntr -lt $LN; do BK="$BK"; let cntr+=1; done
   echo -en "$STRG$BK"
   return $LN
 }
@@ -42,7 +42,7 @@ white_out ()
   BK=""; WH=""
   if test -n "$1"; then LN=$1; fi
   declare -i cntr=0
-  while test $cntr -lt $LN; do BK="$BK\e[D"; WH="$WH "; let cntr+=1; done
+  while test $cntr -lt $LN; do BK="$BK"; WH="$WH "; let cntr+=1; done
   echo -en "$WH$BK"
 }
 
@@ -237,7 +237,7 @@ testonline ()
     RC=$?
   done
   if test $ctr != 0; then white_out; fi
-  # echo -e "\e[A\e[A\e[A${yellow}Test existence of $SGDEV = $RC ${norm} \n\n\n"
+  # echo -e "${yellow}Test existence of $SGDEV = $RC ${norm} \n\n\n"
   if test $RC = 1; then return $RC; fi
   # Reset RC (might be !=0 for passive paths)
   RC=0
@@ -252,7 +252,7 @@ testonline ()
   IPTYPE=`echo "$INQ" | sed -n 's/.* Device_type=\([0-9]*\) .*/\1/p'`
   IPQUAL=`echo "$INQ" | sed -n 's/ *PQual=\([0-9]*\)  Device.*/\1/p'`
   if [ "$IPQUAL" != 0 ] ; then
-    echo -e "\e[A\e[A\e[A\e[A${red}$SGDEV changed: ${bold}LU not available (PQual $IPQUAL)${norm}    \n\n\n"
+    echo -e "${red}$SGDEV changed: ${bold}LU not available (PQual $IPQUAL)${norm}    \n\n\n"
     return 2
   fi
 
@@ -260,12 +260,12 @@ testonline ()
   procscsiscsi
   TMPSTR=`echo "$SCSISTR" | grep 'Vendor:'`
   if [ "$TMPSTR" != "$STR" ]; then
-    echo -e "\e[A\e[A\e[A\e[A${red}$SGDEV changed: ${bold}\nfrom:${SCSISTR#* } \nto: $STR ${norm} \n\n\n"
+    echo -e "${red}$SGDEV changed: ${bold}\nfrom:${SCSISTR#* } \nto: $STR ${norm} \n\n\n"
     return 1
   fi
   TMPSTR=`echo "$SCSISTR" | sed -n 's/.*Type: *\(.*\) *ANSI.*/\1/p'`
   if [ $TMPSTR != $TYPE ] ; then
-    echo -e "\e[A\e[A\e[A\e[A${red}$SGDEV changed: ${bold}\nfrom:${TMPSTR} \nto: $TYPE ${norm} \n\n\n"
+    echo -e "${red}$SGDEV changed: ${bold}\nfrom:${TMPSTR} \nto: $TYPE ${norm} \n\n\n"
     return 1
   fi
   return $RC
@@ -387,7 +387,7 @@ dolunscan()
   # so make sure we correctly treat it as new
   if test "$lun" = "0" -a "$1"; then
     SCSISTR=""
-    printf "\r\e[A\e[A\e[A"
+    printf ""
   fi
   : f $remove s $SCSISTR
   if test "$remove" -a "$SCSISTR"; then
@@ -396,9 +396,9 @@ dolunscan()
     testonline
     RC=$?
     if test $RC != 0 -o ! -z "$forceremove"; then
-      echo -en "\r\e[A\e[A\e[A${red}REM: "
+      echo -en "${red}REM: "
       echo "$SCSISTR" | head -n1
-      echo -e "${norm}\e[B\e[B"
+      echo -e "${norm}"
       if test -e /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device; then
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/delete
       else
@@ -414,17 +414,17 @@ dolunscan()
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/rescan
       fi
     fi
-    printf "\r\e[A\e[A\e[A${yellow}OLD: $norm"
+    printf "${yellow}OLD: $norm"
     testexist
     if test -z "$SCSISTR"; then
-      printf "\r${red}DEL: $norm\r\n\n"
+      printf "${red}DEL: $norm\n\n"
       let rmvd+=1;
       return 1
     fi
   fi
   if test -z "$SCSISTR"; then
     # Device does not exist, try to add
-    printf "\r${green}NEW: $norm"
+    printf "${green}NEW: $norm"
     if test -e /sys/class/scsi_host/host${host}/scan; then
       echo "$channel $id $lun" > /sys/class/scsi_host/host${host}/scan 2> /dev/null
     else
@@ -433,7 +433,7 @@ dolunscan()
     testexist
     if test -z "$SCSISTR"; then
       # Device not present
-      printf "\r\e[A";
+      printf "";
       # Optimization: if lun==0, stop here (only if in non-remove mode)
       if test $lun = 0 -a -z "$remove" -a $optscan = 1; then
         break;
@@ -450,14 +450,14 @@ doreportlun()
   lun=0
   SCSISTR=
   devnr="$host $channel $id $lun"
-  echo -en " Scanning (Report LUNs) for device $devnr ...\r"
+  echo -e " Scanning (Report LUNs) for device $devnr ..."
   lun0added=
   #printf "${yellow}OLD: $norm"
   # Phase one: If LUN0 does not exist, try to add
   testexist -q
   if test -z "$SCSISTR"; then
     # Device does not exist, try to add
-    #printf "\r${green}NEW: $norm"
+    printf "${green}NEW: $norm"
     if test -e /sys/class/scsi_host/host${host}/scan; then
       echo "$channel $id $lun" > /sys/class/scsi_host/host${host}/scan 2> /dev/null
     else
