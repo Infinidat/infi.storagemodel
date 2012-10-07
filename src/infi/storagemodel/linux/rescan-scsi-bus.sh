@@ -254,7 +254,7 @@ testonline ()
   IPQUAL=`echo "$INQ" | sed -n 's/ *PQual=\([0-9]*\)  Device.*/\1/p'`
   if [ "$IPQUAL" != 0 ] ; then
     echo -e "${red}$SGDEV changed: ${bold}LU not available (PQual $IPQUAL)${norm}    \n\n\n"
-    return 2
+    return 1
   fi
 
   TYPE=$(printtype $IPTYPE)
