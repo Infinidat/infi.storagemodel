@@ -400,14 +400,11 @@ dolunscan()
       echo "$SCSISTR" | head -n1
       echo -e "${norm}\e[B\e[B"
       if test -e /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device; then
-        echo 1 \> /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/delete
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/delete
       else
-        echo "scsi remove-single-device $devnr"
         echo "scsi remove-single-device $devnr" > /proc/scsi/scsi
 	if test $RC -eq 1 -o $lun -eq 0 ; then
           # Try readding, should fail if device is gone
-          echo "scsi add-single-device $devnr"
           echo "scsi add-single-device $devnr" > /proc/scsi/scsi
 	fi
       fi
@@ -423,8 +420,6 @@ dolunscan()
       printf "\r${red}DEL: $norm\r\n\n"
       let rmvd+=1;
       return 1
-    else
-      printf "\r${red}STAY: $norm\r\n\n"
     fi
   fi
   if test -z "$SCSISTR"; then
