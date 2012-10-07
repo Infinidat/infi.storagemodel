@@ -225,6 +225,7 @@ testonline ()
   if test -z "$SGDEV"; then return 0; fi
   sg_turs /dev/$SGDEV >/dev/null 2>&1
   RC=$?
+  echo "sg_turs /dev/$SGDEV exited with return code $RC"
   # Handle in progress of becoming ready and unit attention -- wait at max 11s
   declare -i ctr=0
   if test $RC = 2 -o $RC = 6; then
@@ -395,13 +396,16 @@ dolunscan()
     # (testonline returns 1 if it's gone or has changed)
     testonline
     RC=$?
+    echo "testonline for $devnr returned $RC"
     if test $RC != 0 -o ! -z "$forceremove"; then
       echo -en "${red}REM: "
       echo "$SCSISTR" | head -n1
       echo -e "${norm}"
       if test -e /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device; then
+        echo "Deleting $devnr by echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/delete"
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/delete
       else
+        echo "Deleting $devnr by echo scsi remove-single-device $devnr > /proc/scsi/scsi"
         echo "scsi remove-single-device $devnr" > /proc/scsi/scsi
 	if test $RC -eq 1 -o $lun -eq 0 ; then
           # Try readding, should fail if device is gone
@@ -420,6 +424,8 @@ dolunscan()
       printf "${red}DEL: $norm\n\n"
       let rmvd+=1;
       return 1
+    else
+      printf "${green}STAY: $norm\n\n"
     fi
   fi
   if test -z "$SCSISTR"; then
@@ -699,6 +705,7 @@ if test -w /sys/module/scsi_mod/parameters/default_dev_flags -a $scan_flags != 0
     unset OLD_SCANFLAGS
   fi
 fi
+echo "rescan-scsi-bus.sh started"
 echo "Scanning SCSI subsystem for new devices"
 test -z "$remove" || echo " and remove devices that have disappeared"
 declare -i found=0
@@ -740,6 +747,7 @@ fi
 udevadm_settle
 echo "$found new device(s) found.               "
 echo "$rmvd device(s) removed.                 "
+echo "rescan-scsi-bus.sh ended"
 
 # Local Variables:
 # sh-basic-offset: 2
