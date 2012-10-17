@@ -172,7 +172,7 @@ class Sysfs(object):
     @cached_method
     def get_all_block_devices(self):
         self._populate()
-        return self.block_devices.values()
+        return self.block_devno_to_device.values()
 
     def find_block_device_by_devno(self, devno):
         if len(self.block_devno_to_device.keys()) == 0:
