@@ -107,6 +107,13 @@ class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         return _repr.format(self.sysfs_dev_path, self.hctl)
 
 class Sysfs(object):
+    def __init__(self):
+        self.sg_disks = []
+        self.sd_disks = []
+        self.controllers = []
+        self.block_devices = []
+        self.block_devno_to_device = dict()
+
     @cached_method
     def _populate(self):
         for hctl_str in os.listdir(SYSFS_CLASS_SCSI_DEVICE_PATH):
@@ -120,17 +127,9 @@ class Sysfs(object):
         for name, path in self._get_sysfs_block_devices_pathnames().items():
             dev = SysfsBlockDevice(name, path)
             devno = dev.get_block_devno()
-            assert devno not in self.block_devno_to_device
-            self.block_devno_to_device[devno] = dev
-
-    def __init__(self):
-        self.disks = []
-        self.controllers = []
-        self.block_devno_to_device = dict()
-
-    def __repr__(self):
-        _repr = "<Sysfs: disks={!r}, controllers={!r}, block_devno_to_device={!r}>"
-        return _repr.format(self.disks, self.controllers, self.block_devno_to_device)
+            if devno not in self.block_devno_to_device:
+                self.block_devno_to_device[devno] = dev
+                self.block_devices.append(dev)
 
     def _append_device_by_type(self, hctl_str, dev_path, scsi_type):
         if scsi_type == SCSI_TYPE_STORAGE_CONTROLLER:
@@ -138,15 +137,19 @@ class Sysfs(object):
         elif scsi_type == SCSI_TYPE_DISK:
             block_dev_names = get_sd_paths(dev_path)
             if block_dev_names == []:
-                self.disks.append(SysfsSCSIDevice(dev_path, HCTL.from_string(hctl_str)))
+                self.sg_disks.append(SysfsSCSIDevice(dev_path, HCTL.from_string(hctl_str)))
             else:
-                self.disks.append(SysfsSDDisk(dev_path, HCTL.from_string(hctl_str), block_dev_names))
+                sd_disk = SysfsSDDisk(dev_path, HCTL.from_string(hctl_str), block_dev_names)
+                self.sd_disks.append(sd_disk)
+                self.sg_disks.append(sd_disk)
+                self.block_devices.append(sd_disk)
+                self.block_devno_to_device[sd_disk.get_block_devno()] = sd_disk
 
     def _get_sysfs_block_devices_pathnames(self):
         """:returns a dict of name:path"""
         for base in ["/sys/block", ]:
             if os.path.exists(base):
-                #  /sys/class/block/sda -> 
+                #  /sys/class/block/sda ->
                 #     ../../devices/pci0000:00/0000:00:15.0/0000:03:00.0/host2/target2:0:0/2:0:0:0/block/sda
                 def readlink(src):
                     if os.path.islink(src):
@@ -157,12 +160,12 @@ class Sysfs(object):
     @cached_method
     def get_all_sd_disks(self):
         self._populate()
-        return [disk for disk in self.disks if isinstance(disk, SysfsSDDisk)]
+        return self.sd_disks
 
     @cached_method
     def get_all_sg_disks(self):
         self._populate()
-        return self.disks
+        return self.sg_disks
 
     @cached_method
     def get_all_scsi_storage_controllers(self):
@@ -172,17 +175,22 @@ class Sysfs(object):
     @cached_method
     def get_all_block_devices(self):
         self._populate()
-        return self.block_devno_to_device.values()
+        return self.block_devices
 
     def find_block_device_by_devno(self, devno):
-        if len(self.block_devno_to_device.keys()) == 0:
-            self._populate()
+        self._populate()
         return self.block_devno_to_device.get(devno, None)
 
     def find_scsi_disk_by_hctl(self, hctl):
-        if len(self.disks) == 0:
-            self._populate()
-        disk = [ disk for disk in self.disks if disk.get_hctl() == hctl ]
+        self._populate()
+        disk = [ disk for disk in self.sd_disks if disk.get_hctl() == hctl ]
         if len(disk) != 1:
             raise ValueError("cannot find a disk with HCTL %s" % (str(hctl),))
         return disk[0]
+
+    def __repr__(self):
+        _repr = ("<Sysfs: sg_disks={!r}, sd_disks={!r}, controllers={!r}, block_devices={!r}, " +
+                 "block_devno_to_device={!r}>")
+        return _repr.format(self.sg_disks, self.sd_disks, self.controllers, self.block_devices,
+                            self.block_devno_to_device)
+
