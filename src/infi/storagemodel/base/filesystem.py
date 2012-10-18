@@ -38,7 +38,7 @@ class FileSystem(object):
         """
         raise NotImplementedError()
 
-    def unmount(self, mount_point): # pragma: no cover
+    def unmount(self, block_access_path, mount_point): # pragma: no cover
         """unmount the filesystem from the mount point
         
         :param mount_point: path to the mount point

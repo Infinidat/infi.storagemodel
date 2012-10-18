@@ -31,7 +31,7 @@ print_and_scroll_back ()
   LN=${#STRG}
   BK=""
   declare -i cntr=0
-  while test $cntr -lt $LN; do BK="$BK\e[D"; let cntr+=1; done
+  while test $cntr -lt $LN; do BK="$BK"; let cntr+=1; done
   echo -en "$STRG$BK"
   return $LN
 }
@@ -42,7 +42,7 @@ white_out ()
   BK=""; WH=""
   if test -n "$1"; then LN=$1; fi
   declare -i cntr=0
-  while test $cntr -lt $LN; do BK="$BK\e[D"; WH="$WH "; let cntr+=1; done
+  while test $cntr -lt $LN; do BK="$BK"; WH="$WH "; let cntr+=1; done
   echo -en "$WH$BK"
 }
 
@@ -225,6 +225,7 @@ testonline ()
   if test -z "$SGDEV"; then return 0; fi
   sg_turs /dev/$SGDEV >/dev/null 2>&1
   RC=$?
+  echo "sg_turs /dev/$SGDEV exited with return code $RC"
   # Handle in progress of becoming ready and unit attention -- wait at max 11s
   declare -i ctr=0
   if test $RC = 2 -o $RC = 6; then
@@ -237,8 +238,8 @@ testonline ()
     RC=$?
   done
   if test $ctr != 0; then white_out; fi
-  # echo -e "\e[A\e[A\e[A${yellow}Test existence of $SGDEV = $RC ${norm} \n\n\n"
-  if test $RC = 1; then return $RC; fi
+  # echo -e "${yellow}Test existence of $SGDEV = $RC ${norm} \n\n\n"
+  if test $RC = 1 -o $RC = 99; then return 1; fi
   # Reset RC (might be !=0 for passive paths)
   RC=0
   # OK, device online, compare INQUIRY string
@@ -252,20 +253,20 @@ testonline ()
   IPTYPE=`echo "$INQ" | sed -n 's/.* Device_type=\([0-9]*\) .*/\1/p'`
   IPQUAL=`echo "$INQ" | sed -n 's/ *PQual=\([0-9]*\)  Device.*/\1/p'`
   if [ "$IPQUAL" != 0 ] ; then
-    echo -e "\e[A\e[A\e[A\e[A${red}$SGDEV changed: ${bold}LU not available (PQual $IPQUAL)${norm}    \n\n\n"
-    return 2
+    echo -e "${red}$SGDEV changed: ${bold}LU not available (PQual $IPQUAL)${norm}    \n\n\n"
+    return 1
   fi
 
   TYPE=$(printtype $IPTYPE)
   procscsiscsi
   TMPSTR=`echo "$SCSISTR" | grep 'Vendor:'`
   if [ "$TMPSTR" != "$STR" ]; then
-    echo -e "\e[A\e[A\e[A\e[A${red}$SGDEV changed: ${bold}\nfrom:${SCSISTR#* } \nto: $STR ${norm} \n\n\n"
+    echo -e "${red}$SGDEV changed: ${bold}\nfrom:${SCSISTR#* } \nto: $STR ${norm} \n\n\n"
     return 1
   fi
   TMPSTR=`echo "$SCSISTR" | sed -n 's/.*Type: *\(.*\) *ANSI.*/\1/p'`
   if [ $TMPSTR != $TYPE ] ; then
-    echo -e "\e[A\e[A\e[A\e[A${red}$SGDEV changed: ${bold}\nfrom:${TMPSTR} \nto: $TYPE ${norm} \n\n\n"
+    echo -e "${red}$SGDEV changed: ${bold}\nfrom:${TMPSTR} \nto: $TYPE ${norm} \n\n\n"
     return 1
   fi
   return $RC
@@ -387,7 +388,7 @@ dolunscan()
   # so make sure we correctly treat it as new
   if test "$lun" = "0" -a "$1"; then
     SCSISTR=""
-    printf "\r\e[A\e[A\e[A"
+    printf ""
   fi
   : f $remove s $SCSISTR
   if test "$remove" -a "$SCSISTR"; then
@@ -395,18 +396,22 @@ dolunscan()
     # (testonline returns 1 if it's gone or has changed)
     testonline
     RC=$?
+    echo "testonline for $devnr returned $RC"
     if test $RC != 0 -o ! -z "$forceremove"; then
-      echo -en "\r\e[A\e[A\e[A${red}REM: "
+      echo -en "${red}REM: "
       echo "$SCSISTR" | head -n1
-      echo -e "${norm}\e[B\e[B"
+      echo -e "${norm}"
       if test -e /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device; then
+        echo "Deleting $devnr by echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/delete"
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/delete
       else
+        echo "Deleting $devnr by echo scsi remove-single-device $devnr > /proc/scsi/scsi"
         echo "scsi remove-single-device $devnr" > /proc/scsi/scsi
-	if test $RC -eq 1 -o $lun -eq 0 ; then
-          # Try readding, should fail if device is gone
-          echo "scsi add-single-device $devnr" > /proc/scsi/scsi
-	fi
+        # STORAGEMODEL-171 I don't understand why this is needed.
+        # If the device has failed, why should we try to re-add it
+      	# if test $RC -eq 1 -o $lun -eq 0 ; then
+        #   echo "scsi add-single-device $devnr" > /proc/scsi/scsi
+      	# fi
       fi
     fi
     if test -o "$forcerescan" ; then
@@ -414,17 +419,19 @@ dolunscan()
         echo 1 > /sys/class/scsi_device/${host}:${channel}:${id}:${lun}/device/rescan
       fi
     fi
-    printf "\r\e[A\e[A\e[A${yellow}OLD: $norm"
+    printf "${yellow}OLD: $norm"
     testexist
     if test -z "$SCSISTR"; then
-      printf "\r${red}DEL: $norm\r\n\n"
+      printf "${red}DEL: $norm\n\n"
       let rmvd+=1;
       return 1
+    else
+      printf "${green}STAY: $norm\n\n"
     fi
   fi
   if test -z "$SCSISTR"; then
     # Device does not exist, try to add
-    printf "\r${green}NEW: $norm"
+    printf "${green}NEW: $norm"
     if test -e /sys/class/scsi_host/host${host}/scan; then
       echo "$channel $id $lun" > /sys/class/scsi_host/host${host}/scan 2> /dev/null
     else
@@ -433,7 +440,7 @@ dolunscan()
     testexist
     if test -z "$SCSISTR"; then
       # Device not present
-      printf "\r\e[A";
+      printf "";
       # Optimization: if lun==0, stop here (only if in non-remove mode)
       if test $lun = 0 -a -z "$remove" -a $optscan = 1; then
         break;
@@ -450,14 +457,14 @@ doreportlun()
   lun=0
   SCSISTR=
   devnr="$host $channel $id $lun"
-  echo -en " Scanning (Report LUNs) for device $devnr ...\r"
+  echo -e " Scanning (Report LUNs) for device $devnr ..."
   lun0added=
   #printf "${yellow}OLD: $norm"
   # Phase one: If LUN0 does not exist, try to add
   testexist -q
   if test -z "$SCSISTR"; then
     # Device does not exist, try to add
-    #printf "\r${green}NEW: $norm"
+    printf "${green}NEW: $norm"
     if test -e /sys/class/scsi_host/host${host}/scan; then
       echo "$channel $id $lun" > /sys/class/scsi_host/host${host}/scan 2> /dev/null
     else
@@ -699,6 +706,7 @@ if test -w /sys/module/scsi_mod/parameters/default_dev_flags -a $scan_flags != 0
     unset OLD_SCANFLAGS
   fi
 fi
+echo "rescan-scsi-bus.sh started"
 echo "Scanning SCSI subsystem for new devices"
 test -z "$remove" || echo " and remove devices that have disappeared"
 declare -i found=0
@@ -740,6 +748,7 @@ fi
 udevadm_settle
 echo "$found new device(s) found.               "
 echo "$rmvd device(s) removed.                 "
+echo "rescan-scsi-bus.sh ended"
 
 # Local Variables:
 # sh-basic-offset: 2

@@ -1,6 +1,7 @@
 
 from infi.pyutils.lazy import cached_method
 from ..base import partition
+from .filesystem import WindowsFileSystem
 
 # pylint: disable=W0212,E1002
 
@@ -64,7 +65,7 @@ class WindowsPartition(object):
         return self._disk_device
 
     def get_current_filesystem(self): # pragma: no cover
-        return WindowsPartition.get_current_filesystem(self) # pragma: no cover
+        return WindowsFileSystem("NTFS")
 
 class WindowsPrimaryPartition(WindowsPartition, partition.PrimaryPartition):
     pass

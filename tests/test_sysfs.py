@@ -42,36 +42,43 @@ class SysfsTestCase(TestCase):
             '/sys/class/scsi_device/2:0:0:0/device/type': '0',
             '/sys/class/scsi_device/2:0:0:0/device/vendor': 'VMware',
             '/sys/class/scsi_device/2:0:0:0/device/block/sda/size': '16777216',
+            '/sys/class/scsi_device/2:0:0:0/device/block/sda/dev': '8:0',
             '/sys/class/scsi_device/2:0:0:0/device/queue_depth': '64',
 
             '/sys/class/scsi_device/3:0:0:0/device/type': '0',
             '/sys/class/scsi_device/3:0:0:0/device/vendor': 'NFINIDAT',
             '/sys/class/scsi_device/3:0:0:0/device/block/sde/size': '2097156',
+            '/sys/class/scsi_device/3:0:0:0/device/block/sde/dev': '8:4',
             '/sys/class/scsi_device/3:0:0:0/device/queue_depth': '32',
 
             '/sys/class/scsi_device/3:0:1:1/device/type': '0',
             '/sys/class/scsi_device/3:0:1:1/device/vendor': 'NEXSAN',
             '/sys/class/scsi_device/3:0:1:1/device/block/sdf/size': '1953792',
+            '/sys/class/scsi_device/3:0:1:1/device/block/sdf/dev': '8:5',
             '/sys/class/scsi_device/3:0:1:1/device/queue_depth': '32',
 
             '/sys/class/scsi_device/3:0:1:2/device/type': '0',
             '/sys/class/scsi_device/3:0:1:2/device/vendor': 'NEXSAN',
             '/sys/class/scsi_device/3:0:1:2/device/block/sdg/size': '1953792',
+            '/sys/class/scsi_device/3:0:1:2/device/block/sdg/dev': '8:6',
             '/sys/class/scsi_device/3:0:1:2/device/queue_depth': '32',
 
             '/sys/class/scsi_device/4:0:0:0/device/type': '0',
             '/sys/class/scsi_device/4:0:0:0/device/vendor': 'NFINIDAT',
             '/sys/class/scsi_device/4:0:0:0/device/block/sdb/size': '2097156',
+            '/sys/class/scsi_device/4:0:0:0/device/block/sdb/dev': '8:1',
             '/sys/class/scsi_device/4:0:0:0/device/queue_depth': '32',
 
             '/sys/class/scsi_device/4:0:1:1/device/type': '0',
             '/sys/class/scsi_device/4:0:1:1/device/vendor': 'NEXSAN',
             '/sys/class/scsi_device/4:0:1:1/device/block/sdc/size': '1953792',
+            '/sys/class/scsi_device/4:0:1:1/device/block/sdc/dev': '8:2',
             '/sys/class/scsi_device/4:0:1:1/device/queue_depth': '32',
 
             '/sys/class/scsi_device/4:0:1:2/device/type': '0',
             '/sys/class/scsi_device/4:0:1:2/device/vendor': 'NEXSAN',
             '/sys/class/scsi_device/4:0:1:2/device/block/sdd/size': '1953792',
+            '/sys/class/scsi_device/4:0:1:2/device/block/sdd/dev': '8:3',
             '/sys/class/scsi_device/4:0:1:2/device/queue_depth': '32',
 
             '/sys/class/scsi_device/5:0:0:0/device/type': '12',
