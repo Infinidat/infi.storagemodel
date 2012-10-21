@@ -65,7 +65,7 @@ def _call_rescan_script(env=None, sync=False, shell=True):
     if rescan_script is None:
         raise StorageModelError("no rescan-scsi-bus script found") # pylint: disable=W0710
     try:
-        logger.info("Calling rescan-scsi-bus.sh")
+        logger.info("Calling rescan-scsi-bus.sh, {}synchronously, shell={!r}".format('' if sync else 'a', shell))
         if shell:
             command = "{} --remove {} | logger".format(rescan_script, ' '.join(hba_numbers))
         else:
@@ -88,6 +88,9 @@ def _daemonize_and_run(command, env, shell):
         basic_daemonize()
         script = execute(command, env=env, shell=shell)
         logger.info("rescan-scsi-bus.sh finished with return code {}".format(script.get_returncode()))
+        logger.debug("the following log messages are the stdout and stderr of rescan-scsi-bus.sh")
+        logger.debug(script.get_stdout())
+        logger.debug(script.get_stderr())
         os._exit(0)
 
 class LinuxStorageModel(StorageModel):
