@@ -320,18 +320,22 @@ idlist ()
   local tmpid
 
   for dev in /sys/class/scsi_device/${host}:${channel}:* ; do
+    echo "idlist: Extracting target id from device $dev"
     [ -d $dev ] || continue;
+    echo "idlist: Device exists, good"
     hcil=${dev##*/}
     cil=${hcil#*:}
     il=${cil#*:}
     target=${il%%:*}
     for tmpid in $idsearch ; do
       if test "$target" -eq $tmpid ; then
-	target=
-	break
+        echo "idlist: Target ID $target already accounted for"
+        target=
+	      break
       fi
     done
     if test -n "$target" ; then
+      echo "idlist: add Target ID $target"
       idsearch="$idsearch $target"
     fi
   done
@@ -544,15 +548,18 @@ dosearch ()
   if test -z "$channelsearch" ; then
     chanlist
   fi
+  echo "dosearch: Searching for channels $channelsearch"
   for channel in $channelsearch; do
     if test -z "$idsearch" ; then
       idlist
     fi
+    echo "dosearch: Searching for target IDs $idsearch"
     for id in $idsearch; do
       if test -z "$lunsearch" ; then
-	doreportlun
+        doreportlun
       else
-	for lun in $lunsearch; do
+        echo "dosearch: Searching for LUNs $lunsearch"
+	      for lun in $lunsearch; do
           dolunscan
         done
       fi
