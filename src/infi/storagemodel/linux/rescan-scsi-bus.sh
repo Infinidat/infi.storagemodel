@@ -521,10 +521,10 @@ doreportlun()
     # OK, is existing $lun (still) in reported list
     for tmplun in $targetluns; do
       if test $tmplun -eq $lun ; then
-	inlist=1
-	dolunscan $lun0added
+      	inlist=1
+	      dolunscan $lun0added
       else
-	newsearch="$newsearch $tmplun"
+       	newsearch="$newsearch $tmplun"
       fi
     done
     # OK, we have now done a lunscan on $lun and

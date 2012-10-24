@@ -1,0 +1,113 @@
+from logging import getLogger
+from os import path, getpid
+from time import sleep
+
+from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute
+
+logger = getLogger(__name__)
+
+def write_to_proc_scsi_scsi(line):
+    try:
+        with open("/proc/scsi/scsi", "w") as fd:
+            fd.write("{}\n".format(line))
+    except IOError, err:
+        logger.error("{} IOError {} when writing {!r} to /proc/scsi/scsi".format(getpid(), err, line))
+        return False
+    return True
+
+@func_logger
+def scsi_add_single_device(host, channel, target, lun):
+    return write_to_proc_scsi_scsi("scsi add-single-device {} {} {} {}".format(host, channel, target, lun))
+
+@func_logger
+def scsi_remove_single_device(host, channel, target, lun):
+    return write_to_proc_scsi_scsi("scsi remove-single-device {} {} {} {}".format(host, channel, target, lun))
+
+@func_logger
+def scsi_host_scan(host):
+    scan_file = "/sys/class/scsi_host/host{}/scan".format(host)
+    if path.exists(scan_file):
+        try:
+            with open(scan_file, "w") as fd:
+                fd.write("1\n")
+        except IOError, err:
+            logger.error("{} IOError {} when writing 1 to {}".format(getpid(), err, scan_file))
+            return False
+        return True
+    logger.debug("{} scan file {} does not exist".format(getpid(), scan_file))
+    return False
+
+@func_logger
+def remove_device_via_sysfs(host, channel, target, lun):
+    hctl = "{}:{}:{}:{}".format(host, channel, target, lun)
+    delete_file = "/sys/class/scsi_device/{}/device/delete".format(hctl)
+    if not path.exists(delete_file):
+        logger.debug("{} sysfs delete file {} does not exist".format(getpid(), delete_file))
+        return False
+    try:
+        with open(delete_file, "w") as fd:
+            fd.write("1\n")
+    except IOError, err:
+        logger.error("{} IOError {} when writing 1 to {}".format(getpid(), err, delete_file))
+        return False
+    return True
+
+@func_logger
+@check_for_scsi_errors
+def do_report_luns(sg_device):
+    from infi.asi.cdb.report_luns import ReportLunsCommand
+    from infi.asi.coroutines.sync_adapter import sync_wait
+    with asi_context(sg_device) as executer:
+        cdb = ReportLunsCommand(select_report=1)
+        return sync_wait(cdb.execute(executer))
+
+@func_logger
+@check_for_scsi_errors
+def do_test_unit_ready(sg_device):
+    from infi.asi.cdb.tur import TestUnitReadyCommand
+    from infi.asi.coroutines.sync_adapter import sync_wait
+    with asi_context(sg_device) as executer:
+        cdb = TestUnitReadyCommand()
+        return sync_wait(cdb.execute(executer))
+
+@func_logger
+@check_for_scsi_errors
+def do_standard_inquiry(sg_device):
+    from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
+    from infi.asi.coroutines.sync_adapter import sync_wait
+    with asi_context(sg_device) as executer:
+        command = StandardInquiryCommand()
+        return sync_wait(command.execute(executer))    
+
+@func_logger
+def sync_file_systems():
+    return log_execute(["sync"])
+
+@func_logger
+def is_udevadm_exist():
+    return path.exists("/sbin/udevadm")
+
+@func_logger
+def execute_udevadm():
+    return log_execute(["/sbin/udevadm", "settle"])
+
+@func_logger
+def is_udevsettle_exist():
+    return path.exists("/sbin/udevsettle")
+
+@func_logger
+def execute_udevsettle():
+    return log_execute(["/sbin/udevsettle"])
+
+@func_logger
+def udevadm_settle():
+    if is_udevadm_exist():
+        return execute_udevadm()
+    elif is_udevsettle_exist():
+        return execute_udevsettle()
+    sleep(20)
+    return 0
+
+@func_logger
+def partprobe():
+    return log_execute(["/sbin/partprobe"])
