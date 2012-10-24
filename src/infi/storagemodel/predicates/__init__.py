@@ -71,7 +71,7 @@ class FiberChannelMappingExists(object):
         self.connectivity = FCConnectivity(None, i_port, t_port)
 
     def _is_fc_connectivity_a_match(self, device):
-        logger.debug("Connectivity details: {!r}".format(device.get_connectivity()))
+        logger.debug("Connectivity details: {!r}, Lun {}".format(device.get_connectivity(), device.get_hctl().get_lun()))
         if device.get_connectivity() == self.connectivity and device.get_hctl().get_lun() == self.lun_number:
             return True
         return False
@@ -102,7 +102,7 @@ class FiberChannelMappingExists(object):
         return False
 
     def __repr__(self):
-        return "<FiberChannelMappingExists: {!r}>".format(self.connectivity)
+        return "<FiberChannelMappingExists: {!r}:{}>".format(self.connectivity, self.lun_number)
 
 class FiberChannelMappingNotExists(FiberChannelMappingExists):
     """:returns: True if a lun un-mapping was discovered"""
@@ -110,7 +110,7 @@ class FiberChannelMappingNotExists(FiberChannelMappingExists):
         return not super(FiberChannelMappingNotExists, self).__call__()
 
     def __repr__(self):
-        return "<FiberChannelMappingNotExists: {!r}>".format(self.connectivity)
+        return "<FiberChannelMappingNotExists: {!r}:{}>".format(self.connectivity, self.lun_number)
 
 class WaitForNothing(object):
     def __call__(self):
