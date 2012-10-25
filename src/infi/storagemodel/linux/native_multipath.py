@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from ..base import multipath
-from ..errors import StorageModelFindError, MultipathDaemonTimeoutError
+from ..errors import StorageModelFindError, MultipathDaemonTimeoutError, DeviceDisappeared
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 import itertools
@@ -107,7 +107,10 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
             logger.info("MultipathD is not running")
             return []
 
-        devices = self._get_list_of_active_devices(client)
+        try:
+            devices = self._get_list_of_active_devices(client)
+        except IOError:
+            raise DeviceDisappeared()
         result = []
         logger.debug("Got {} devices from multipath client".format(len(devices)))
         for mpath_device in devices:
