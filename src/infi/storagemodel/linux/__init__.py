@@ -66,6 +66,3 @@ class LinuxStorageModel(StorageModel):
             logger.debug("rescan process started")
             if wait_for_completion:
                 self.rescan_process.join()
-
-def is_rescan_script_exists():
-    return _locate_rescan_script() is not None

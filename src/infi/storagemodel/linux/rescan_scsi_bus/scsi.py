@@ -52,32 +52,31 @@ def remove_device_via_sysfs(host, channel, target, lun):
         return False
     return True
 
+
 @func_logger
 @check_for_scsi_errors
+def do_scsi_cdb(sg_device, cdb):
+    from infi.asi.coroutines.sync_adapter import sync_wait
+    with asi_context(sg_device) as executer:
+        return sync_wait(cdb.execute(executer))
+
+@func_logger
 def do_report_luns(sg_device):
     from infi.asi.cdb.report_luns import ReportLunsCommand
-    from infi.asi.coroutines.sync_adapter import sync_wait
-    with asi_context(sg_device) as executer:
-        cdb = ReportLunsCommand(select_report=1)
-        return sync_wait(cdb.execute(executer))
+    cdb = ReportLunsCommand(select_report=1)
+    return do_scsi_cdb(sg_device, cdb)
 
 @func_logger
-@check_for_scsi_errors
 def do_test_unit_ready(sg_device):
     from infi.asi.cdb.tur import TestUnitReadyCommand
-    from infi.asi.coroutines.sync_adapter import sync_wait
-    with asi_context(sg_device) as executer:
-        cdb = TestUnitReadyCommand()
-        return sync_wait(cdb.execute(executer))
+    cdb = TestUnitReadyCommand()
+    return do_scsi_cdb(sg_device, cdb)
 
 @func_logger
-@check_for_scsi_errors
 def do_standard_inquiry(sg_device):
     from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
-    from infi.asi.coroutines.sync_adapter import sync_wait
-    with asi_context(sg_device) as executer:
-        command = StandardInquiryCommand()
-        return sync_wait(command.execute(executer))    
+    cdb = StandardInquiryCommand()
+    return do_scsi_cdb(sg_device, cdb)
 
 @func_logger
 def sync_file_systems():

@@ -10,13 +10,10 @@ logger = getLogger(__name__)
 
 @func_logger
 def get_luns_from_report_luns(host, channel, target):
-    controller_added = False
     if not is_device_exist(host, channel, target, 0):
         if not scsi_host_scan(host):
             scsi_add_single_device(host, channel, target, 0)
-        if is_device_exist(host, channel, target, 0):
-            controller_added = True
-        else:
+        if not is_device_exist(host, channel, target, 0):
             logger.debug("{} No controller device exist, skipping".fomrat(getpid()))
             return set()
     sg_device = get_scsi_generic_device(host, channel, target, 0)

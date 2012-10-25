@@ -64,7 +64,8 @@ def check_for_scsi_errors(func):
                 msg = "{} sg device {} got {} {}".format(getpid(), sg_device, key, code)
                 logger.warn(msg)
                 if (key, code) in CHECK_CONDITIONS_NOT_WORTH_RETRY:
-                    counter = 0
+                    # give up
+                    break
                 counter -= 1
             except (IOError, OSError, AsiOSError, AsiSCSIError), error:
                 msg = "{} sg device {} got unrecoverable error {} during {!r}"
