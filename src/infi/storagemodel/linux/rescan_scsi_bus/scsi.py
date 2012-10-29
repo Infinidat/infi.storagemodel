@@ -2,7 +2,7 @@ from logging import getLogger
 from os import path, getpid
 from time import sleep
 
-from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute, ScsiCommandFailed
+from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute
 
 logger = getLogger(__name__)
 
@@ -52,40 +52,13 @@ def remove_device_via_sysfs(host, channel, target, lun):
         return False
     return True
 
-def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
-    from infi.asi.coroutines.sync_adapter import sync_wait
-    try:
-        with asi_context(sg_device) as executer:
-            queue.put(sync_wait(cdb.execute(executer)))
-    except (BaseException, Exception), error:
-        return_value = error
-        queue.put(return_value)
-        raise
 
 @func_logger
 @check_for_scsi_errors
 def do_scsi_cdb(sg_device, cdb):
-    from multiprocessing import Process, Queue
-    from Queue import Empty
-    queue = Queue()
-    logger.debug("{} issuing cdb {} on {} with multiprocessing".format(getpid(), cdb, sg_device))
-    subprocess = Process(target=call_with_multiprocessing, args=(queue, sg_device, cdb,))
-    subprocess.start()
-    logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
-    try:
-        return_value = queue.get(timeout=5)
-    except Empty:
-        logger.error("{} multiprocessing {} did not return within timeout".format(getpid(), subprocess.pid))
-        return_value = ScsiCommandFailed()
-    if not subprocess.is_alive():
-        logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))
-        try:
-            subprocess.terminate()
-        except:
-            logger.error("{} failed to terminate multiprocessing {}".format(getpid(), subprocess.pid))
-    if isinstance(return_value, (BaseException, Exception)):
-        raise return_value
-    return return_value
+    from infi.asi.coroutines.sync_adapter import sync_wait
+    with asi_context(sg_device) as executer:
+        return sync_wait(cdb.execute(executer))
 
 @func_logger
 def do_report_luns(sg_device):
