@@ -10,6 +10,9 @@ CHECK_CONDITIONS_NOT_WORTH_RETRY = [
     ('UNIT_ATTENTION', 'POWER ON OCCURRED'),
 ]
 
+SEC = 1000
+TIMEOUT = 3 * SEC
+
 logger = getLogger(__name__)
 
 class ScsiCommandFailed(Exception):
@@ -40,7 +43,7 @@ def asi_context(sg_device):
     import infi.asi
     import infi.asi.unix
     handle = infi.asi.unix.OSFile(os.open("/dev/{}".format(sg_device), os.O_RDWR))
-    executer = infi.asi.create_platform_command_executer(handle)
+    executer = infi.asi.create_platform_command_executer(handle, timeout=TIMEOUT)
     try:
         yield executer
     finally:
