@@ -16,8 +16,8 @@ def main(host_numbers):
         udevadm_settle()
         partprobe()
         udevadm_settle()
-    except:
-        logger.exception("{} Unhandled exception in rescan_scsi_bus".format(getpid()))
+    except Exception, err:
+        logger.exception("{} Unhandled exception in rescan_scsi_bus: [}".format(getpid(), err))
         raise
 
 @func_logger
