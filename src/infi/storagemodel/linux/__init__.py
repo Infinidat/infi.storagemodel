@@ -1,5 +1,4 @@
 import os
-from time import sleep
 from contextlib import contextmanager
 
 from ..base import StorageModel
@@ -48,17 +47,16 @@ class LinuxStorageModel(StorageModel):
         from multiprocessing import Process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             logger.debug("terminating previous rescan process")
-            if (datetime.now() - self.rescan_process_start_time).total_seconds() > 10:
+            if (datetime.now() - self.rescan_process_start_time).total_seconds() > 30:
                 try:
                     self.rescan_process.terminate()
-                except:
+                except Exception:
                     logger.exception("Failed to terminate rescan process")
                 self.rescan_process = None
                 self.initiate_rescan(wait_for_completion)
             else:
                 logger.debug("previous rescan process is still running")
-                sleep(10)
-                self.initiate_rescan(wait_for_completion)
+                return
         else:
             self.rescan_process = Process(target=main, args=(_get_all_host_bus_adapter_numbers(),))
             self.rescan_process_start_time = datetime.now()
