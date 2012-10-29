@@ -69,7 +69,7 @@ def do_scsi_cdb(sg_device, cdb):
     from Queue import Empty
     queue = Queue()
     logger.debug("{} issuing cdb {} on {} with multiprocessing".format(getpid(), cdb, sg_device))
-    subprocess = Process(target=call_with_multiprocessing, args=(queue, sg_device, cdb,))
+    subprocess = Process(target=do_scsi_cdb_with_in_process, args=(queue, sg_device, cdb,))
     subprocess.start()
     logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
     try:
