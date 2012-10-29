@@ -2,7 +2,7 @@ from logging import getLogger
 from os import path, getpid
 from time import sleep
 
-from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute, ScsiCommandFailed
+from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute, ScsiCommandFailed, TIMEOUT_IN_SEC
 
 logger = getLogger(__name__)
 
@@ -73,9 +73,10 @@ def do_scsi_cdb(sg_device, cdb):
     subprocess.start()
     logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
     try:
-        return_value = queue.get(timeout=5)
+        return_value = queue.get(timeout=TIMEOUT_IN_SEC)
     except Empty:
-        logger.error("{} multiprocessing {} did not return within timeout".format(getpid(), subprocess.pid))
+        msg = "{} multiprocessing {} did not return within {} seconds timeout"
+        logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
         return_value = ScsiCommandFailed()
     if not subprocess.is_alive():
         logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))

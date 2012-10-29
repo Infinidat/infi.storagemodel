@@ -11,7 +11,8 @@ CHECK_CONDITIONS_NOT_WORTH_RETRY = [
 ]
 
 SEC = 1000
-TIMEOUT = 3 * SEC
+TIMEOUT_IN_SEC = 3
+TIMEOUT = SEC * TIMEOUT_IN_SEC
 
 logger = getLogger(__name__)
 
