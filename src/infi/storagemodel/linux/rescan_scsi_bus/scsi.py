@@ -57,11 +57,11 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
     from sys import exc_info
 
     @check_for_scsi_errors
-    def func():
+    def func(sg_device):
         with asi_context(sg_device) as executer:
             return queue.put(sync_wait(cdb.execute(executer)))
     try:
-        func()
+        func(sg_device)
     except:
         logger.exception("{} multiprocessing caught unhandled exception".format(getpid()))
         return ScsiCommandFailed()
