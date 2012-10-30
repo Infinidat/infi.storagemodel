@@ -54,13 +54,12 @@ def remove_device_via_sysfs(host, channel, target, lun):
 
 def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
     from infi.asi.coroutines.sync_adapter import sync_wait
+    from sys import exc_info
     try:
         with asi_context(sg_device) as executer:
             queue.put(sync_wait(cdb.execute(executer)))
     except (BaseException, Exception), error:
-        return_value = error
-        queue.put(return_value)
-        raise
+        queue.put(exc_info())
 
 @func_logger
 @check_for_scsi_errors
@@ -78,14 +77,16 @@ def do_scsi_cdb(sg_device, cdb):
         msg = "{} multiprocessing {} did not return within {} seconds timeout"
         logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
         return_value = ScsiCommandFailed()
+    logger.debug("{} multiprocessing {} returned {}".format(getpid(), subprocess.pid, return_value))
     if not subprocess.is_alive():
         logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))
         try:
             subprocess.terminate()
         except:
             logger.error("{} failed to terminate multiprocessing {}".format(getpid(), subprocess.pid))
-    if isinstance(return_value, (BaseException, Exception)):
-        raise return_value
+    if isinstance(return_value, tuple) and isinstance(return_value[0], (BaseException, Exception)):
+        exc_type, exc_value, traceback = return_value
+        raise exc_type, exc_value, traceback
     return return_value
 
 @func_logger
