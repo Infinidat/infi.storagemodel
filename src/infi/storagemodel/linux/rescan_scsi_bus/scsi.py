@@ -55,15 +55,18 @@ def remove_device_via_sysfs(host, channel, target, lun):
 def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
     from infi.asi.coroutines.sync_adapter import sync_wait
     from sys import exc_info
-    try:
+
+    @check_for_scsi_errors
+    def func():
         with asi_context(sg_device) as executer:
-            queue.put(sync_wait(cdb.execute(executer)))
-    except (BaseException, Exception), error:
+            return queue.put(sync_wait(cdb.execute(executer)))
+    try:
+        func()
+    except:
         logger.exception("{} multiprocessing caught unhandled exception".format(getpid()))
         return ScsiCommandFailed()
 
 @func_logger
-@check_for_scsi_errors
 def do_scsi_cdb(sg_device, cdb):
     from multiprocessing import Process, Queue
     from Queue import Empty
