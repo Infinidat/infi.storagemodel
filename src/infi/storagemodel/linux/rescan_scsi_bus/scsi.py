@@ -59,7 +59,8 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
         with asi_context(sg_device) as executer:
             queue.put(sync_wait(cdb.execute(executer)))
     except (BaseException, Exception), error:
-        queue.put(exc_info())
+        logger.exception("{} multiprocessing caught unhandled exception".format(getpid()))
+        return ScsiCommandFailed()
 
 @func_logger
 @check_for_scsi_errors
@@ -84,9 +85,8 @@ def do_scsi_cdb(sg_device, cdb):
             subprocess.terminate()
         except:
             logger.error("{} failed to terminate multiprocessing {}".format(getpid(), subprocess.pid))
-    if isinstance(return_value, tuple) and isinstance(return_value[0], (BaseException, Exception)):
-        exc_type, exc_value, traceback = return_value
-        raise exc_type, exc_value, traceback
+    if isinstance(return_value, ScsiCommandFailed):
+        raise ScsiCommandFailed()
     return return_value
 
 @func_logger
