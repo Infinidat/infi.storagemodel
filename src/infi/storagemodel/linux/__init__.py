@@ -46,8 +46,8 @@ class LinuxStorageModel(StorageModel):
         from .rescan_scsi_bus import main
         from multiprocessing import Process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
-            logger.debug("terminating previous rescan process")
             if (datetime.now() - self.rescan_process_start_time).total_seconds() > 30:
+                logger.debug("terminating previous rescan process")
                 try:
                     self.rescan_process.terminate()
                 except Exception:
