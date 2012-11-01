@@ -73,7 +73,7 @@ def check_for_scsi_errors(func):
                 counter -= 1
             except (IOError, OSError, AsiOSError, AsiSCSIError), error:
                 msg = "{} sg device {} got unrecoverable error {} during {}"
-                logger.error(msg.format(getpid(), sg_device, error, cdb)
+                logger.error(msg.format(getpid(), sg_device, error, cdb))
                 counter = 0
         raise chain(ScsiCommandFailed())
     return decorator
