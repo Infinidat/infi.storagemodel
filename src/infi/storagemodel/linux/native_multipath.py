@@ -61,9 +61,9 @@ class LinuxPath(multipath.Path):
         import os
         from infi.asi.unix import OSFile
         from infi.asi import create_platform_command_executer
-
+        from .scsi import SG_TIMEOUT_IN_MS
         handle = OSFile(os.open(os.path.join("/dev", self.sysfs_device.get_scsi_generic_device_name()), os.O_RDWR))
-        executer = create_platform_command_executer(handle)
+        executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
         try:
             yield executer
         finally:

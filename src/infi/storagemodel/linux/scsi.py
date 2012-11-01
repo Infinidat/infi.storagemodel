@@ -6,6 +6,10 @@ from .block import LinuxBlockDeviceMixin
 from infi.storagemodel.base.scsi import SCSIBlockDevice
 from infi.exceptools import chain
 
+MS = 1000
+SG_TIMEOUT_IN_SEC = 3
+SG_TIMEOUT_IN_MS = SG_TIMEOUT_IN_SEC * MS
+
 class LinuxSCSIDeviceMixin(object):
     @contextmanager
     def asi_context(self):
@@ -14,7 +18,7 @@ class LinuxSCSIDeviceMixin(object):
         from infi.asi import create_platform_command_executer
 
         handle = OSFile(os.open(self.get_scsi_access_path(), os.O_RDWR))
-        executer = create_platform_command_executer(handle)
+        executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
         try:
             yield executer
         finally:
