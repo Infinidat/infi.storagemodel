@@ -1,5 +1,5 @@
 import os
-from contextlib import contextmanager
+import atexit
 
 from ..base import StorageModel
 from infi.pyutils.lazy import cached_method, cached_function
@@ -17,6 +17,8 @@ class LinuxStorageModel(StorageModel):
         super(LinuxStorageModel, self).__init__()
         self.rescan_process = None
         self.rescan_process_start_time = None
+        atexit.register(self.terminate_rescan_process)
+
     @cached_method
     def _get_sysfs(self):
         from .sysfs import Sysfs
@@ -41,6 +43,15 @@ class LinuxStorageModel(StorageModel):
     def _create_mount_repository(self):
         from .mount import LinuxMountRepository
         return LinuxMountRepository()
+
+    def terminate_rescan_process(self):
+        from multiprocessing import Process
+        if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
+            try:
+                self.rescan_process.terminate()
+            except Exception:
+                logger.exception("Failed to terminate rescan process")
+            self.rescan_process = None
 
     def initiate_rescan(self, wait_for_completion=True):
         from .rescan_scsi_bus import main
