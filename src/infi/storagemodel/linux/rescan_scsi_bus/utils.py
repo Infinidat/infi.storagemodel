@@ -58,7 +58,7 @@ def check_for_scsi_errors(func):
         counter = 5
         while counter > 0:
             try:
-                sg_device = args[0]
+                sg_device, cdb = args
                 msg = "{} attempting to send {} to sg device {}, {} more retries"
                 logger.debug(msg.format(getpid(), func.__name__, sg_device, counter))
                 response = func(*args, **kwargs)
@@ -72,8 +72,8 @@ def check_for_scsi_errors(func):
                     break
                 counter -= 1
             except (IOError, OSError, AsiOSError, AsiSCSIError), error:
-                msg = "{} sg device {} got unrecoverable error {} during {!r}"
-                logger.error(msg.format(getpid(), sg_device, error, func.__name__))
+                msg = "{} sg device {} got unrecoverable error {} during {}"
+                logger.error(msg.format(getpid(), sg_device, error, cdb)
                 counter = 0
         raise chain(ScsiCommandFailed())
     return decorator
