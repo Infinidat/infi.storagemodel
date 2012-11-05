@@ -1,5 +1,5 @@
 from logging import getLogger
-from os import path, readlink, getpid
+from os import path, getpid
 from glob import glob
 from .utils import func_logger
 
@@ -11,7 +11,7 @@ PROC_SCSI_SCSI_LINE_TEMPLATE = "Host: scsi{} Channel: {:02d} Id: {:02d} Lun: {:0
 def get_scsi_device_names_from_sysfs():
     base = "/sys/class/scsi_device/*"
     return [path.basename(item) for item in glob(base)]
-    
+
 @func_logger
 def get_proc_scsi_scsi():
     with open("/proc/scsi/scsi") as fd:
@@ -40,7 +40,7 @@ def get_luns(host, channel, target):
     luns = set([int(device.split(":")[3])
                 for device in matching_host_channel_and_target])
     return luns
-    
+
 @func_logger
 def is_hctl_written_in_proc_scsi_scsi(host, channel, target, lun):
     expression = PROC_SCSI_SCSI_LINE_TEMPLATE.format(host, channel, target, lun)
@@ -52,6 +52,7 @@ def is_device_exist(host, channel, target, lun):
 
 @func_logger
 def try_readlink(src):
+    from os import readlink
     try:
         return readlink(src)
     except OSError, err:
@@ -60,6 +61,7 @@ def try_readlink(src):
 
 @func_logger
 def get_scsi_generic_device(host, channel, target, lun):
+    from os import readlink
     hctl = "{}:{}:{}:{}".format(host, channel, target, lun)
     guess = "/sys/class/scsi_device/{}/device/generic".format(hctl)
     if path.exists(guess):
