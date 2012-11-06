@@ -4,7 +4,7 @@ class InfinidatFiberChannelPort(object):
         self._relative_target_port_identifer = relative_target_port_identifer
         self._target_port_group = target_port_group
 
-    def get_server_id(self):
+    def get_node_id(self):
         return (self._relative_target_port_identifer >> 8) & 0xff
 
     def get_port_id(self):
