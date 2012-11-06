@@ -218,6 +218,26 @@ class LeastQueueDepth(LoadBalancePolicy):
     # This methods below are overriden by platform-specific implementations
     name = "Least Queue Depth"
 
+class PathStatistics(object):
+    def __init__(self, bytes_read, bytes_written, number_reads, number_writes):
+        self._bytes_read = bytes_read
+        self._bytes_written = bytes_written
+        self._number_reads = number_reads
+        self._number_writes = number_writes
+        
+    @property
+    def bytes_read(self):
+        return self._bytes_read
+    @property
+    def read_io_count(self):
+        return self._number_reads
+    @property
+    def bytes_written(self):
+        return self._bytes_written
+    @property
+    def write_io_count(self):
+        return self._number_writes
+
 class Path(object):
     @cached_method
     def get_connectivity(self):
@@ -252,4 +272,8 @@ class Path(object):
     def get_state(self): # pragma: no cover
         """:returns: either "up" or "down"."""
         # platform implementation
+        raise NotImplementedError()
+
+    def get_io_statistics(self):
+        """:returns: `PathStatistics` class """
         raise NotImplementedError()

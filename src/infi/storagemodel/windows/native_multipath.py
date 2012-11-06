@@ -98,7 +98,7 @@ class WindowsNativeMultipathBlockDevice(WindowsDiskDeviceMixin, WindowsDeviceMix
 
     @cached_method
     def get_paths(self):
-        return [WindowsPath(item) for item in self._multipath_object.PdoInformation]
+        return [WindowsPath(item, self._multipath_object) for item in self._multipath_object.PdoInformation]
 
     @cached_method
     def get_policy(self):
@@ -120,9 +120,10 @@ class WindowsNativeMultipathBlockDevice(WindowsDiskDeviceMixin, WindowsDeviceMix
             return WindowsLeastQueueDepth()
 
 class WindowsPath(multipath.Path):
-    def __init__(self, pdo_information):
+    def __init__(self, pdo_information, multipath_object):
         super(WindowsPath, self).__init__()
         self._pdo_information = pdo_information
+        self._multipath_object = multipath_object
 
     @cached_method
     def get_path_id(self):
@@ -142,3 +143,13 @@ class WindowsPath(multipath.Path):
     def get_display_name(self):
         return "%x" % self.get_path_id()
 
+    def get_io_statistics(self):
+        from infi.wmpio import get_device_performance, WmiClient
+        wmi_client = WmiClient()
+        device_wmi_path = self._multipath_object.InstanceName
+        device_performance = get_device_performance(wmi_client)[device_wmi_path]
+        path_perfromance = device_performance.PerfInfo[self.get_path_id()]
+        return multipath.PathStatistics(path_perfromance.BytesRead,
+                                        path_perfromance.BytesWritten,
+                                        path_perfromance.NumberReads,
+                                        path_perfromance.NumberWrites)
