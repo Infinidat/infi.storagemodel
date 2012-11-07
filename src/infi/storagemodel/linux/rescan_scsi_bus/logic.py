@@ -90,10 +90,8 @@ def target_scan(host, channel, target):
 @func_logger
 def rescan_scsi_host(host):
     for channel in get_channels(host):
+        scsi_host_scan(host)
         targets = get_targets(host, channel)
-        if not targets:
-            scsi_host_scan(host)
-            targets = get_targets(host, channel)
         for target in targets:
             target_scan(host, channel, target)
 
