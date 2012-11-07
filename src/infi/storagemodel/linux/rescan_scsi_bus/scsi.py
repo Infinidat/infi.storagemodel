@@ -11,7 +11,7 @@ def write_to_proc_scsi_scsi(line):
         with open("/proc/scsi/scsi", "w") as fd:
             fd.write("{}\n".format(line))
     except IOError, err:
-        logger.error("{} IOError {} when writing {!r} to /proc/scsi/scsi".format(getpid(), err, line))
+        logger.exception("{} IOError {} when writing {!r} to /proc/scsi/scsi".format(getpid(), err, line))
         return False
     return True
 
@@ -29,13 +29,13 @@ def scsi_host_scan(host):
     if path.exists(scan_file):
         try:
             with open(scan_file, "w") as fd:
-                fd.write("1\n")
+                fd.write("- - -\n")
         except IOError, err:
-            logger.error("{} IOError {} when writing 1 to {}".format(getpid(), err, scan_file))
+            logger.exception("{} IOError {} when writing '- - -' to {}".format(getpid(), err, scan_file))
             return False
         return True
     logger.debug("{} scan file {} does not exist".format(getpid(), scan_file))
-    return False
+    return True
 
 @func_logger
 def remove_device_via_sysfs(host, channel, target, lun):
@@ -43,12 +43,12 @@ def remove_device_via_sysfs(host, channel, target, lun):
     delete_file = "/sys/class/scsi_device/{}/device/delete".format(hctl)
     if not path.exists(delete_file):
         logger.debug("{} sysfs delete file {} does not exist".format(getpid(), delete_file))
-        return False
+        return True
     try:
         with open(delete_file, "w") as fd:
             fd.write("1\n")
     except IOError, err:
-        logger.error("{} IOError {} when writing 1 to {}".format(getpid(), err, delete_file))
+        logger.exception("{} IOError {} when writing 1 to {}".format(getpid(), err, delete_file))
         return False
     return True
 
@@ -71,7 +71,7 @@ def do_scsi_cdb(sg_device, cdb):
     from multiprocessing import Process, Queue
     from Queue import Empty
     queue = Queue()
-    logger.debug("{} issuing cdb {} on {} with multiprocessing".format(getpid(), cdb, sg_device))
+    logger.debug("{} issuing cdb {!r} on {} with multiprocessing".format(getpid(), cdb, sg_device))
     subprocess = Process(target=do_scsi_cdb_with_in_process, args=(queue, sg_device, cdb,))
     subprocess.start()
     logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))

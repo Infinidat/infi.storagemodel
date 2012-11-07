@@ -15,11 +15,18 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
         self.sysfs_device = sysfs_device
         self.multipath_object = multipath_object
 
+    @contextmanager
     def asi_context(self):
-        for path in self.get_paths():
-            if path.get_state() == "up":
-                return path.asi_context()
-        raise StorageModelFindError("cannot find an active path to open SCSI generic device") # pylint: disable=W0710
+        import os
+        from infi.asi.unix import OSFile
+        from infi.asi.linux import LinuxIoctlCommandExecuter
+
+        handle = OSFile(os.open(self.get_block_access_path(), os.O_RDWR))
+        executer = LinuxIoctlCommandExecuter(handle)
+        try:
+            yield executer
+        finally:
+            handle.close()
 
     def _is_there_atleast_one_path_up(self):
         return bool(filter(lambda path: path.get_state() == "up", self.get_paths()))

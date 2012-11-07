@@ -1,24 +1,20 @@
 from os import getpid
 from logging import getLogger
-from .utils import func_logger, format_hctl, ScsiCommandFailed 
+from .utils import func_logger, format_hctl, ScsiCommandFailed
 from .scsi import scsi_host_scan, scsi_add_single_device, scsi_remove_single_device, remove_device_via_sysfs
 from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready
 from .getters import is_device_exist, get_scsi_generic_device
 from .getters import get_channels, get_targets, get_luns
-    
+
 logger = getLogger(__name__)
 
 @func_logger
 def get_luns_from_report_luns(host, channel, target):
-    if not is_device_exist(host, channel, target, 0):
-        if not scsi_host_scan(host):
-            scsi_add_single_device(host, channel, target, 0)
-        if not is_device_exist(host, channel, target, 0):
-            logger.debug("{} No controller device exist, skipping".format(getpid()))
-            return set()
-    sg_device = get_scsi_generic_device(host, channel, target, 0)
     device_exists = lun_scan(host, channel, target, 0)
-    return set(do_report_luns(sg_device).lun_list) if device_exists else set()
+    if device_exists:
+        sg_device = get_scsi_generic_device(host, channel, target, 0)
+        return set(do_report_luns(sg_device).lun_list)
+    return set()
 
 @func_logger
 def is_scsi_generic_device_online(sg_device):
@@ -43,27 +39,21 @@ def lun_scan(host, channel, target, lun):
     sg_device = get_scsi_generic_device(host, channel, target, lun)
     if sg_device is None:
         logger.debug("{} No sg device for {}".format(getpid(), format_hctl(host, channel, target, lun)))
-        handle_device_removal(host, channel, target, lun)
         return False
     if not is_scsi_generic_device_online(sg_device):
         logger.debug("{} scsi generic device {} is not online".format(getpid(), sg_device.format()))
-        if handle_device_removal(host, channel, target, lun) and handle_add_devices(host, channel, target, [lun]):
-            logger.debug("{} hctl {} was remapped".format(getpid(), format_hctl(host, channel, target, lun)))
-            return lun_scan(host, channel, target, lun)
-        logger.debug("{} hctl {} was NOT remapped".format(getpid(), format_hctl(host, channel, target, lun)))
         return False
     return True
 
 @func_logger
 def handle_add_devices(host, channel, target, missing_luns):
-    scsi_host_scan(host)
-    return True if all([scsi_add_single_device(host, channel, target, lun)
-                        for lun in missing_luns]) else False
+    return scsi_host_scan(host)
 
 @func_logger
 def handle_device_removal(host, channel, target, lun):
-    if not any([remove_device_via_sysfs(host, channel, target, lun),
-                scsi_remove_single_device(host, channel, target, lun)]):
+    first = remove_device_via_sysfs
+    args = (host, channel, target, lun)
+    if not first(*args):
         logger.error("{} failed to remove device {}".format(getpid(), format_hctl(host, channel, target, lun)))
         return False
     return True
@@ -76,10 +66,16 @@ def target_scan(host, channel, target):
     logger.debug("{} actual_luns: {}".format(getpid(), actual_luns))
     missing_luns = expected_luns.difference(actual_luns)
     unmapped_luns = actual_luns.difference(expected_luns)
-    existing_luns = actual_luns.union(expected_luns)
+    existing_luns = actual_luns.intersection(expected_luns)
     logger.debug("{} missing_luns: {}".format(getpid(), missing_luns))
     logger.debug("{} unmapped_luns: {}".format(getpid(), unmapped_luns))
     logger.debug("{} existing_luns: {}".format(getpid(), existing_luns))
+    if actual_luns and not expected_luns:
+        # In this case, the target was removed and the SCSI mid-layer will delete the devices
+        # once the FC driver deletes the remote port
+        # There is a sublte race in the kernel so we don't remove the devices manually
+        logger.info("{} target {}:{}:{} was removed".format(getpid(), host, channel, target))
+        return
     if missing_luns:
         handle_add_devices(host, channel, target, missing_luns)
     for lun in unmapped_luns:
@@ -91,9 +87,6 @@ def target_scan(host, channel, target):
 def rescan_scsi_host(host):
     for channel in get_channels(host):
         targets = get_targets(host, channel)
-        if not targets:
-            scsi_host_scan(host)
-            targets = get_targets(host, channel)
         for target in targets:
             target_scan(host, channel, target)
 
