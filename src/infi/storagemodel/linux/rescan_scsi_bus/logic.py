@@ -75,6 +75,12 @@ def target_scan(host, channel, target):
     logger.debug("{} missing_luns: {}".format(getpid(), missing_luns))
     logger.debug("{} unmapped_luns: {}".format(getpid(), unmapped_luns))
     logger.debug("{} existing_luns: {}".format(getpid(), existing_luns))
+    if actual_luns and not expected_luns:
+        # In this case, the target was removed and the SCSI mid-layer will delete the devices
+        # once the FC driver deletes the remote port
+        # There is a sublte race in the kernel so we don't remove the devices manually
+        logger.info("{} target {}:{}:{} was removed".format(getpid(), host, channel, target))
+        return
     if missing_luns:
         handle_add_devices(host, channel, target, missing_luns)
     for lun in unmapped_luns:
