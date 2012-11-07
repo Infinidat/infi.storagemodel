@@ -11,7 +11,7 @@ def write_to_proc_scsi_scsi(line):
         with open("/proc/scsi/scsi", "w") as fd:
             fd.write("{}\n".format(line))
     except IOError, err:
-        logger.error("{} IOError {} when writing {!r} to /proc/scsi/scsi".format(getpid(), err, line))
+        logger.exception("{} IOError {} when writing {!r} to /proc/scsi/scsi".format(getpid(), err, line))
         return False
     return True
 
@@ -31,7 +31,7 @@ def scsi_host_scan(host):
             with open(scan_file, "w") as fd:
                 fd.write("- - -\n")
         except IOError, err:
-            logger.error("{} IOError {} when writing '- - -' to {}".format(getpid(), err, scan_file))
+            logger.exception("{} IOError {} when writing '- - -' to {}".format(getpid(), err, scan_file))
             return False
         return True
     logger.debug("{} scan file {} does not exist".format(getpid(), scan_file))
@@ -48,7 +48,7 @@ def remove_device_via_sysfs(host, channel, target, lun):
         with open(delete_file, "w") as fd:
             fd.write("1\n")
     except IOError, err:
-        logger.error("{} IOError {} when writing 1 to {}".format(getpid(), err, delete_file))
+        logger.exception("{} IOError {} when writing 1 to {}".format(getpid(), err, delete_file))
         return False
     return True
 
