@@ -29,7 +29,7 @@ def scsi_host_scan(host):
     if path.exists(scan_file):
         try:
             with open(scan_file, "w") as fd:
-                fd.write("1\n")
+                fd.write("- - -\n")
         except IOError, err:
             logger.error("{} IOError {} when writing 1 to {}".format(getpid(), err, scan_file))
             return False
