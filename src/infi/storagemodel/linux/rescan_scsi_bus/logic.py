@@ -76,7 +76,7 @@ def target_scan(host, channel, target):
     logger.debug("{} actual_luns: {}".format(getpid(), actual_luns))
     missing_luns = expected_luns.difference(actual_luns)
     unmapped_luns = actual_luns.difference(expected_luns)
-    existing_luns = actual_luns.union(expected_luns)
+    existing_luns = actual_luns.intersection(expected_luns)
     logger.debug("{} missing_luns: {}".format(getpid(), missing_luns))
     logger.debug("{} unmapped_luns: {}".format(getpid(), unmapped_luns))
     logger.debug("{} existing_luns: {}".format(getpid(), existing_luns))
