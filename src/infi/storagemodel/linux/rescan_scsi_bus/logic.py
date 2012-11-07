@@ -62,8 +62,10 @@ def handle_add_devices(host, channel, target, missing_luns):
 
 @func_logger
 def handle_device_removal(host, channel, target, lun):
-    if not any([remove_device_via_sysfs(host, channel, target, lun),
-                scsi_remove_single_device(host, channel, target, lun)]):
+    first = remove_device_via_sysfs
+    second = scsi_remove_single_device
+    args = (host, channel, target, lun)
+    if not first(*args) and not second(*args):
         logger.error("{} failed to remove device {}".format(getpid(), format_hctl(host, channel, target, lun)))
         return False
     return True
