@@ -39,14 +39,9 @@ def lun_scan(host, channel, target, lun):
     sg_device = get_scsi_generic_device(host, channel, target, lun)
     if sg_device is None:
         logger.debug("{} No sg device for {}".format(getpid(), format_hctl(host, channel, target, lun)))
-        handle_device_removal(host, channel, target, lun)
         return False
     if not is_scsi_generic_device_online(sg_device):
         logger.debug("{} scsi generic device {} is not online".format(getpid(), sg_device.format()))
-        if handle_device_removal(host, channel, target, lun) and handle_add_devices(host, channel, target, [lun]):
-            logger.debug("{} hctl {} was remapped".format(getpid(), format_hctl(host, channel, target, lun)))
-            return lun_scan(host, channel, target, lun)
-        logger.debug("{} hctl {} was NOT remapped".format(getpid(), format_hctl(host, channel, target, lun)))
         return False
     return True
 
