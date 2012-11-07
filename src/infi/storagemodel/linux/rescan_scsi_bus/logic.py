@@ -1,11 +1,11 @@
 from os import getpid
 from logging import getLogger
-from .utils import func_logger, format_hctl, ScsiCommandFailed 
+from .utils import func_logger, format_hctl, ScsiCommandFailed
 from .scsi import scsi_host_scan, scsi_add_single_device, scsi_remove_single_device, remove_device_via_sysfs
 from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready
 from .getters import is_device_exist, get_scsi_generic_device
 from .getters import get_channels, get_targets, get_luns
-    
+
 logger = getLogger(__name__)
 
 @func_logger
@@ -52,16 +52,13 @@ def lun_scan(host, channel, target, lun):
 
 @func_logger
 def handle_add_devices(host, channel, target, missing_luns):
-    if scsi_host_scan(host):
-        return True
-    return all([scsi_add_single_device(host, channel, target, lun) for lun in missing_luns])
+    return scsi_host_scan(host)
 
 @func_logger
 def handle_device_removal(host, channel, target, lun):
     first = remove_device_via_sysfs
-    second = scsi_remove_single_device
     args = (host, channel, target, lun)
-    if not first(*args) and not second(*args):
+    if not first(*args):
         logger.error("{} failed to remove device {}".format(getpid(), format_hctl(host, channel, target, lun)))
         return False
     return True

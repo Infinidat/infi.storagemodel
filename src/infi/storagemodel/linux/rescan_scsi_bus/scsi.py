@@ -31,11 +31,11 @@ def scsi_host_scan(host):
             with open(scan_file, "w") as fd:
                 fd.write("- - -\n")
         except IOError, err:
-            logger.error("{} IOError {} when writing 1 to {}".format(getpid(), err, scan_file))
+            logger.error("{} IOError {} when writing '- - -' to {}".format(getpid(), err, scan_file))
             return False
         return True
     logger.debug("{} scan file {} does not exist".format(getpid(), scan_file))
-    return False
+    return True
 
 @func_logger
 def remove_device_via_sysfs(host, channel, target, lun):
@@ -43,7 +43,7 @@ def remove_device_via_sysfs(host, channel, target, lun):
     delete_file = "/sys/class/scsi_device/{}/device/delete".format(hctl)
     if not path.exists(delete_file):
         logger.debug("{} sysfs delete file {} does not exist".format(getpid(), delete_file))
-        return False
+        return True
     try:
         with open(delete_file, "w") as fd:
             fd.write("1\n")
