@@ -52,9 +52,9 @@ def lun_scan(host, channel, target, lun):
 
 @func_logger
 def handle_add_devices(host, channel, target, missing_luns):
-    scsi_host_scan(host)
-    return True if all([scsi_add_single_device(host, channel, target, lun)
-                        for lun in missing_luns]) else False
+    if scsi_host_scan(host):
+        return True
+    return all([scsi_add_single_device(host, channel, target, lun) for lun in missing_luns])
 
 @func_logger
 def handle_device_removal(host, channel, target, lun):
