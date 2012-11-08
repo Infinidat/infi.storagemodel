@@ -35,7 +35,6 @@ def is_scsi_generic_device_online(sg_device):
 
 @func_logger
 def lun_scan(host, channel, target, lun):
-    remaped_hctl = list()
     sg_device = get_scsi_generic_device(host, channel, target, lun)
     if sg_device is None:
         logger.debug("{} No sg device for {}".format(getpid(), format_hctl(host, channel, target, lun)))
@@ -73,9 +72,12 @@ def target_scan(host, channel, target):
     if actual_luns and not expected_luns:
         # In this case, the target was removed and the SCSI mid-layer will delete the devices
         # once the FC driver deletes the remote port
-        # There is a sublte race in the kernel so we don't remove the devices manually
+        # There is a sublte race in the Ubuntu kernel so we don't remove the devices manually
+        from platform import linux_distribution
         logger.info("{} target {}:{}:{} was removed".format(getpid(), host, channel, target))
-        return
+        distname, _, _ = linux_distribution()
+        if distname in ["Ubuntu"]:
+            return
     if missing_luns:
         handle_add_devices(host, channel, target, missing_luns)
     for lun in unmapped_luns:
