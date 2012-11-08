@@ -34,9 +34,22 @@ def func_logger(func):
         return result
     return decorator
 
+def silence_command_timeout(func):
+    @wraps(func)
+    def decorator(*args, **kwargs):
+        from infi.execute import CommandTimeout
+        try:
+            return func(*args, **kwargs)
+        except CommandTimeout:
+            return None
+    return decorator
+
+@silence_command_timeout
 @func_logger
-def log_execute(args):
-    return execute(args).get_pid()
+def log_execute(args, timeout_in_seconds=None):
+    pid = execute(args)
+    pid.wait(timeout_in_seconds)
+    return pid.get_pid()
 
 @contextmanager
 def asi_context(sg_device):

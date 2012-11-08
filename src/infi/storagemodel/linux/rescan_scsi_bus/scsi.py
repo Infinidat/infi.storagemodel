@@ -112,7 +112,7 @@ def do_standard_inquiry(sg_device):
 
 @func_logger
 def sync_file_systems():
-    return log_execute(["sync"])
+    return log_execute(["sync"], TIMEOUT_IN_SEC)
 
 @func_logger
 def is_udevadm_exist():
