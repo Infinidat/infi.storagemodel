@@ -5,6 +5,7 @@ from .scsi import scsi_host_scan, scsi_add_single_device, scsi_remove_single_dev
 from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready
 from .getters import is_device_exist, get_scsi_generic_device
 from .getters import get_channels, get_targets, get_luns
+from .getters import is_there_a_bug_in_target_removal, is_there_a_bug_in_sysfs_async_scanning
 
 logger = getLogger(__name__)
 
@@ -46,6 +47,8 @@ def lun_scan(host, channel, target, lun):
 
 @func_logger
 def handle_add_devices(host, channel, target, missing_luns):
+    if is_there_a_bug_in_sysfs_async_scanning():
+        return all([scsi_add_single_device(host, channel, target, lun) for lun in missing_luns])
     return scsi_host_scan(host)
 
 @func_logger
@@ -70,13 +73,8 @@ def target_scan(host, channel, target):
     logger.debug("{} unmapped_luns: {}".format(getpid(), unmapped_luns))
     logger.debug("{} existing_luns: {}".format(getpid(), existing_luns))
     if actual_luns and not expected_luns:
-        # In this case, the target was removed and the SCSI mid-layer will delete the devices
-        # once the FC driver deletes the remote port
-        # There is a sublte race in the Ubuntu kernel so we don't remove the devices manually
-        from platform import linux_distribution
         logger.info("{} target {}:{}:{} was removed".format(getpid(), host, channel, target))
-        distname, _, _ = linux_distribution()
-        if distname in ["Ubuntu"]:
+        if is_there_a_bug_in_target_removal():
             return
     if missing_luns:
         handle_add_devices(host, channel, target, missing_luns)
