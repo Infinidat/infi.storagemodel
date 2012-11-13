@@ -120,7 +120,7 @@ def is_udevadm_exist():
 
 @func_logger
 def execute_udevadm():
-    return log_execute(["/sbin/udevadm", "settle"])
+    return log_execute(["/sbin/udevadm", "settle"], TIMEOUT_IN_SEC*3)
 
 @func_logger
 def is_udevsettle_exist():
@@ -128,7 +128,7 @@ def is_udevsettle_exist():
 
 @func_logger
 def execute_udevsettle():
-    return log_execute(["/sbin/udevsettle"])
+    return log_execute(["/sbin/udevsettle"], TIMEOUT_IN_SEC*3)
 
 @func_logger
 def udevadm_settle():
@@ -141,4 +141,4 @@ def udevadm_settle():
 
 @func_logger
 def partprobe():
-    return log_execute(["/sbin/partprobe"])
+    return log_execute(["/sbin/partprobe"], TIMEOUT_IN_SEC)
