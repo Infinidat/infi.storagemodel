@@ -81,7 +81,7 @@ def do_scsi_cdb(sg_device, cdb):
         msg = "{} multiprocessing {} did not return within {} seconds timeout"
         logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
         return_value = ScsiCommandFailed()
-    logger.debug("{} multiprocessing {} returned {}".format(getpid(), subprocess.pid, return_value))
+    logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
     if not subprocess.is_alive():
         logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))
         try:
