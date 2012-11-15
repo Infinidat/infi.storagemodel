@@ -1,7 +1,6 @@
 from logging import getLogger
 from os import getpid
 from infi.exceptools import chain
-from infi.execute import execute
 from infi.pyutils.contexts import contextmanager
 from infi.pyutils.decorators import wraps
 
@@ -35,8 +34,14 @@ def func_logger(func):
     return decorator
 
 @func_logger
-def log_execute(args):
-    return execute(args).get_pid()
+def log_execute(args, timeout_in_seconds=None):
+    from infi.execute import execute_async, CommandTimeout
+    pid = execute_async(args)
+    try:
+        pid.wait(timeout_in_seconds)
+    except CommandTimeout:
+        pid.kill(9)
+    return pid.get_pid()
 
 @contextmanager
 def asi_context(sg_device):

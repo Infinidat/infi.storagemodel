@@ -81,7 +81,7 @@ def do_scsi_cdb(sg_device, cdb):
         msg = "{} multiprocessing {} did not return within {} seconds timeout"
         logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
         return_value = ScsiCommandFailed()
-    logger.debug("{} multiprocessing {} returned {}".format(getpid(), subprocess.pid, return_value))
+    logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
     if not subprocess.is_alive():
         logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))
         try:
@@ -112,7 +112,7 @@ def do_standard_inquiry(sg_device):
 
 @func_logger
 def sync_file_systems():
-    return log_execute(["sync"])
+    return log_execute(["sync"], TIMEOUT_IN_SEC)
 
 @func_logger
 def is_udevadm_exist():
@@ -120,7 +120,7 @@ def is_udevadm_exist():
 
 @func_logger
 def execute_udevadm():
-    return log_execute(["/sbin/udevadm", "settle"])
+    return log_execute(["/sbin/udevadm", "settle"], TIMEOUT_IN_SEC*3)
 
 @func_logger
 def is_udevsettle_exist():
@@ -128,7 +128,7 @@ def is_udevsettle_exist():
 
 @func_logger
 def execute_udevsettle():
-    return log_execute(["/sbin/udevsettle"])
+    return log_execute(["/sbin/udevsettle"], TIMEOUT_IN_SEC*3)
 
 @func_logger
 def udevadm_settle():
@@ -141,4 +141,4 @@ def udevadm_settle():
 
 @func_logger
 def partprobe():
-    return log_execute(["/sbin/partprobe"])
+    return log_execute(["/sbin/partprobe"], TIMEOUT_IN_SEC)
