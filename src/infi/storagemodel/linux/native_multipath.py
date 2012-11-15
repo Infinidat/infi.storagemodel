@@ -86,6 +86,18 @@ class LinuxPath(multipath.Path):
     @cached_method
     def get_state(self):
         return "up" if self.multipath_object_path.state == "active" else "down"
+    
+    def get_io_statistics(self):
+        # http://www.kernel.org/doc/Documentation/block/stat.txt
+        stat_file_path = "/sys/block/{}/stat".format(self.get_path_id())
+        with open(stat_file_path, "rb") as fd:
+            stat_data = fd.read()
+            stat_values = [int(val) for val in stat_data.split()]
+            read_ios, _, read_sectors, _, write_ios, _, write_sectors, _, _, _, _ = stat_values
+            # sector = always 512 bytes, not disk-dependent
+            bytes_read = read_sectors * 512
+            bytes_written = write_sectors * 512
+            return multipath.PathStatistics(bytes_read, bytes_written, read_ios, write_ios)
 
 class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
     def __init__(self, sysfs):

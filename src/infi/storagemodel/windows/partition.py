@@ -59,7 +59,10 @@ class WindowsPartition(object):
 
     @cached_method
     def get_block_access_path(self):
-        return self._get_volume().get_volume_guid()
+        volume = self._get_volume()
+        if volume is None:
+            return None
+        return volume.get_volume_guid()
 
     def get_containing_disk(self):
         return self._disk_device
