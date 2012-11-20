@@ -1,7 +1,13 @@
+from .....errors import StorageModelError
+from infi.asi.cdb.inquiry.vpd_pages.device_identification import designators
 
 class InfinidatNAA(object):
     def __init__(self, data):
         super(InfinidatNAA, self).__init__()
+        if isinstance(data, str):
+            data = self._string_to_designator(data)
+        if not isinstance(data, designators.NAA_IEEE_Registered_Extended_Designator):
+            raise StorageModelError("Invalid argument type {!r}".format(data))
         self._data = data
 
     def get_ieee_company_id(self):
@@ -20,3 +26,12 @@ class InfinidatNAA(object):
 
     def __repr__(self):
         return "<Infinidat NAA system {} volume {}".format(self.get_system_serial(), self.get_volume_serial())
+
+    def _string_to_designator(self, descriptor):
+        # supporting strings as returned from SCSI inquiry in the NAA designator
+        # e.g. 6742b0f000004e2b000000000000018c (in hex)
+        # we'll convert to NAA_IEEE_Registered_Extended_Designator and parse using create_from_string,
+        # but we need to add DescriptorHeaderFields - we'll just add zeros
+        raw_data = "\x00\x00\x00" + chr(len(descriptor)) + descriptor
+        designator = designators.NAA_IEEE_Registered_Extended_Designator.create_from_string(raw_data)
+        return designator
