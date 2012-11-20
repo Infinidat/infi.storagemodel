@@ -50,7 +50,7 @@ class MappedVolumed(scsi_block_class):
     def get_naa(self):
         return self
 
-    def get_volume_serial(self):
+    def get_volume_id(self):
         return 1
 
 class JSONInquiryTestCase(unittest.TestCase):
