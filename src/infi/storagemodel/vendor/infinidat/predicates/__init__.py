@@ -15,10 +15,10 @@ class InfinidatVolumeExists(object):
         log.debug("Looking for Infinidat volume id {} from system id {}".format(self.volume_id, self.system_serial))
         for device in devices_to_query:
             device.get_scsi_test_unit_ready()
-            volume_id = device.get_vendor().get_naa().get_volume_serial()
+            volume_id = device.get_vendor().get_naa().get_volume_id()
             system_serial = device.get_vendor().get_naa().get_system_serial()
             log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))
-        return any([self.volume_id == device.get_vendor().get_naa().get_volume_serial() and
+        return any([self.volume_id == device.get_vendor().get_naa().get_volume_id() and
                     self.system_serial == device.get_vendor().get_naa().get_system_serial() \
                     for device in devices_to_query])
 
