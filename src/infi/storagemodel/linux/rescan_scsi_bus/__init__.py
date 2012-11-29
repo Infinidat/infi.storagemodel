@@ -11,11 +11,7 @@ logger = getLogger(__name__)
 @func_logger
 def main(host_numbers):
     try:
-        sync_file_systems()
         rescan_scsi_hosts(host_numbers)
-        udevadm_settle()
-        partprobe()
-        udevadm_settle()
     except Exception, err:
         logger.exception("{} Unhandled exception in rescan_scsi_bus: {}".format(getpid(), err))
         raise
