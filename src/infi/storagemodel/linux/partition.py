@@ -9,6 +9,12 @@ class LinuxPartition(partition.Partition):
         self._parted_partition = parted_partition
         self._containing_disk = containing_disk
 
+    def _get_mount_fs_mapping(self):
+        mount_lines = open("/proc/mounts", "rb").readlines()
+        mount_data = [line.split() for line in mount_lines]
+        return dict((mount_access_path, filesystem_type) for
+                     mount_access_path, _, filesystem_type, _, _, _ in mount_data)
+
     @cached_method
     def get_size_in_bytes(self):
         return self._parted_partition.get_size().bits / 8
@@ -23,7 +29,10 @@ class LinuxPartition(partition.Partition):
 
     @cached_method
     def get_current_filesystem(self):
-        raise NotImplementedError()
+        from .filesystem import LinuxFileSystem
+        mount_fs_mapping = self._get_mount_fs_mapping()
+        filesystem_type = mount_fs_mapping[self.get_block_access_path()]
+        return LinuxFileSystem(filesystem_type)
 
 class LinuxPrimaryPartition(LinuxPartition, partition.PrimaryPartition):
     # pylint: disable=W0223
