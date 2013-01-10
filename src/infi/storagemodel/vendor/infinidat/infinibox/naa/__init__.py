@@ -24,8 +24,14 @@ class InfinidatNAA(object):
         """:returns: the volume entity ID"""
         return self._data.vendor_specific_identifier_extension
 
+    def __str__(self):
+        # return format as defined by http://tools.ietf.org/html/rfc3980#ref-FC-FS
+        # e.g. naa.6742b0f000004e2b000000000000018c
+        binary_without_header = str(self._data)[4:]
+        return "naa." + binary_without_header.encode("hex")
+
     def __repr__(self):
-        return "<Infinidat NAA system {} volume {}".format(self.get_system_serial(), self.get_volume_id())
+        return "<Infinidat NAA system {} volume {}>".format(self.get_system_serial(), self.get_volume_id())
 
     def _string_to_designator(self, descriptor):
         # supporting strings as returned from SCSI inquiry in the NAA designator

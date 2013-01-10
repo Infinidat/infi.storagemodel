@@ -24,6 +24,15 @@ class SophisticatedMixin(object):
     def _get_cluster_name_from_json_page(self):
         return self._get_key_from_json_page('cluster')
 
+    def _get_system_name_from_json_page(self):
+        return self._get_key_from_json_page('system_name')
+    
+    def _get_system_version_from_json_page(self):
+        self._get_key_from_json_page('system_version')
+
+    def _get_system_serial_from_naa(self):
+        return self.get_naa().get_system_serial()
+
     @cached_method
     def get_host_name(self):
         return self._get_host_name_from_json_page()
@@ -32,16 +41,14 @@ class SophisticatedMixin(object):
     def get_cluster_name(self):
         return self._get_cluster_name_from_json_page()
 
-    def _get_system_serial_from_naa(self):
-        return self.get_naa().get_system_serial()
-
     @cached_method
     def get_system_serial(self):
         return self._get_system_serial_from_naa()
 
-    def _get_system_name_from_json_page(self):
-        return self._get_key_from_json_page('system_name')
-
     @cached_method
     def get_system_name(self):
         return self._get_system_name_from_json_page()
+
+    @cached_method
+    def get_system_version(self):
+        return self._get_system_version_from_json_page()
