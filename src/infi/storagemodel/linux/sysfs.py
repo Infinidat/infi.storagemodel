@@ -131,7 +131,7 @@ class Sysfs(object):
                 if devno not in self.block_devno_to_device:
                     self.block_devno_to_device[devno] = dev
                     self.block_devices.append(dev)
-             except (IOError, OSError):
+            except (IOError, OSError):
                 log.debug("no device for {}".format(dev))
 
     def _append_device_by_type(self, hctl_str, dev_path, scsi_type):
