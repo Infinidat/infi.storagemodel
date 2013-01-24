@@ -126,10 +126,13 @@ class Sysfs(object):
 
         for name, path in self._get_sysfs_block_devices_pathnames().items():
             dev = SysfsBlockDevice(name, path)
-            devno = dev.get_block_devno()
-            if devno not in self.block_devno_to_device:
-                self.block_devno_to_device[devno] = dev
-                self.block_devices.append(dev)
+            try:
+                devno = dev.get_block_devno()
+                if devno not in self.block_devno_to_device:
+                    self.block_devno_to_device[devno] = dev
+                    self.block_devices.append(dev)
+            except (IOError, OSError):
+                log.debug("no device for {}".format(dev))
 
     def _append_device_by_type(self, hctl_str, dev_path, scsi_type):
         if scsi_type == SCSI_TYPE_STORAGE_CONTROLLER:
