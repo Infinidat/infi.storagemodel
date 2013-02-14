@@ -50,7 +50,8 @@ import sys
 curdir = os.path.abspath(os.curdir)
 pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
-os.system("mkdir .cache")
+if not os.path.exists(".cache"):
+    os.system("mkdir .cache")
 os.system("python bootstrap.py -d")
 os.system("bin/buildout -s buildout:develop= install isolated-python")
 os.system("parts/python/bin/python bootstrap.py -d")
