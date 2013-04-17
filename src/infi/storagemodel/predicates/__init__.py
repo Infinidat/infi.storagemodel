@@ -87,6 +87,7 @@ class MultipleFiberChannelMappingExist(object):
         logger.debug("Connectivity details: {!r}, Lun {}".format(device.get_connectivity(), device.get_hctl().get_lun()))
         for connectivity, lun_number in self._expected_mappings:
             if device.get_connectivity() == connectivity and device.get_hctl().get_lun() == lun_number:
+                device.get_scsi_test_unit_ready()
                 self._expected_mappings.remove((connectivity, lun_number))
                 return True
         return False
@@ -104,7 +105,6 @@ class MultipleFiberChannelMappingExist(object):
         logger.debug("Looking for all scsi block devices")
         logger.debug("Expecting to find {} matches".format(len(self._expected_mappings)))
         for device in self._get_chain_of_devices(model):
-            device.get_scsi_test_unit_ready()
             logger.debug("Found device: {!r}".format(device))
             if self._is_fc_connectivity_a_match(device):
                 logger.debug("Connectivity matches, only {} more to go".format(self._expected_mappings))
@@ -143,7 +143,6 @@ class MultipleFiberChannelMappingNotExist(MultipleFiberChannelMappingExist):
         logger.debug("Looking for all scsi block devices")
         logger.debug("Expecting to not find {} matches".format(initial_count))
         for device in self._get_chain_of_devices(model):
-            device.get_scsi_test_unit_ready()
             logger.debug("Found device: {!r}".format(device))
             if self._is_fc_connectivity_a_match(device):
                 logger.debug("Found a connectivity match I wasn't supposed to find")
