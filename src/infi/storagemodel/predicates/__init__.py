@@ -1,8 +1,10 @@
 
 from infi.pyutils.lazy import cached_method, clear_cache
-
 from logging import getLogger
+from itertools import product
+
 logger = getLogger(__name__)
+
 
 class PredicateList(object):
     """:returns: True if all predicates in a given list return True"""
@@ -21,6 +23,7 @@ class PredicateList(object):
 
     def __repr__(self):
         return "<PredicateList: {!r}>".format(self._list_of_predicates)
+
 
 class DiskExists(object):
     """:returns: True if a disk was discovered with scsi_serial_number"""
@@ -44,6 +47,7 @@ class DiskExists(object):
     def __repr__(self):
         return "<DiskExists: {}>".format(self.scsi_serial_number)
 
+
 class DiskNotExists(DiskExists):
     """:returns: True if a disk with scsi_serial_number has gone away"""
 
@@ -53,27 +57,38 @@ class DiskNotExists(DiskExists):
     def __repr__(self):
         return "<DiskNotExists: {}>".format(self.scsi_serial_number)
 
-class FiberChannelMappingExists(object):
+
+def build_connectivity_object_from_wwn(initiator_wwn, target_wwn):
+    from infi.hbaapi import Port
+    from ..connectivity import FCConnectivity
+    local_port = Port()
+    local_port.port_wwn = initiator_wwn
+    remote_port = Port()
+    remote_port.port_wwn = target_wwn
+    return FCConnectivity(None, local_port, remote_port)
+
+
+class MultipleFiberChannelMappingExist(object):
     """:returns: True if a lun mapping was discovered"""
+    def __init__(self, initiators, targets, lun_numbers):
 
-    def __init__(self, initiator_wwn, target_wwn, lun_number):
-        super(FiberChannelMappingExists, self).__init__()
+        super(MultipleFiberChannelMappingExist, self).__init__()
+        self._initators = initiators
+        self._targets = targets
+        self._lun_numbers = lun_numbers
+        self._expected_mappings = []
 
-        from infi.hbaapi import Port
-        from ..connectivity import FCConnectivity
-
-        self.lun_number = lun_number
-
-        i_port = Port()
-        i_port.port_wwn = initiator_wwn
-        t_port = Port()
-        t_port.port_wwn = target_wwn
-        self.connectivity = FCConnectivity(None, i_port, t_port)
+    def _build_product(self):
+        self._expected_mappings = [(build_connectivity_object_from_wwn(initiator_wwn, target_wwn), lun_number)
+                                   for initiator_wwn, target_wwn, lun_number in
+                                   product(self._initators, self._targets, self._lun_numbers)]
 
     def _is_fc_connectivity_a_match(self, device):
         logger.debug("Connectivity details: {!r}, Lun {}".format(device.get_connectivity(), device.get_hctl().get_lun()))
-        if device.get_connectivity() == self.connectivity and device.get_hctl().get_lun() == self.lun_number:
-            return True
+        for connectivity, lun_number in self._expected_mappings:
+            if device.get_connectivity() == connectivity and device.get_hctl().get_lun() == lun_number:
+                self._expected_mappings.remove((connectivity, lun_number))
+                return True
         return False
 
     def _get_chain_of_devices(self, model):
@@ -84,33 +99,71 @@ class FiberChannelMappingExists(object):
     def __call__(self):
         from .. import get_storage_model
         model = get_storage_model()
+        self._build_product()
         logger.debug("Working on: {!r}".format(self))
         logger.debug("Looking for all scsi block devices")
+        logger.debug("Expecting to find {} matches".format(len(self._expected_mappings)))
         for device in self._get_chain_of_devices(model):
             device.get_scsi_test_unit_ready()
             logger.debug("Found device: {!r}".format(device))
             if self._is_fc_connectivity_a_match(device):
-                logger.debug("Connectivity matches")
-                return True
+                logger.debug("Connectivity matches, only {} more to go".format(self._expected_mappings))
         for device in model.get_native_multipath().get_all_multipath_block_devices():
             logger.debug("Found device: {!r}".format(device))
             for path in device.get_paths():
                 if self._is_fc_connectivity_a_match(path):
-                    logger.debug("Connectivity matches")
-                    return True
-        logger.debug("Did not find the requested connection")
-        return False
+                    logger.debug("Connectivity matches, only {} more to go".format(self._expected_mappings))
+        if self._expected_mappings:
+            logger.debug("Did not find all the mappings, {} missing".format(len(self._expected_mappings)))
+            return False
+        logger.debug("Found all expected mappings")
+        return True
 
     def __repr__(self):
-        return "<FiberChannelMappingExists: {!r}:{}>".format(self.connectivity, self.lun_number)
+        text = "<{} (initiators={!r}, targets={!r}, luns={!r})>"
+        return text.format(self.__class__.__name__, self._initators, self._targets, self._lun_numbers)
 
-class FiberChannelMappingNotExists(FiberChannelMappingExists):
+
+class FiberChannelMappingExists(MultipleFiberChannelMappingExist):
+    """:returns: True if a lun mapping was discovered"""
+
+    def __init__(self, initiator_wwn, target_wwn, lun_number):
+        super(FiberChannelMappingExists, self).__init__([initiator_wwn], [target_wwn], [lun_number])
+
+
+class MultipleFiberChannelMappingNotExist(MultipleFiberChannelMappingExist):
     """:returns: True if a lun un-mapping was discovered"""
-    def __call__(self):
-        return not super(FiberChannelMappingNotExists, self).__call__()
 
-    def __repr__(self):
-        return "<FiberChannelMappingNotExists: {!r}:{}>".format(self.connectivity, self.lun_number)
+    def __call__(self):
+        from .. import get_storage_model
+        model = get_storage_model()
+        self._build_product()
+        initial_count = len(self._expected_mappings)
+        logger.debug("Working on: {!r}".format(self))
+        logger.debug("Looking for all scsi block devices")
+        logger.debug("Expecting to not find {} matches".format(initial_count))
+        for device in self._get_chain_of_devices(model):
+            device.get_scsi_test_unit_ready()
+            logger.debug("Found device: {!r}".format(device))
+            if self._is_fc_connectivity_a_match(device):
+                logger.debug("Found a connectivity match I wasn't supposed to find")
+                return False
+        for device in model.get_native_multipath().get_all_multipath_block_devices():
+            logger.debug("Found device: {!r}".format(device))
+            for path in device.get_paths():
+                if self._is_fc_connectivity_a_match(path):
+                    logger.debug("Found a connectivity match I wasn't supposed to find")
+                    return False
+        logger.debug("Did not find any of the expected mappings")
+        return True
+
+
+class FiberChannelMappingNotExists(MultipleFiberChannelMappingNotExist):
+    """:returns: True if a lun un-mapping was discovered"""
+
+    def __init__(self, initiator_wwn, target_wwn, lun_number):
+        super(FiberChannelMappingNotExists, self).__init__([initiator_wwn], [target_wwn], [lun_number])
+
 
 class WaitForNothing(object):
     def __call__(self):
@@ -118,6 +171,7 @@ class WaitForNothing(object):
 
     def __repr__(self):
         return "<WaitForNothing>"
+
 
 class ScsiDevicesAreReady(object):
     def __call__(self):
