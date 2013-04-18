@@ -73,7 +73,7 @@ class MultipleFiberChannelMappingExist(object):
     def __init__(self, initiators, targets, lun_numbers):
 
         super(MultipleFiberChannelMappingExist, self).__init__()
-        self._initators = initiators
+        self._initiators = initiators
         self._targets = targets
         self._lun_numbers = lun_numbers
         self._expected_mappings = []
@@ -81,7 +81,7 @@ class MultipleFiberChannelMappingExist(object):
     def _build_product(self):
         self._expected_mappings = [(build_connectivity_object_from_wwn(initiator_wwn, target_wwn), lun_number)
                                    for initiator_wwn, target_wwn, lun_number in
-                                   product(self._initators, self._targets, self._lun_numbers)]
+                                   product(self._initiators, self._targets, self._lun_numbers)]
 
     def _is_fc_connectivity_a_match(self, device):
         logger.debug("Connectivity details: {!r}, Lun {}".format(device.get_connectivity(), device.get_hctl().get_lun()))
@@ -121,7 +121,7 @@ class MultipleFiberChannelMappingExist(object):
 
     def __repr__(self):
         text = "<{} (initiators={!r}, targets={!r}, luns={!r})>"
-        return text.format(self.__class__.__name__, self._initators, self._targets, self._lun_numbers)
+        return text.format(self.__class__.__name__, self._initiators, self._targets, self._lun_numbers)
 
 
 class FiberChannelMappingExists(MultipleFiberChannelMappingExist):
