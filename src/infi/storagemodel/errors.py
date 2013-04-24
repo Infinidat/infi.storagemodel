@@ -74,7 +74,7 @@ def check_for_scsi_errors(func):
             logger.debug("Sending SCSI command {!r} for device {!r}".format(func, safe_repr(device)))
             response = func(*args, **kwargs)
             logger.debug("Got response {!r}".format(response))
-            return func(*args, **kwargs)
+            return response
         except AsiCheckConditionError, e:
             (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
             if (key, code) in CHECK_CONDITIONS_TO_CHECK:
