@@ -77,6 +77,15 @@ class MultipleFiberChannelMappingExist(object):
         self._targets = targets
         self._lun_numbers = lun_numbers
         self._expected_mappings = []
+        self._assert_on_rpyc_netref()
+
+    def _assert_on_rpyc_netref(self):
+        suspects = [self._initiators, self._targets, self._lun_numbers]
+        suspects.extend(self._initiators)
+        suspects.extend(self._targets)
+        suspects.extend(self._lun_numbers)
+        for item in suspects:
+            assert type(item).__name__.lower() != 'netref'
 
     def _build_product(self):
         self._expected_mappings = [(build_connectivity_object_from_wwn(initiator_wwn, target_wwn), lun_number)
