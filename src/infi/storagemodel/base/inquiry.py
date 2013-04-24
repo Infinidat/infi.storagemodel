@@ -2,6 +2,7 @@ from infi.pyutils.lazy import cached_method, LazyImmutableDict
 from infi.storagemodel.errors import check_for_scsi_errors
 #pylint: disable=E1002,W0622
 
+
 class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):
         super(SupportedVPDPagesDict, self).__init__(dict.copy())
@@ -18,12 +19,19 @@ class SupportedVPDPagesDict(LazyImmutableDict):
     def __repr__(self):
         return "<Supported VPD Pages for {!r}: {!r}>".format(self.device, self.keys())
 
+
 class InquiryInformationMixin(object):
     @cached_method
     def get_scsi_vendor_id(self):
         """:returns: the T10 vendor identifier string, as give in SCSI Standard Inquiry
         :rtype: string"""
         return self.get_scsi_standard_inquiry().t10_vendor_identification.strip()
+
+    @cached_method
+    def get_scsi_revision(self):
+        """:returns: the T10 revision string, as give in SCSI Standard Inquiry
+        :rtype: string"""
+        return self.get_scsi_standard_inquiry().product_revision_level.strip()
 
     @cached_method
     def get_scsi_product_id(self):
@@ -36,6 +44,12 @@ class InquiryInformationMixin(object):
         """:returns: a tuple of the vendor_id and product_id
         :rtype: tuple"""
         return (self.get_scsi_vendor_id(), self.get_scsi_product_id())
+
+    @cached_method
+    def get_scsi_vid_pid_rev(self):
+        """:returns: a tuple of the vendor_id, product_id and revision
+        :rtype: tuple"""
+        return (self.get_scsi_vendor_id(), self.get_scsi_product_id(), self.get_scsi_revision())
 
     @cached_method
     @check_for_scsi_errors
@@ -79,6 +93,25 @@ class InquiryInformationMixin(object):
         return serial
 
     @cached_method
+    def get_scsi_ata_information(self):
+        """:returns: the SCSI ata information of the device as a dict of dicts
+                     for SATL and identify device
+        :rtype: dict"""
+        from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_ATA_INFORMATION
+        ata_info = dict(sat=dict(), device=dict())
+        if INQUIRY_PAGE_ATA_INFORMATION in self.get_scsi_inquiry_pages():
+            ata_info['sat']['vendor'] = self.get_scsi_inquiry_pages()[INQUIRY_PAGE_ATA_INFORMATION].sat_vendor_identification
+            ata_info['sat']['model'] = self.get_scsi_inquiry_pages()[INQUIRY_PAGE_ATA_INFORMATION].sat_product_identification
+            ata_info['sat']['rev'] = self.get_scsi_inquiry_pages()[INQUIRY_PAGE_ATA_INFORMATION].sat_product_revision_level
+            ata_info['device']['serial_number'] = \
+                self.get_scsi_inquiry_pages()[INQUIRY_PAGE_ATA_INFORMATION].identify_device.serial_number
+            ata_info['device']['model'] = \
+                self.get_scsi_inquiry_pages()[INQUIRY_PAGE_ATA_INFORMATION].identify_device.model_number
+            ata_info['device']['rev'] = \
+                self.get_scsi_inquiry_pages()[INQUIRY_PAGE_ATA_INFORMATION].identify_device.firmware_revision
+        return ata_info
+
+    @cached_method
     @check_for_scsi_errors
     def get_scsi_standard_inquiry(self):
         """:returns: the standard inquiry data"""
@@ -97,4 +130,3 @@ class InquiryInformationMixin(object):
         with self.asi_context() as asi:
             command = TestUnitReadyCommand()
             return sync_wait(command.execute(asi))
-
