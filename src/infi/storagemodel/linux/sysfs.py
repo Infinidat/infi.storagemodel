@@ -132,21 +132,20 @@ class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
 class SysfsEnclosureDevice(SysfsSCSIDevice):
     def __init__(self, sysfs_dev_path, hctl):
         super(SysfsEnclosureDevice, self).__init__(sysfs_dev_path, hctl)
-        self.slots = []
         # /sys/class/scsi_device/h:c:t:l/device/enclosure/h:c:t:l
         self._basepath = os.path.join(self.sysfs_dev_path, 'enclosure', str(hctl))
 
     @cached_method
     def get_all_slots(self):
+        slots = []
         for item in os.listdir(self._basepath):
             if item.startswith('SLOT'):
-                self.slots.append(item)
-        return self.slots
+                slots.append(item)
+        return slots
 
     def get_all_occupied_slots(self):
         occupied_slots = []
-        self.get_all_slots()
-        for slot in self.slots:
+        for slot in self.get_all_slots():
             status = _sysfs_read_field(os.path.join(self._basepath, slot), "status")
             if status == 'OK':
                 occupied_slots.append(slot)
