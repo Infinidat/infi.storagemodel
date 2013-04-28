@@ -88,9 +88,6 @@ class SCSIBlockDevice(SCSIDevice):
 
 
 class SCSIStorageController(SCSIDevice):
-    # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
-
     @cached_method
     def get_vendor(self):
         """ :returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
@@ -98,13 +95,10 @@ class SCSIStorageController(SCSIDevice):
         return VendorFactory.create_scsi_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     def __repr__(self):
-        return "<SCSIStorageController: for {}>".format(super(SCSIStorageController, self).__repr__())
+        return "<SCSIStorageController {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
 
 
 class SCSIEnclosure(SesInformationMixin, SCSIDevice):
-    # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
-
     @cached_method
     def get_vendor(self):
         """ :returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
@@ -112,7 +106,7 @@ class SCSIEnclosure(SesInformationMixin, SCSIDevice):
         return VendorFactory.create_scsi_enclosure_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     def __repr__(self):
-        return "<SCSIEnclosure: for {}>".format(super(SCSIEnclosure, self).__repr__())
+        return "<SCSIEnclosure {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
 
 
 class SCSIModel(object):
