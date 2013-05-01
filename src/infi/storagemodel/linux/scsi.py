@@ -5,6 +5,7 @@ from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 from infi.storagemodel.base.scsi import SCSIBlockDevice
 from infi.exceptools import chain
+from infi.pyutils.decorators import wraps
 
 MS = 1000
 SG_TIMEOUT_IN_SEC = 3
@@ -89,6 +90,16 @@ class LinuxSCSIEnclosure(LinuxSCSIDeviceMixin, scsi.SCSIEnclosure):
         return self.sysfs_device.find_hctl_by_slot(slot)
 
 
+def device_disappered(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (IOError, OSError):
+            raise chain(DeviceDisappeared())
+    return wrapper
+
+
 class LinuxSCSIModel(scsi.SCSIModel):
     def __init__(self, sysfs):
         self.sysfs = sysfs
@@ -103,19 +114,15 @@ class LinuxSCSIModel(scsi.SCSIModel):
         self._raise_exception_if_sd_devices_are_missing(devices)
         return devices
 
+    @device_disappered
     @cached_method
     def get_all_storage_controller_devices(self):
-        try:
-            return [LinuxSCSIStorageController(sysfs_dev) for sysfs_dev in self.sysfs.get_all_scsi_storage_controllers()]
-        except (IOError, OSError), error:
-            raise chain(DeviceDisappeared())
+        return [LinuxSCSIStorageController(sysfs_dev) for sysfs_dev in self.sysfs.get_all_scsi_storage_controllers()]
 
+    @device_disappered
     @cached_method
     def get_all_enclosure_devices(self):
-        try:
-            return [LinuxSCSIEnclosure(sysfs_dev) for sysfs_dev in self.sysfs.get_all_enclosures()]
-        except (IOError, OSError), error:
-            raise chain(DeviceDisappeared())
+        return [LinuxSCSIEnclosure(sysfs_dev) for sysfs_dev in self.sysfs.get_all_enclosures()]
 
     def find_scsi_block_device_by_block_devno(self, devno):
         devices = [dev for dev in self.get_all_scsi_block_devices() if dev.get_unix_block_devno() == devno]
@@ -123,12 +130,10 @@ class LinuxSCSIModel(scsi.SCSIModel):
             raise StorageModelFindError("%d SCSI block devices found with devno=%s" % (len(devices), devno))  # pylint: disable=W0710
         return devices[0]
 
+    @device_disappered
     @cached_method
     def get_all_linux_scsi_generic_disk_devices(self):
         """Linux specific: returns a list of ScsiDisk objects that do not rely on SD"""
         from .sysfs import SysfsSDDisk
-        try:
-            return [LinuxSCSIBlockDevice(disk) if isinstance(disk, SysfsSDDisk) else LinuxSCSIGenericDevice(disk)
-                    for disk in self.sysfs.get_all_sg_disks()]
-        except (IOError, OSError), error:
-            raise chain(DeviceDisappeared())
+        return [LinuxSCSIBlockDevice(disk) if isinstance(disk, SysfsSDDisk) else LinuxSCSIGenericDevice(disk)
+                for disk in self.sysfs.get_all_sg_disks()]
