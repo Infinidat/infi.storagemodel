@@ -54,7 +54,7 @@ if not os.path.exists(".cache"):
     os.system("mkdir .cache")
 os.system("python bootstrap.py -d -v 1.6.3")
 os.system("bin/buildout -s buildout:develop= install isolated-python")
-os.system("parts/python/bin/python bootstrap.py -d")
+os.system("parts/python/bin/python bootstrap.py -d -v 1.6.3")
 os.system("bin/buildout -s buildout:develop= install setup.py __version__.py")
 os.system("bin/buildout -s install development-scripts")
 os.chdir(curdir)
