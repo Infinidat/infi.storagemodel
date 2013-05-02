@@ -58,6 +58,7 @@ pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
 if not os.path.exists(".cache"):
     run("mkdir .cache")
+run("easy_install -U zc.buildout")
 run("python bootstrap.py -d")
 run("bin/buildout buildout:develop= install isolated-python")
 run("parts/python/bin/python bootstrap.py -d")
