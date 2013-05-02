@@ -47,16 +47,22 @@ copyright = u'2011, Guy Rozendorn'
 import os
 import sys
 
+def run(cmd):
+    import subprocess
+    print "Running '{0}'".format(cmd)
+    if subprocess.Popen(cmd, shell=True).wait() != 0:
+        raise Exception("Command '{0}' failed".format(cmd))
+
 curdir = os.path.abspath(os.curdir)
 pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
 if not os.path.exists(".cache"):
-    os.system("mkdir .cache")
-os.system("python bootstrap.py -d -v 1.6.3")
-os.system("bin/buildout -s buildout:develop= install isolated-python")
-os.system("parts/python/bin/python bootstrap.py -d")
-os.system("bin/buildout -s buildout:develop= install setup.py __version__.py")
-os.system("bin/buildout -s install development-scripts")
+    run("mkdir .cache")
+run("python bootstrap.py -d")
+run("bin/buildout buildout:develop= install isolated-python")
+run("parts/python/bin/python bootstrap.py -d")
+run("bin/buildout buildout:develop= install setup.py __version__.py")
+run("bin/buildout install development-scripts")
 os.chdir(curdir)
 
 sys.path.append(os.path.join(pardir, "src"))

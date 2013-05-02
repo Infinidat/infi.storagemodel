@@ -1,0 +1,154 @@
+from infi.pyutils.lazy import cached_method, LazyImmutableDict
+from infi.storagemodel.errors import check_for_scsi_errors
+#pylint: disable=E1002,W0622
+
+
+class SupportedSesPagesDict(LazyImmutableDict):
+    def __init__(self, page_dict, device, helper=None):
+        super(SupportedSesPagesDict, self).__init__(page_dict.copy())
+        self.device = device
+        self.helper = helper
+
+    @check_for_scsi_errors
+    def _create_value(self, page_code):
+        from infi.asi.cdb.diagnostic.ses_pages import get_ses_page
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        with self.device.asi_context() as asi:
+            diagnostic_command = get_ses_page(page_code)(self.helper) if self.helper else get_ses_page(page_code)()
+            return sync_wait(diagnostic_command.execute(asi))
+
+    def __repr__(self):
+        return "<Supported SES Pages for {!r}: {!r}>".format(self.device, self.keys())
+
+
+class SesInformationMixin(object):
+    @cached_method
+    @check_for_scsi_errors
+    def get_scsi_ses_pages(self, helper=None):
+        """Returns an immutable dict-like object of available SES pages from this device.
+        """
+        from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_SUPPORTED_PAGES
+        from infi.asi.cdb.diagnostic.ses_pages import SupportedDiagnosticPagesCommand
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        command = SupportedDiagnosticPagesCommand()
+
+        page_dict = {}
+        with self.asi_context() as asi:
+            data = sync_wait(command.execute(asi))
+            page_dict[DIAGNOSTIC_PAGE_SUPPORTED_PAGES] = data.supported_pages[:data.page_length]
+            for page in range(data.page_length):
+                page_dict[data.supported_pages[page]] = None
+        return SupportedSesPagesDict(page_dict, self, helper)
+
+    @cached_method
+    def _get_configuration_page(self):
+        from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_CONFIGURATION
+        if DIAGNOSTIC_PAGE_CONFIGURATION in self.get_scsi_ses_pages():
+            return self.get_scsi_ses_pages()[DIAGNOSTIC_PAGE_CONFIGURATION]
+
+    @cached_method
+    def get_enclosure_configuration(self, raw_data=None):
+        """:returns: the dict of elements {elem_type: (num_of_elem, elem_idx)}
+        :rtype: dict"""
+        from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_CONFIGURATION
+        elements = {}
+        if DIAGNOSTIC_PAGE_CONFIGURATION in self.get_scsi_ses_pages():
+            conf_page = raw_data if raw_data else self._get_configuration_page()
+            for subencl in range(len(conf_page.enclosure_descriptor_list)):
+                for idx in range(len(conf_page.type_descriptor_header_list)):
+                    elements[conf_page.type_descriptor_header_list[idx].element_type] = \
+                        (conf_page.type_descriptor_header_list[idx].possible_elements_num, idx)
+        return elements
+
+    @cached_method
+    def get_enclosure_vendor_specific_0x80(self):
+        """:returns: the vendor specific data from SES page 0x80
+        :rtype: dict"""
+        from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_VENDOR_0X80
+        if DIAGNOSTIC_PAGE_VENDOR_0X80 in self.get_scsi_ses_pages():
+            vendor_data = self.get_scsi_ses_pages()[DIAGNOSTIC_PAGE_VENDOR_0X80].vendor_specific
+        return vendor_data
+
+    def _get_enclosure_elements_by_type(self, elem_type):
+        """:returns: list of dicts per element according to element type, each dict is element's status info
+        :rtype: list"""
+        from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_ENCLOSURE_STATUS
+        from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR
+        from infi.asi.cdb.diagnostic.ses_pages.enclosure_status import ELEMENT_STATUS_CODE
+        elem_info = []
+        if DIAGNOSTIC_PAGE_ENCLOSURE_STATUS in self.get_scsi_ses_pages() and \
+                DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
+            raw_conf_page = self._get_configuration_page()
+            elements = self.get_enclosure_configuration(raw_conf_page)
+            num_of_elem, elem_idx = elements[elem_type]
+            status_descr = self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ENCLOSURE_STATUS].status_descriptors[elem_idx]
+            for elem in status_descr.individual_elements:
+                elem_info.append(dict(status=ELEMENT_STATUS_CODE[elem.element_status_code],
+                                      swap=elem.swap,
+                                      disabled=elem.disabled,
+                                      predicted_failure=elem.prdfail,
+                                      status_info=elem.status_info))
+
+            elem_descr = self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR].element_descriptors[elem_idx]
+            idx = 0
+            for elem in elem_descr.individual_elements:
+                elem_info[idx].update(dict(descriptor=str(elem.descriptor)))
+                idx += 1
+
+        return elem_info
+
+    def get_all_enclosure_slots(self):
+        """:returns: list of dicts per slot, each dict is slot's status info
+        :rtype: list"""
+        from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_ARRAY_DEVICE_SLOT
+        slots = self._get_enclosure_elements_by_type(ELEMENT_TYPE_ARRAY_DEVICE_SLOT)
+        # TODO: drill down status_info
+        return slots
+
+    def get_all_enclosure_power_supply(self):
+        """:returns: list of dicts per power supply, each dict is power supply status info
+        :rtype: list"""
+        from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_POWER_SUPPLY
+        ps = self._get_enclosure_elements_by_type(ELEMENT_TYPE_POWER_SUPPLY)
+        # TODO: drill down status_info
+        return ps
+
+    def get_all_enclosure_fans(self):
+        """:returns: list of dicts per coling element, each dict is fan's status info
+        :rtype: list"""
+        from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_COOLING
+        fan = self._get_enclosure_elements_by_type(ELEMENT_TYPE_COOLING)
+        # TODO: drill down status_info
+        return fan
+
+    def get_all_enclosure_buzzers(self):
+        """:returns: list of dicts per audible alarm element, each dict is buzzer's status info
+        :rtype: list"""
+        from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_AUDIBLE_ALARM
+        buzzer = self._get_enclosure_elements_by_type(ELEMENT_TYPE_AUDIBLE_ALARM)
+        # TODO: drill down status_info
+        return buzzer
+
+    def get_all_enclosure_temperature_sensors(self):
+        """:returns: list of dicts per temperature_sensor, each dict is sensor's status info
+        :rtype: list"""
+        from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_TEMPERATURE_SENSOR
+        temp_sensor = self._get_enclosure_elements_by_type(ELEMENT_TYPE_TEMPERATURE_SENSOR)
+        # TODO: drill down status_info
+        return temp_sensor
+
+    def get_all_enclosure_es_controllers(self):
+        """:returns: list of dicts per ES controller, each dict is controller's status info
+        :rtype: list"""
+        from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_ES_CONTROLLER
+        es_cntrl = self._get_enclosure_elements_by_type(ELEMENT_TYPE_ES_CONTROLLER)
+        # TODO: drill down status_info
+        return es_cntrl
+
+    def get_all_enclosure_sas_expanders(self):
+        """:returns: list of dicts per SAS expander, each dict is expander's status info
+        :rtype: list"""
+        from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_SAS_EXPANDER
+        sas_exp = self._get_enclosure_elements_by_type(ELEMENT_TYPE_SAS_EXPANDER)
+        # TODO: drill down status_info
+        return sas_exp

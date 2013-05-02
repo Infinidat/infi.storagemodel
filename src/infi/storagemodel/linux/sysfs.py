@@ -6,19 +6,25 @@ from ..errors import DeviceDisappeared
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
 SYSFS_CLASS_BLOCK_DEVICE_PATH = "/sys/class/block"
+SYSFS_CLASS_ENCLOSURE_DEVICE_PATH = "/sys/class/enclosure"
 
 SCSI_TYPE_DISK = 0x00
 SCSI_TYPE_STORAGE_CONTROLLER = 0x0C
+SCSI_TYPE_ENCLOSURE = 0x0D
+
 
 from logging import getLogger
 log = getLogger(__name__)
+
 
 def _sysfs_read_field(device_path, field):
     with open(os.path.join(device_path, field), "rb") as f:
         return f.read()
 
+
 def _sysfs_read_devno(device_path):
-    return tuple([ int(n) for n in _sysfs_read_field(device_path, "dev").strip().split(":") ])
+    return tuple([int(n) for n in _sysfs_read_field(device_path, "dev").strip().split(":")])
+
 
 class SysfsBlockDeviceMixin(object):
     def get_block_device_name(self):
@@ -30,6 +36,7 @@ class SysfsBlockDeviceMixin(object):
     def get_size_in_bytes(self):
         return int(_sysfs_read_field(self.sysfs_block_device_path, "size")) * 512
 
+
 class SysfsBlockDevice(SysfsBlockDeviceMixin):
     def __init__(self, block_device_name, block_device_path):
         self.block_device_name = block_device_name
@@ -38,6 +45,7 @@ class SysfsBlockDevice(SysfsBlockDeviceMixin):
     def __repr__(self):
         _repr = "<SysfsBlockDevice(block_device_name={!r}, block_device_path={!r}>"
         return _repr.format(self.block_device_name, self.sysfs_block_device_path)
+
 
 class SysfsSCSIDevice(object):
     def __init__(self, sysfs_dev_path, hctl):
@@ -70,6 +78,18 @@ class SysfsSCSIDevice(object):
     def get_vendor(self):
         return _sysfs_read_field(self.sysfs_dev_path, "vendor")
 
+    def get_model(self):
+        return _sysfs_read_field(self.sysfs_dev_path, "model")
+
+    def get_revision(self):
+        return _sysfs_read_field(self.sysfs_dev_path, "rev")
+
+    def get_sas_address(self):
+        if os.path.exists(os.path.join(self.sysfs_dev_path, "sas_address")):
+            return _sysfs_read_field(self.sysfs_dev_path, "sas_address").strip()
+        else:
+            return None
+
     def get_scsi_generic_devno(self):
         return _sysfs_read_devno(self.sysfs_scsi_generic_device_path)
 
@@ -80,6 +100,7 @@ class SysfsSCSIDevice(object):
     def get_sysfs_dev_path(self):
         return self.sysfs_dev_path
 
+
 def get_sd_paths(sysfs_dev_path):
     basepath = os.path.join(sysfs_dev_path, "block")
     log.debug("basepath = {!r}".format(basepath))
@@ -89,6 +110,7 @@ def get_sd_paths(sysfs_dev_path):
         block_dev_names = glob.glob(os.path.join(sysfs_dev_path, "block*"))
     log.debug("block_dev_names = {!r}".format(block_dev_names))
     return block_dev_names
+
 
 class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
     def __init__(self, sysfs_dev_path, hctl, block_dev_names):
@@ -106,11 +128,47 @@ class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         _repr = "<SysfsBlockDeviceMixin(sysfs_dev_path={!r}, hctl={!r})>"
         return _repr.format(self.sysfs_dev_path, self.hctl)
 
+
+class SysfsEnclosureDevice(SysfsSCSIDevice):
+    def __init__(self, sysfs_dev_path, hctl):
+        super(SysfsEnclosureDevice, self).__init__(sysfs_dev_path, hctl)
+        # /sys/class/scsi_device/h:c:t:l/device/enclosure/h:c:t:l
+        self._basepath = os.path.join(self.sysfs_dev_path, 'enclosure', str(hctl))
+
+    @cached_method
+    def get_all_slots(self):
+        slots = []
+        for item in os.listdir(self._basepath):
+            if item.startswith('SLOT'):
+                slots.append(item)
+        return slots
+
+    def get_all_occupied_slots(self):
+        occupied_slots = []
+        for slot in self.get_all_slots():
+            status = _sysfs_read_field(os.path.join(self._basepath, slot), "status")
+            if status == 'OK':
+                occupied_slots.append(slot)
+        return occupied_slots
+
+    def find_hctl_by_slot(self, slot):
+        dev_path = os.path.join(self._basepath, slot, 'device')
+        if os.path.exists(dev_path):
+            hctl = os.path.basename(os.readlink(dev_path))
+            return HCTL.from_string(hctl)
+        return None
+
+    def __repr__(self):
+        _repr = "<SysfsEnclosureDevice(sysfs_dev_path={!r}, hctl={!r})>"
+        return _repr.format(self.sysfs_dev_path, self.hctl)
+
+
 class Sysfs(object):
     def __init__(self):
         self.sg_disks = []
         self.sd_disks = []
         self.controllers = []
+        self.enclosures = []
         self.block_devices = []
         self.block_devno_to_device = dict()
 
@@ -137,6 +195,8 @@ class Sysfs(object):
     def _append_device_by_type(self, hctl_str, dev_path, scsi_type):
         if scsi_type == SCSI_TYPE_STORAGE_CONTROLLER:
             self.controllers.append(SysfsSCSIDevice(dev_path, HCTL.from_string(hctl_str)))
+        elif scsi_type == SCSI_TYPE_ENCLOSURE:
+            self.enclosures.append(SysfsEnclosureDevice(dev_path, HCTL.from_string(hctl_str)))
         elif scsi_type == SCSI_TYPE_DISK:
             block_dev_names = get_sd_paths(dev_path)
             if block_dev_names == []:
@@ -158,7 +218,7 @@ class Sysfs(object):
                     if os.path.islink(src):
                         return os.path.abspath(os.path.join(base, os.readlink(os.path.join(base, src))))
                     return os.path.join(base, src)
-                return {link:readlink(link) for link in os.listdir(base)}
+                return {link: readlink(link) for link in os.listdir(base)}
 
     @cached_method
     def get_all_sd_disks(self):
@@ -176,6 +236,11 @@ class Sysfs(object):
         return self.controllers
 
     @cached_method
+    def get_all_enclosures(self):
+        self._populate()
+        return self.enclosures
+
+    @cached_method
     def get_all_block_devices(self):
         self._populate()
         return self.block_devices
@@ -186,14 +251,13 @@ class Sysfs(object):
 
     def find_scsi_disk_by_hctl(self, hctl):
         self._populate()
-        disk = [ disk for disk in self.sd_disks if disk.get_hctl() == hctl ]
+        disk = [disk for disk in self.sd_disks if disk.get_hctl() == hctl]
         if len(disk) != 1:
             raise ValueError("cannot find a disk with HCTL %s" % (str(hctl),))
         return disk[0]
 
     def __repr__(self):
         _repr = ("<Sysfs: sg_disks={!r}, sd_disks={!r}, controllers={!r}, block_devices={!r}, " +
-                 "block_devno_to_device={!r}>")
+                 "block_devno_to_device={!r}, enclosures={!r}>")
         return _repr.format(self.sg_disks, self.sd_disks, self.controllers, self.block_devices,
-                            self.block_devno_to_device)
-
+                            self.block_devno_to_device, self.enclosures)
