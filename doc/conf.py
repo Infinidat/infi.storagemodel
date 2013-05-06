@@ -60,8 +60,6 @@ if not os.path.exists(".cache"):
     run("mkdir .cache")
 run("easy_install -U zc.buildout")
 run("python bootstrap.py -d")
-run("bin/buildout buildout:develop= install isolated-python")
-run("parts/python/bin/python bootstrap.py -d")
 run("bin/buildout buildout:develop= install setup.py __version__.py")
 run("bin/buildout install development-scripts")
 os.chdir(curdir)
