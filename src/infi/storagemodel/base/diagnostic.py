@@ -103,6 +103,8 @@ class SesInformationMixin(object):
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_ARRAY_DEVICE_SLOT
         slots = self._get_enclosure_elements_by_type(ELEMENT_TYPE_ARRAY_DEVICE_SLOT)
+        for slot in slots:
+                slot['location'] = int(slot['descriptor'].split()[1])
         return slots
 
     def get_all_enclosure_power_supply(self):
