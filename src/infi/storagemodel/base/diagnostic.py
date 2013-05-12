@@ -76,21 +76,24 @@ class SesInformationMixin(object):
         from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR
         from infi.asi.cdb.diagnostic.ses_pages.enclosure_status import ELEMENT_STATUS_CODE
         elem_info = []
-        if DIAGNOSTIC_PAGE_ENCLOSURE_STATUS in self.get_scsi_ses_pages() and \
-                DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
+        if DIAGNOSTIC_PAGE_ENCLOSURE_STATUS in self.get_scsi_ses_pages():
             raw_conf_page = self._get_configuration_page()
             elements = self.get_enclosure_configuration(raw_conf_page)
-            num_of_elem, elem_idx = elements[elem_type]
-            status_descr = self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ENCLOSURE_STATUS].status_descriptors[elem_idx]
-            for elem in status_descr.individual_elements:
-                d = dict(status=ELEMENT_STATUS_CODE[elem.element_status_code],
-                         swap=elem.swap,
-                         disabled=elem.disabled,
-                         predicted_failure=elem.prdfail)
-                d.update(vars(elem.status_info))
-                elem_info.append(d)
+            if elem_type in elements:
+                num_of_elem, elem_idx = elements[elem_type]
+                status_descr = \
+                    self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ENCLOSURE_STATUS].status_descriptors[elem_idx]
+                for elem in status_descr.individual_elements:
+                    d = dict(status=ELEMENT_STATUS_CODE[elem.element_status_code],
+                             swap=elem.swap,
+                             disabled=elem.disabled,
+                             predicted_failure=elem.prdfail)
+                    d.update(vars(elem.status_info))
+                    elem_info.append(d)
 
-            elem_descr = self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR].element_descriptors[elem_idx]
+        if DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
+            elem_descr = \
+                self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR].element_descriptors[elem_idx]
             idx = 0
             for elem in elem_descr.individual_elements:
                 elem_info[idx].update(dict(descriptor=str(elem.descriptor)))
@@ -102,9 +105,11 @@ class SesInformationMixin(object):
         """:returns: list of dicts per slot, each dict is slot's status info
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_ARRAY_DEVICE_SLOT
+        from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR
         slots = self._get_enclosure_elements_by_type(ELEMENT_TYPE_ARRAY_DEVICE_SLOT)
-        for slot in slots:
-                slot['location'] = int(slot['descriptor'].split()[1])
+        if DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
+            for slot in slots:
+                    slot['location'] = int(slot['descriptor'].split()[1])
         return slots
 
     def get_all_enclosure_power_supply(self):
