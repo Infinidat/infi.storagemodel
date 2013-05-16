@@ -76,20 +76,24 @@ class SesInformationMixin(object):
         from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR
         from infi.asi.cdb.diagnostic.ses_pages.enclosure_status import ELEMENT_STATUS_CODE
         elem_info = []
-        if DIAGNOSTIC_PAGE_ENCLOSURE_STATUS in self.get_scsi_ses_pages() and \
-                DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
+        if DIAGNOSTIC_PAGE_ENCLOSURE_STATUS in self.get_scsi_ses_pages():
             raw_conf_page = self._get_configuration_page()
             elements = self.get_enclosure_configuration(raw_conf_page)
-            num_of_elem, elem_idx = elements[elem_type]
-            status_descr = self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ENCLOSURE_STATUS].status_descriptors[elem_idx]
-            for elem in status_descr.individual_elements:
-                elem_info.append(dict(status=ELEMENT_STATUS_CODE[elem.element_status_code],
-                                      swap=elem.swap,
-                                      disabled=elem.disabled,
-                                      predicted_failure=elem.prdfail,
-                                      status_info=elem.status_info))
+            if elem_type in elements:
+                num_of_elem, elem_idx = elements[elem_type]
+                status_descr = \
+                    self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ENCLOSURE_STATUS].status_descriptors[elem_idx]
+                for elem in status_descr.individual_elements:
+                    d = dict(status=ELEMENT_STATUS_CODE[elem.element_status_code],
+                             swap=elem.swap,
+                             disabled=elem.disabled,
+                             predicted_failure=elem.prdfail)
+                    d.update(vars(elem.status_info))
+                    elem_info.append(d)
 
-            elem_descr = self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR].element_descriptors[elem_idx]
+        if DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
+            elem_descr = \
+                self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR].element_descriptors[elem_idx]
             idx = 0
             for elem in elem_descr.individual_elements:
                 elem_info[idx].update(dict(descriptor=str(elem.descriptor)))
@@ -101,8 +105,11 @@ class SesInformationMixin(object):
         """:returns: list of dicts per slot, each dict is slot's status info
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_ARRAY_DEVICE_SLOT
+        from infi.asi.cdb.diagnostic.ses_pages import DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR
         slots = self._get_enclosure_elements_by_type(ELEMENT_TYPE_ARRAY_DEVICE_SLOT)
-        # TODO: drill down status_info
+        if DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
+            for slot in slots:
+                    slot['location'] = int(slot['descriptor'].split()[1])
         return slots
 
     def get_all_enclosure_power_supply(self):
@@ -110,23 +117,23 @@ class SesInformationMixin(object):
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_POWER_SUPPLY
         ps = self._get_enclosure_elements_by_type(ELEMENT_TYPE_POWER_SUPPLY)
-        # TODO: drill down status_info
         return ps
 
     def get_all_enclosure_fans(self):
         """:returns: list of dicts per coling element, each dict is fan's status info
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_COOLING
-        fan = self._get_enclosure_elements_by_type(ELEMENT_TYPE_COOLING)
-        # TODO: drill down status_info
-        return fan
+        from infi.asi.cdb.diagnostic.ses_pages.enclosure_status import FAN_SPEED_CODE
+        fans = self._get_enclosure_elements_by_type(ELEMENT_TYPE_COOLING)
+        for fan in fans:
+            fan['speed_code'] = FAN_SPEED_CODE[fan['speed_code']]
+        return fans
 
     def get_all_enclosure_buzzers(self):
         """:returns: list of dicts per audible alarm element, each dict is buzzer's status info
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_AUDIBLE_ALARM
         buzzer = self._get_enclosure_elements_by_type(ELEMENT_TYPE_AUDIBLE_ALARM)
-        # TODO: drill down status_info
         return buzzer
 
     def get_all_enclosure_temperature_sensors(self):
@@ -134,7 +141,6 @@ class SesInformationMixin(object):
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_TEMPERATURE_SENSOR
         temp_sensor = self._get_enclosure_elements_by_type(ELEMENT_TYPE_TEMPERATURE_SENSOR)
-        # TODO: drill down status_info
         return temp_sensor
 
     def get_all_enclosure_es_controllers(self):
@@ -142,7 +148,6 @@ class SesInformationMixin(object):
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_ES_CONTROLLER
         es_cntrl = self._get_enclosure_elements_by_type(ELEMENT_TYPE_ES_CONTROLLER)
-        # TODO: drill down status_info
         return es_cntrl
 
     def get_all_enclosure_sas_expanders(self):
@@ -150,5 +155,4 @@ class SesInformationMixin(object):
         :rtype: list"""
         from infi.asi.cdb.diagnostic.ses_pages.configuration import ELEMENT_TYPE_SAS_EXPANDER
         sas_exp = self._get_enclosure_elements_by_type(ELEMENT_TYPE_SAS_EXPANDER)
-        # TODO: drill down status_info
         return sas_exp
