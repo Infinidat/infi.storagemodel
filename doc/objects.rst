@@ -22,6 +22,14 @@ SCSI Storage Controller Device
 .. autoclass:: SCSIStorageController
     :show-inheritance:
 
+SCSI Enclosure Device
+------------------------------
+
+.. autoclass:: SCSIEnclosure
+    :show-inheritance:
+
+.. autoclass:: SesInformationMixin
+
 Multipath Objects
 =================
 
