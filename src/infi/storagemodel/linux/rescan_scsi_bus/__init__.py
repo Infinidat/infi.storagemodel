@@ -2,10 +2,10 @@ from logging import getLogger
 from os import getpid
 from infi.traceback import traceback_decorator
 from .utils import func_logger
-from .scsi import sync_file_systems, udevadm_settle, partprobe
 from .logic import rescan_scsi_hosts
 
 logger = getLogger(__name__)
+
 
 @traceback_decorator
 @func_logger
@@ -15,6 +15,7 @@ def main(host_numbers):
     except Exception, err:
         logger.exception("{} Unhandled exception in rescan_scsi_bus: {}".format(getpid(), err))
         raise
+
 
 @func_logger
 def console_script():

@@ -111,10 +111,6 @@ def do_standard_inquiry(sg_device):
     return do_scsi_cdb(sg_device, cdb)
 
 @func_logger
-def sync_file_systems():
-    return log_execute(["sync"], TIMEOUT_IN_SEC)
-
-@func_logger
 def is_udevadm_exist():
     return path.exists("/sbin/udevadm")
 
@@ -129,16 +125,3 @@ def is_udevsettle_exist():
 @func_logger
 def execute_udevsettle():
     return log_execute(["/sbin/udevsettle"], TIMEOUT_IN_SEC*3)
-
-@func_logger
-def udevadm_settle():
-    if is_udevadm_exist():
-        return execute_udevadm()
-    elif is_udevsettle_exist():
-        return execute_udevsettle()
-    sleep(20)
-    return 0
-
-@func_logger
-def partprobe():
-    return log_execute(["/sbin/partprobe"], TIMEOUT_IN_SEC)
