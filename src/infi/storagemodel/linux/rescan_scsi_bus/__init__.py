@@ -11,6 +11,11 @@ logger = getLogger(__name__)
 @func_logger
 def main(host_numbers):
     try:
+        from gevent import reinit
+        reinit()
+    except ImportError:
+        pass
+    try:
         rescan_scsi_hosts(host_numbers)
     except Exception, err:
         logger.exception("{} Unhandled exception in rescan_scsi_bus: {}".format(getpid(), err))
