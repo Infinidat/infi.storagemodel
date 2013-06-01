@@ -60,6 +60,13 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
     def func(sg_device, cdb):
         with asi_context(sg_device) as executer:
             queue.put(sync_wait(cdb.execute(executer)))
+
+    try:
+        from gevent import reinit
+        reinit()
+    except ImportError:
+        pass
+
     try:
         func(sg_device,cdb )
     except:
