@@ -60,7 +60,6 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
     def func(sg_device, cdb):
         with asi_context(sg_device) as executer:
             queue.put(sync_wait(cdb.execute(executer)))
-
     try:
         from gevent import reinit
         reinit()
@@ -68,7 +67,7 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
         pass
 
     try:
-        func(sg_device,cdb )
+        func(sg_device, cdb)
     except:
         logger.exception("{} multiprocessing caught unhandled exception".format(getpid()))
         queue.put(ScsiCommandFailed())
@@ -77,17 +76,25 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
 def do_scsi_cdb(sg_device, cdb):
     from multiprocessing import Process, Queue
     from Queue import Empty
+    from errno import EINTR
     queue = Queue()
     logger.debug("{} issuing cdb {!r} on {} with multiprocessing".format(getpid(), cdb, sg_device))
     subprocess = Process(target=do_scsi_cdb_with_in_process, args=(queue, sg_device, cdb,))
     subprocess.start()
     logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
-    try:
-        return_value = queue.get(timeout=TIMEOUT_IN_SEC)
-    except Empty:
-        msg = "{} multiprocessing {} did not return within {} seconds timeout"
-        logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
-        return_value = ScsiCommandFailed()
+    return_value = None
+    while return_value is None:
+        try:
+            return_value = queue.get(timeout=TIMEOUT_IN_SEC)
+        except IOError, error:
+            # stackoverflow.com/questions/14136195/what-is-the-proper-way-to-handle-in-python-ioerror-errno-4-interrupted-syst
+            if error.errno != EINTR:
+                raise
+            logger.debug("multiprocessing.Queue.get caught IOError: interrupted system call")
+        except Empty:
+            msg = "{} multiprocessing {} did not return within {} seconds timeout"
+            logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
+            return_value = ScsiCommandFailed()
     logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
     if not subprocess.is_alive():
         logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))
