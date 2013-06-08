@@ -49,8 +49,8 @@ class LinuxStorageModel(StorageModel):
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             try:
                 self.rescan_process.terminate()
-            except Exception:
-                logger.exception("Failed to terminate rescan process")
+            except:
+                pass
             self.rescan_process = None
 
     def initiate_rescan(self, wait_for_completion=True):
