@@ -1,6 +1,7 @@
 from ..base import filesystem
-
+from infi.storagemodel.errors import UnmountFailedDeviceIsBusy
 # pylint: disable=W0102,W0212
+
 
 class LinuxFileSystem(filesystem.FileSystem):
     def __init__(self, name):
@@ -17,8 +18,12 @@ class LinuxFileSystem(filesystem.FileSystem):
 
     def unmount(self, block_access_path, mount_point):
         from infi.mountoolinux.mount.manager import MountManager, MountEntry
+        from infi.mountoolinux.mount.errors import BaseMountException
         entry = MountEntry(None, mount_point, None, {}, 0, 0)
-        MountManager().umount_entry(entry)
+        try:
+            MountManager().umount_entry(entry)
+        except BaseMountException:
+            raise UnmountFailedDeviceIsBusy(block_access_path, mount_point)
 
     def format(self, block_device, *args, **kwargs):
         """currently we ignore args and kwargs"""
