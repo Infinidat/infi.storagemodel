@@ -1,21 +1,26 @@
 
-from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
-
+try:
+    from gevent import sleep
+except ImportError:
+    from time import sleep
+from infi.pyutils.lazy import cached_method, clear_cache
 from logging import getLogger
+
 logger = getLogger(__name__)
+
 
 class StorageModel(object):
     """StorageModel provides layered view of the storage stack.
     The layers currently offered by the model are the SCSI layer and the Multipath layer.
-    
+
     All layers are fetched in a lazy and cached manner:
-    
+
     - No information is gathers upon initialization
-    
+
     - Information is gathered when it is asked for, and stored in a cache within the object
-    
+
     - Every second request is pulled from the cache
-    
+
     When you think tha the cache no longer up-to-date, you can clear it using the refresh() method
     """
 
@@ -70,21 +75,21 @@ class StorageModel(object):
 
     def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60, wait_on_rescan=False):
         """Rescan devices and polls the prediate until either it returns True or a timeout is reached.
-        
+
         The model is refreshed automatically, there is no need to refresh() after calling this method or in the
         implementation of the predicate.
-        
+
         For more information and usage examples, see :doc:`rescan`
 
-        :param predicate: a callable object that returns either True or False. 
-        
+        :param predicate: a callable object that returns either True or False.
+
         :param timeout_in_seconds: time in seconds to poll the predicate.
-        
+
         :param wait_on_rescan: waits until the rescan process is completed before checking the predicates
-        
+
         :raises: :exc:`infi.storagemodel.errors.TimeoutError` exception.
         """
-        from time import time, sleep
+        from time import time
         from sys import maxint
         from ..errors import TimeoutError
         if timeout_in_seconds is None:
@@ -104,7 +109,7 @@ class StorageModel(object):
                 break
             elif time() - start_time >= timeout_in_seconds:
                 logger.debug("Rescan did not complete before timeout")
-                raise TimeoutError() # pylint: disable=W0710
+                raise TimeoutError()  # pylint: disable=W0710
             elif result in [False, None]:
                 logger.debug("Predicate returned False, will rescan again")
                 self.initiate_rescan(wait_on_rescan)
@@ -115,27 +120,27 @@ class StorageModel(object):
     # Platform Specific Methods #
     #############################
 
-    def initiate_rescan(self, wait_for_completion=False): # pragma: no cover
+    def initiate_rescan(self, wait_for_completion=False):  # pragma: no cover
         """A premitive rescan method, if you do not wish to use the waiting mechanism"""
         # platform implementation
         raise NotImplementedError()
 
-    def _create_scsi_model(self): # pragma: no cover
+    def _create_scsi_model(self):  # pragma: no cover
         # platform implementation
         raise NotImplementedError()
 
-    def _create_native_multipath_model(self): # pragma: no cover
+    def _create_native_multipath_model(self):  # pragma: no cover
         # platform implementation
         raise NotImplementedError()
 
-    def _create_disk_model(self): # pragma: no cover
+    def _create_disk_model(self):  # pragma: no cover
         # platform implementation
         raise NotImplementedError()
 
-    def _create_mount_manager(self): # pragma: no cover
+    def _create_mount_manager(self):  # pragma: no cover
         # platform implementation
         raise NotImplementedError()
 
-    def _create_mount_repository(self): # pragma: no cover
+    def _create_mount_repository(self):  # pragma: no cover
         # platform implementation
         raise NotImplementedError()

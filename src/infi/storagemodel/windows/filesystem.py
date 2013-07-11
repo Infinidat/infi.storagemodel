@@ -1,5 +1,6 @@
 
 from ..base import filesystem, partition
+from infi.storagemodel.errors import UnmountFailedDeviceIsBusy
 from infi.diskmanagement import MountManager
 
 # pylint: disable=W0212,E1002
@@ -27,4 +28,7 @@ class WindowsFileSystem(filesystem.FileSystem):
         return WindowsMount(self, block_access_path, mount_point)
 
     def unmount(self, block_access_path, mount_point):
-        MountManager().remove_mount_point(block_access_path, mount_point)
+        try:
+            MountManager().remove_mount_point(block_access_path, mount_point)
+        except:  # diskmanagement module is a thin wrapper on top ctypes, does not differntiate error codes
+            raise UnmountFailedDeviceIsBusy(block_access_path, mount_point)

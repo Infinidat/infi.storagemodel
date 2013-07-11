@@ -12,12 +12,27 @@ class StorageModelError(InfiException):
     """Base Exception class for this module """
     pass
 
+
 class StorageModelFindError(StorageModelError):
     """Find error"""
     pass
 
+
 class RescanIsNeeded(StorageModelError):
     pass
+
+
+class DeviceIsBusy(StorageModelError):
+    pass
+
+
+class UnmountFailedDeviceIsBusy(DeviceIsBusy):
+    def __init__(self, block_access_path, mount_point):
+        super(UnmountFailedDeviceIsBusy, self).__init__(block_access_path, mount_point)
+
+    def __str__(self):
+        return "Cannot unmount filesystem {}, device {} is busy".format(self.args[1], self.args[0])
+
 
 class DeviceDisappeared(RescanIsNeeded):
     def __init__(self, *args, **kwargs):

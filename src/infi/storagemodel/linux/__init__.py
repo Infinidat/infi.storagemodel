@@ -74,4 +74,5 @@ class LinuxStorageModel(StorageModel):
             self.rescan_process.start()
             logger.debug("rescan process started")
             if wait_for_completion:
+                logger.debug("waiting for rescan process completion")
                 self.rescan_process.join()
