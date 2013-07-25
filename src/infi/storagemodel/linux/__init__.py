@@ -45,33 +45,42 @@ class LinuxStorageModel(StorageModel):
         return LinuxMountRepository()
 
     def terminate_rescan_process(self):
-        from multiprocessing import Process
+        try:
+            from gipc.gipc import _GProcess as Process
+        except ImportError:
+            from multiprocessing import Process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
+            logger.debug("terminating previous rescan process")
             try:
                 self.rescan_process.terminate()
-            except:
-                pass
+            except Exception:
+                logger.exception("Failed to terminate rescan process")
             self.rescan_process = None
 
     def initiate_rescan(self, wait_for_completion=True):
         from .rescan_scsi_bus import main
-        from multiprocessing import Process
+        try:
+            from gipc.gipc import _GProcess as Process
+            from gipc.gipc import start_process
+        except ImportError:
+            from multiprocessing import Process
+
+            def start_process(*args, **kwargs):
+                process = Process(*args, **kwargs)
+                process.start()
+                return process
+
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             if (datetime.now() - self.rescan_process_start_time).total_seconds() > 30:
-                logger.debug("terminating previous rescan process")
-                try:
-                    self.rescan_process.terminate()
-                except Exception:
-                    logger.exception("Failed to terminate rescan process")
+                self.terminate_rescan_process()
                 self.rescan_process = None
                 self.initiate_rescan(wait_for_completion)
             else:
                 logger.debug("previous rescan process is still running")
                 return
         else:
-            self.rescan_process = Process(target=main, args=(_get_all_host_bus_adapter_numbers(),))
             self.rescan_process_start_time = datetime.now()
-            self.rescan_process.start()
+            self.rescan_process = start_process(target=main, args=(_get_all_host_bus_adapter_numbers(),))
             logger.debug("rescan process started")
             if wait_for_completion:
                 logger.debug("waiting for rescan process completion")

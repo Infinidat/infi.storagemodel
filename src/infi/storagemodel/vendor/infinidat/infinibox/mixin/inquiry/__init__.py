@@ -135,6 +135,7 @@ class InfiniBoxInquiryMixin(object):
         except AsiCheckConditionError, error:
             if _is_exception_of_unsupported_inquiry_page(error):
                 raise chain(JSONInquiryException("JSON Inquiry command error"))
+            raise
 
     def _get_json_inquiry_data(self):
         return self._get_json_inquiry_page().json_serialized_data
