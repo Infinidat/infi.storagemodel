@@ -88,7 +88,7 @@ def queue():
 
 
 @contextmanager
-def get_pipe_context(duplex=True):
+def get_pipe_context():
     try:
         from gipc.gipc import pipe
         _pipe_context = pipe(duplex=True)
@@ -98,6 +98,7 @@ def get_pipe_context(duplex=True):
         yield reader, writer
 
 def get_timeout():
+    """:returns: the timeout object and exception class"""
     try:  # gipc-based implementation
         from gevent import Timeout
         return Timeout(TIMEOUT_IN_SEC), Timeout
@@ -106,18 +107,11 @@ def get_timeout():
         timeout = TIMEOUT_IN_SEC
         return timeout, Empty
 
-@func_logger
-def do_scsi_cdb(sg_device, cdb):
-    pipe_context = get_pipe_context(duplex=True)
-    reader, writer = pipe_context.__enter__()
+def read_from_queue(reader, subprocess):
     timeout, timeout_class = get_timeout()
-    logger.debug("{} issuing cdb {!r} on {} with multiprocessing".format(getpid(), cdb, sg_device))
-    subprocess = Process(target=do_scsi_cdb_with_in_process, args=(writer, sg_device, cdb,))
-    logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
-    return_value = None
-    while return_value is None:
+    while True:
         try:
-            return_value = reader.get(timeout=timeout)
+            return reader.get(timeout=timeout)
         except IOError, error:
             from errno import EINTR
             # stackoverflow.com/questions/14136195/what-is-the-proper-way-to-handle-in-python-ioerror-errno-4-interrupted-syst
@@ -127,19 +121,30 @@ def do_scsi_cdb(sg_device, cdb):
         except timeout_class:
             msg = "{} multiprocessing {} did not return within {} seconds timeout"
             logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
-            return_value = ScsiCommandFailed()
+            return ScsiCommandFailed()
         except:
             msg = "{} multiprocessing {} error"
             logger.exception(msg.format(getpid(), subprocess.pid))
-    logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
-    if not subprocess.is_alive():
+
+def ensure_subprocess_dead(subprocess):
+    if subprocess.is_alive():
         logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))
         try:
             subprocess.kill()
         except:
             logger.error("{} failed to terminate multiprocessing {}".format(getpid(), subprocess.pid))
     subprocess.join()
-    pipe_context.__exit__(None, None, None)
+
+@func_logger
+def do_scsi_cdb(sg_device, cdb):
+    pipe_context = get_pipe_context()
+    with pipe_context as (reader, writer):
+        logger.debug("{} issuing cdb {!r} on {} with multiprocessing".format(getpid(), cdb, sg_device))
+        subprocess = Process(target=do_scsi_cdb_with_in_process, args=(writer, sg_device, cdb,))
+        logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
+        return_value = read_from_queue(reader, subprocess)
+        logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
+        ensure_subprocess_dead(subprocess)
     if isinstance(return_value, ScsiCommandFailed):
         raise ScsiCommandFailed()
     return return_value
