@@ -64,7 +64,10 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
     try:
         func(sg_device, cdb)
     except:  # HIP-672 can't use logger in the child process
-        queue.put(ScsiCommandFailed())
+        try:  # HIP-673 in case we failed to contact the parent process
+            queue.put(ScsiCommandFailed())
+        except:  # there's no point in raising exception or silencing it because it won't get logged
+            pass
 
 def Process(target, args=(), kwargs={}):
     """mocking mutliprocess.Process; uses gipc where available"""
