@@ -62,7 +62,7 @@ class LinuxPersistentMount(LinuxMount, mount.PersistentMount):
 class LinuxMountRepository(mount.MountRepository):
     def get_all_persistent_mounts(self):
         from infi.mountoolinux.mount.manager import MountManager
-        return [LinuxPersistentMount(entry) for entry in MountManager().get_mounts_from_mtab()]
+        return [LinuxPersistentMount(entry) for entry in MountManager().get_mounts_from_fstab()]
 
     def remove_persistent_mountpoint(self, persistent_mount):
         from infi.mountoolinux.mount.manager import MountManager
