@@ -63,8 +63,7 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
 
     try:
         func(sg_device, cdb)
-    except:
-        logger.exception("{} multiprocessing caught unhandled exception".format(getpid()))
+    except:  # HIP-672 can't use logger in the child process
         queue.put(ScsiCommandFailed())
 
 def Process(target, args=(), kwargs={}):
