@@ -94,10 +94,8 @@ class SesInformationMixin(object):
         if DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
             elem_descr = \
                 self.get_scsi_ses_pages(raw_conf_page)[DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR].element_descriptors[elem_idx]
-            idx = 0
-            for elem in elem_descr.individual_elements:
+            for idx, elem in enumerate(elem_descr.individual_elements):
                 elem_info[idx].update(dict(descriptor=str(elem.descriptor)))
-                idx += 1
 
         return elem_info
 
@@ -109,7 +107,7 @@ class SesInformationMixin(object):
         slots = self._get_enclosure_elements_by_type(ELEMENT_TYPE_ARRAY_DEVICE_SLOT)
         if DIAGNOSTIC_PAGE_ELEMENT_DESCRIPTOR in self.get_scsi_ses_pages():
             for slot in slots:
-                    slot['location'] = int(slot['descriptor'].split()[1])
+                slot['location'] = int(slot['descriptor'].split()[1])
         return slots
 
     def get_all_enclosure_power_supply(self):
