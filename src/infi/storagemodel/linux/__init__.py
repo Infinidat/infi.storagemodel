@@ -5,7 +5,7 @@ from ..base import StorageModel
 from infi.pyutils.lazy import cached_method, cached_function
 from datetime import datetime
 
-from logging import getLogger
+from logging import getLogger, NullHandler
 logger = getLogger(__name__)
 
 def _get_all_host_bus_adapter_numbers():
@@ -17,7 +17,7 @@ class LinuxStorageModel(StorageModel):
         super(LinuxStorageModel, self).__init__()
         self.rescan_process = None
         self.rescan_process_start_time = None
-        atexit.register(self.terminate_rescan_process)
+        atexit.register(self.terminate_rescan_process, silent=True)
 
     @cached_method
     def _get_sysfs(self):
@@ -44,17 +44,21 @@ class LinuxStorageModel(StorageModel):
         from .mount import LinuxMountRepository
         return LinuxMountRepository()
 
-    def terminate_rescan_process(self):
+    def terminate_rescan_process(self, silent=False):
         try:
             from gipc.gipc import _GProcess as Process
         except ImportError:
             from multiprocessing import Process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
-            logger.debug("terminating previous rescan process")
+            if not silent:
+                logger.debug("terminating previous rescan process")
+            else:
+                getLogger("gipc").addHandler(NullHandler())
             try:
                 self.rescan_process.terminate()
             except Exception:
-                logger.exception("Failed to terminate rescan process")
+                if not silent:
+                    logger.exception("Failed to terminate rescan process")
             self.rescan_process = None
 
     def initiate_rescan(self, wait_for_completion=True):
