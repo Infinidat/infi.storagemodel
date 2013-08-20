@@ -192,3 +192,16 @@ class ScsiDevicesAreReady(object):
 
     def __repr__(self):
         return "<ScsiDevicesAreReady>"
+
+
+class MultipathDevicesAreReady(object):
+    def __call__(self):
+        from infi.storagemodel import get_storage_model
+        model = get_storage_model()
+        multipath = model.get_native_multipath()
+        [device.get_scsi_test_unit_ready() for device in multipath.get_all_multipath_block_devices()]
+        [device.get_scsi_test_unit_ready() for device in multipath.get_all_multipath_storage_controller_devices()]
+        return True
+
+    def __repr__(self):
+        return "<MultipathDevicesAreReady>"
