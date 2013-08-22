@@ -81,7 +81,7 @@ def safe_repr(obj):
         return object.__repr__(obj)
 
 def check_for_scsi_errors(func):
-    from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError
+    from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError, AsiRequestQueueFullError
     from sys import exc_info
     @wraps(func)
     def callable(*args, **kwargs):
@@ -102,9 +102,12 @@ def check_for_scsi_errors(func):
                 logger.debug(msg)
                 raise chain(RescanIsNeeded(msg))
             raise
+        except AsiRequestQueueFullError, e:
+            msg = "got queue full from device {!r} during {!r}".format(safe_repr(device), func)
+            logger.debug(msg)
+            raise chain(RescanIsNeeded(msg))
         except (IOError, OSError, AsiOSError, AsiSCSIError), error:
             msg = "device {!r} disappeared during {!r}".format(safe_repr(device), func)
             logger.error(msg, exc_info=exc_info())
             raise chain(DeviceDisappeared(msg))
     return callable
-

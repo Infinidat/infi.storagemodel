@@ -102,6 +102,7 @@ def get_pipe_context():
 def get_timeout():
     """:returns: the timeout object and exception class"""
     try:  # gipc-based implementation
+        from gipc.gipc import pipe
         from gevent import Timeout
         return Timeout(TIMEOUT_IN_SEC), Timeout
     except ImportError:
