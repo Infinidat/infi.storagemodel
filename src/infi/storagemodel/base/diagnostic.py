@@ -46,6 +46,12 @@ class SesInformationMixin(object):
         if DIAGNOSTIC_PAGE_CONFIGURATION in self.get_scsi_ses_pages():
             return self.get_scsi_ses_pages()[DIAGNOSTIC_PAGE_CONFIGURATION]
 
+    @cached_method   
+    def get_enclosure_configuration_page(self):
+        """:returns: whole configuration page
+        :rtype: dict"""        
+        return self._get_configuration_page()
+
     @cached_method
     def get_enclosure_configuration(self, raw_data=None):
         """:returns: the dict of elements {elem_type: (num_of_elem, elem_idx)}
