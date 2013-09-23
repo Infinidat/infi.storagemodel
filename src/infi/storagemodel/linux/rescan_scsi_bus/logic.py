@@ -88,7 +88,11 @@ def rescan_scsi_host(host):
     for channel in get_channels(host):
         targets = get_targets(host, channel)
         for target in targets:
-            target_scan(host, channel, target)
+            try:
+                target_scan(host, channel, target)
+            except:
+                msg = "Failed to scan target: host={} channel={} target={}. Continuing"
+                logger.exception(msg.format(host, channel, target))
 
 @func_logger
 def rescan_scsi_hosts(host_numbers):
