@@ -17,9 +17,10 @@ def main(host_numbers):
         pass
     try:
         rescan_scsi_hosts(host_numbers)
+        return 0
     except Exception, err:
         logger.exception("{} Unhandled exception in rescan_scsi_bus: {}".format(getpid(), err))
-        raise
+        return 1
 
 
 @func_logger
