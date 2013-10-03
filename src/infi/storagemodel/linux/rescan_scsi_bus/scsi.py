@@ -155,7 +155,7 @@ def do_scsi_cdb(sg_device, cdb):
 @func_logger
 def do_report_luns(sg_device):
     from infi.asi.cdb.report_luns import ReportLunsCommand
-    cdb = ReportLunsCommand(select_report=1)
+    cdb = ReportLunsCommand(select_report=0)
     return do_scsi_cdb(sg_device, cdb)
 
 @func_logger
