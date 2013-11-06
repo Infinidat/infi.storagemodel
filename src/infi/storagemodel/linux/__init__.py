@@ -13,6 +13,9 @@ def _get_all_host_bus_adapter_numbers():
     return [port.hct[0] for port in get_ports_collection().get_ports()]
 
 class LinuxStorageModel(StorageModel):
+    rescan_subprocess_timeout = 30
+
+
     def __init__(self):
         super(LinuxStorageModel, self).__init__()
         self.rescan_process = None
@@ -75,7 +78,7 @@ class LinuxStorageModel(StorageModel):
                 return process
 
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
-            if (datetime.now() - self.rescan_process_start_time).total_seconds() > 30:
+            if (datetime.now() - self.rescan_process_start_time).total_seconds() > self.rescan_subprocess_timeout:
                 self.terminate_rescan_process()
                 self.rescan_process = None
                 self.initiate_rescan(wait_for_completion)
