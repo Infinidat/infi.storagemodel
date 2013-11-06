@@ -85,7 +85,12 @@ def target_scan(host, channel, target):
 
 @func_logger
 def rescan_scsi_host(host):
-    for channel in get_channels(host):
+    channels = get_channels(host)
+    if not channels and not is_there_a_bug_in_sysfs_async_scanning():
+        # no devices from this scsi host, yet
+        scsi_host_scan(host)
+        channels = get_channels(host)
+    for channel in channels:
         targets = get_targets(host, channel)
         for target in targets:
             try:
