@@ -123,10 +123,17 @@ class InquiryInformationMixin(object):
 
     @check_for_scsi_errors
     def get_scsi_test_unit_ready(self):
-        """:returns: True if the device is ready
+        """:returns: True if the device is ready, False if got NOT_READY check condition
         """
         from infi.asi.cdb.tur import TestUnitReadyCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi import AsiCheckConditionError
         with self.asi_context() as asi:
-            command = TestUnitReadyCommand()
+            try:
+                command = TestUnitReadyCommand()
+            except AsiCheckConditionError, e:
+                (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
+                if (key, code) == ('NOT_READY', 'MEDIUM NOT PRESENT'):
+                    return False
+                raise
             return sync_wait(command.execute(asi))
