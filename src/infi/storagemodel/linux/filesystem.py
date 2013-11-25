@@ -1,5 +1,5 @@
 from ..base import filesystem
-from infi.storagemodel.errors import UnmountFailedDeviceIsBusy
+from infi.storagemodel.errors import UnmountFailedDeviceIsBusy, LabelNotSupported
 # pylint: disable=W0102,W0212
 
 
@@ -39,3 +39,28 @@ class LinuxFileSystem(filesystem.FileSystem):
             if mkfs.get_returncode() != 0:
                 raise RuntimeError(mkfs.get_stderr())
 
+    def _e2label(self, block_access_path, new_label=None):
+        from infi.execute import execute
+        args = ["e2label", block_access_path]
+        if new_label is not None:
+            args.append(new_label)
+        pid = execute(args)
+        if pid.get_returncode() != 0:
+            raise LabelNotSupported()
+        return pid.get_stdout().strip()
+
+    def get_label(self, block_access_path): # pragma: no cover
+        return self._e2label(block_access_path)
+
+    def set_label(self, block_access_path, label): # pragma: no cover
+        """sets a filesystem label on the specific block device
+        :raises: :class:`.InvalidLabel` if the label is too long
+        :raises: :class:`.LabelNotSupported` if not supported by the filesystem
+        """
+        before = self.get_label(block_access_path)
+        self._e2label(block_access_path, label)
+        after = self.get_label(block_access_path)
+        if before != after:
+            # e2label truncates labels
+            self._e2label(block_access_path, before)
+            raise InvalidLabel()

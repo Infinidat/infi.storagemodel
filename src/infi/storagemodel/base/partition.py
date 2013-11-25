@@ -65,7 +65,7 @@ class PartitionTable(object):
     def create_partition_table(cls, disk_drive): # pragma: no cover
         """Changes are written immediately on disk
         Partition table is re-read and cache for the current object is cleared
-        
+
         :returns: The newly created :class:`.Partition` object"""
         raise NotImplementedError()
 
@@ -83,7 +83,7 @@ class PartitionTable(object):
     def create_partition_for_whole_table(self, file_system_object): # pragma: no cover
         """Changes are written immediately on disk
         Partition table is re-read and cache for the current object is cleared
-        
+
         :returns: a :class:`.Partition` object"""
         # This is one of the places where things can get complicated
         # I just want to be able to create a new partition in an empty partition table

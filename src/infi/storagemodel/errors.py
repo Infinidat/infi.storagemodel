@@ -62,6 +62,13 @@ class MountPointInUse(StorageModelError):
     def __init__(self, mount_point):
         super(MountPointInUse, self).__init__("mount point {!r} is already in use".format(mount_point))
 
+class InvalidLabel(StorageModelError):
+    pass
+
+class LabelNotSupported(StorageModelError):
+    pass
+
+
 CHECK_CONDITIONS_TO_CHECK = [
     # 2-tuple of (sense_key, additional_sense_code)
     ('UNIT_ATTENTION', 'POWER ON OCCURRED'),
