@@ -60,7 +60,7 @@ class LinuxFileSystem(filesystem.FileSystem):
         before = self.get_label(block_access_path)
         self._e2label(block_access_path, label)
         after = self.get_label(block_access_path)
-        if before != after:
+        if after != label:
             # e2label truncates labels
             self._e2label(block_access_path, before)
             raise InvalidLabel()
