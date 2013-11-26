@@ -1,5 +1,5 @@
 from ..base import filesystem
-from infi.storagemodel.errors import UnmountFailedDeviceIsBusy, LabelNotSupported
+from infi.storagemodel.errors import UnmountFailedDeviceIsBusy, LabelNotSupported, InvalidLabel
 # pylint: disable=W0102,W0212
 
 
