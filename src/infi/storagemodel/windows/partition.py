@@ -70,6 +70,9 @@ class WindowsPartition(object):
     def get_current_filesystem(self): # pragma: no cover
         return WindowsFileSystem("NTFS")
 
+    def reize(self, size_in_bytes):
+        self._partition_object.resize(size_in_bytes)
+
 class WindowsPrimaryPartition(WindowsPartition, partition.PrimaryPartition):
     pass
 

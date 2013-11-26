@@ -26,6 +26,10 @@ class Partition(object):
         """Calls :class:`.FileSystemFactoryImpl"""
         raise NotImplementedError()
 
+    def resize(self, size_in_bytes):
+        """Resizes the partition"""
+        raise NotImplementedError()
+
 class MBRPartition(Partition):
     # pylint: disable=W0223
     # This methods below are overriden by platform-specific implementations

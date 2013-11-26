@@ -59,6 +59,10 @@ class FileSystem(object):
         """
         raise NotImplementedError()
 
+    def resize(self, size_in_bytes):  # pragma: no cover
+        """resize a filesystem; on platforms that isn't neccessary on, this method does nothing (e.g. Windows)"""
+        raise NotImplementedError()
+
 
 class FileSystemFactoryImpl(object):
     #############################

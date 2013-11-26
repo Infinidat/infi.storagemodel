@@ -50,3 +50,6 @@ class WindowsFileSystem(filesystem.FileSystem):
     def get_label(self, block_access_path):
         mount_point = self._get_mount_point_for_labels(block_access_path)
         return MountManager().get_volume_label(mount_point)
+
+    def resize(self, size_in_bytes):  # pragma: no cover
+        pass
