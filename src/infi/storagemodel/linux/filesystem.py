@@ -64,3 +64,10 @@ class LinuxFileSystem(filesystem.FileSystem):
             # e2label truncates labels
             self._e2label(block_access_path, before)
             raise InvalidLabel()
+
+    def resize(self, size_in_bytes):
+        from infi.execute import execute
+        args = ["resize2fs", block_access_path, size_in_bytes]
+        pid = execute(args)
+        if pid.get_returncode() != 0:
+            raise RuntimeError(pid.get_stderr())
