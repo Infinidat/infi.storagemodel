@@ -15,8 +15,9 @@ class LinuxPartition(partition.Partition):
         return dict((mount_access_path, filesystem_type) for
                      mount_access_path, _, filesystem_type, _, _, _ in mount_data)
 
+    @cached_method
     def get_size_in_bytes(self):
-        return self._parted_partition.get_size_in_bytes()
+        return self._parted_partition.get_size().bits / 8
 
     @cached_method
     def get_block_access_path(self):
@@ -32,10 +33,6 @@ class LinuxPartition(partition.Partition):
         mount_fs_mapping = self._get_mount_fs_mapping()
         filesystem_type = mount_fs_mapping[self.get_block_access_path()]
         return LinuxFileSystem(filesystem_type)
-
-    def resize(self, size_in_bytes):
-        self._parted_partition.resize(size_in_bytes)
-
 
 class LinuxPrimaryPartition(LinuxPartition, partition.PrimaryPartition):
     # pylint: disable=W0223
