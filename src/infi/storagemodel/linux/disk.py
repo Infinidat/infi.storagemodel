@@ -39,13 +39,13 @@ class LinuxDiskDrive(disk.DiskDrive):
     def delete_partition_table(self):
         raise NotImplementedError()
 
-    def create_gpt_partition_table(self):
+    def create_gpt_partition_table(self, alignment_in_bytes=None):
         from .partition import LinuxGPTPartitionTable
-        return LinuxGPTPartitionTable.create_partition_table(self)
+        return LinuxGPTPartitionTable.create_partition_table(self, alignment_in_bytes)
 
-    def create_mbr_partition_table(self):
+    def create_mbr_partition_table(self, alignment_in_bytes=None):
         from .partition import LinuxMBRPartitionTable
-        return LinuxMBRPartitionTable.create_partition_table(self)
+        return LinuxMBRPartitionTable.create_partition_table(self, alignment_in_bytes)
 
     def _format_partition(self, number, filesystem_name):
         self._get_parted_disk_drive().format_partition(number, filesystem_name)

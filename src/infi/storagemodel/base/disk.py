@@ -34,13 +34,13 @@ class DiskDrive(object):
         """deletes the partition table from the disk"""
         raise NotImplementedError()
 
-    def create_mbr_partition_table(self): # pragma: no cover
+    def create_mbr_partition_table(self, alignment_in_bytes=None): # pragma: no cover
         """creates a MBR partition table
 
         :returns: a :class:`.MBRPartitionTable` object"""
         raise NotImplementedError()
 
-    def create_gpt_partition_table(self): # pragma: no cover
+    def create_gpt_partition_table(self, alignment_in_bytes=None): # pragma: no cover
         """creates a GPT partition table
 
         :returns: a :class:`.GPTPartitionTable` object"""

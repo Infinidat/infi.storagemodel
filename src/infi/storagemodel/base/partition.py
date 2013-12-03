@@ -66,7 +66,7 @@ class PartitionTable(object):
     #############################
 
     @classmethod
-    def create_partition_table(cls, disk_drive): # pragma: no cover
+    def create_partition_table(cls, disk_drive, alignment_in_bytes=None): # pragma: no cover
         """Changes are written immediately on disk
         Partition table is re-read and cache for the current object is cleared
 
@@ -84,7 +84,7 @@ class PartitionTable(object):
         :rtype: :class:`.DiskDrive`"""
         raise NotImplementedError()
 
-    def create_partition_for_whole_table(self, file_system_object): # pragma: no cover
+    def create_partition_for_whole_table(self, file_system_object, alignment_in_bytes=None): # pragma: no cover
         """Changes are written immediately on disk
         Partition table is re-read and cache for the current object is cleared
 
