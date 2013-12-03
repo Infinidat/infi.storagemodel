@@ -25,9 +25,9 @@ class WindowsPartitionTable(object):
 
 class WindowsGPTPartitionTable(WindowsPartitionTable, partition.GPTPartitionTable):
     @classmethod
-    def create_partition_table(cls, disk_drive):
+    def create_partition_table(cls, disk_drive, alignment_in_bytes=None):
         obj = cls(disk_drive)
-        obj._create_partition_table('gpt')
+        obj._create_partition_table('gpt', alignment_in_bytes)
         return cls(disk_drive)
 
     def get_partitions(self):
