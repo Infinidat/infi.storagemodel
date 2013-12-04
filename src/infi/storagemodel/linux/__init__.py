@@ -47,6 +47,8 @@ class LinuxStorageModel(StorageModel):
     def terminate_rescan_process(self, silent=False):
         try:
             from gipc.gipc import _GProcess as Process
+            from gevent import sleep
+            sleep(0)  # give time for gipc time to join on the defunct rescan process
         except ImportError:
             from multiprocessing import Process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
@@ -56,6 +58,7 @@ class LinuxStorageModel(StorageModel):
                 getLogger("gipc").addHandler(NullHandler())
             try:
                 self.rescan_process.terminate()
+                sleep(0)  # give time for gipc time to join on the defunct rescan process
             except Exception:
                 if not silent:
                     logger.exception("Failed to terminate rescan process")
@@ -66,6 +69,8 @@ class LinuxStorageModel(StorageModel):
         try:
             from gipc.gipc import _GProcess as Process
             from gipc.gipc import start_process
+            from gevent import sleep
+            sleep(0)  # give time for gipc time to join on the defunct rescan process
         except ImportError:
             from multiprocessing import Process
 
