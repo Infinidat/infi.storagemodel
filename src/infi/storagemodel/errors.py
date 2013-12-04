@@ -113,7 +113,11 @@ def check_for_scsi_errors(func):
             msg = "got queue full from device {!r} during {!r}".format(safe_repr(device), func)
             logger.debug(msg)
             raise chain(RescanIsNeeded(msg))
-        except (IOError, OSError, AsiOSError, AsiSCSIError), error:
+        except AsiSCSIError as error:
+            msg = "device {!r} disappeared during {!r}: {}".format(safe_repr(device), func, error)
+            logger.error(msg)
+            raise chain(DeviceDisappeared(msg))
+        except (IOError, OSError, AsiOSError), error:
             msg = "device {!r} disappeared during {!r}".format(safe_repr(device), func)
             logger.error(msg, exc_info=exc_info())
             raise chain(DeviceDisappeared(msg))
