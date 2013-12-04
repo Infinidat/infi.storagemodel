@@ -78,9 +78,9 @@ class LinuxStorageModel(StorageModel):
                 process = Process(*args, **kwargs)
                 process.start()
                 return process
-
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             if (datetime.now() - self.rescan_process_start_time).total_seconds() > self.rescan_subprocess_timeout:
+                logger.debug("rescan process timed out, killing it")
                 self.terminate_rescan_process()
                 self.rescan_process = None
                 self.initiate_rescan(wait_for_completion)
@@ -88,6 +88,8 @@ class LinuxStorageModel(StorageModel):
                 logger.debug("previous rescan process is still running")
                 return
         else:
+            if isinstance(self.rescan_process, Process):
+                logger.debug("previous rescan process exit code: {}".format(self.rescan_process.exitcode))
             self.rescan_process_start_time = datetime.now()
             self.rescan_process = start_process(target=main)
             logger.debug("rescan process started")
