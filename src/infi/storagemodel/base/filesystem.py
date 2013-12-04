@@ -62,26 +62,3 @@ class FileSystem(object):
     def resize(self, size_in_bytes):  # pragma: no cover
         """resize a filesystem; on platforms that isn't neccessary on, this method does nothing (e.g. Windows)"""
         raise NotImplementedError()
-
-
-class FileSystemFactoryImpl(object):
-    #############################
-    # Platform Specific Methods #
-    #############################
-
-    def get_filesystem_for_partition(self, device, filesystem_object):
-        """:returns: a :class:`.FileSystem` object that is on top of a block device
-        :param device: Either a :class:`.MultipathDevice` or a :class:`.SCSIBlockDevice` or :class:`.Partition`
-        :param filesystem_object: a :class:`.FileSystem` obeject"""
-        class FileSystemOnPartition(type(filesystem_object)):
-            _device = device
-
-            def format(self, *args, **kwargs):
-                return super(FileSystemOnPartition, self).format(self._device, *args, **kwargs)
-
-            def mount(self, mount_point, mount_options_dict={}):
-                return super(FileSystemOnPartition, self).mount(self._device.get_block_access_path(),
-                                                              mount_point, mount_options_dict)
-        return FileSystemOnPartition()
-
-FileSystemFactory = FileSystemFactoryImpl()
