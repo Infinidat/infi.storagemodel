@@ -8,9 +8,6 @@ from datetime import datetime
 from logging import getLogger, NullHandler
 logger = getLogger(__name__)
 
-def _get_all_host_bus_adapter_numbers():
-    from infi.hbaapi import get_ports_collection
-    return [port.hct[0] for port in get_ports_collection().get_ports()]
 
 class LinuxStorageModel(StorageModel):
     rescan_subprocess_timeout = 30
@@ -87,7 +84,7 @@ class LinuxStorageModel(StorageModel):
                 return
         else:
             self.rescan_process_start_time = datetime.now()
-            self.rescan_process = start_process(target=main, args=(_get_all_host_bus_adapter_numbers(),))
+            self.rescan_process = start_process(target=main)
             logger.debug("rescan process started")
             if wait_for_completion:
                 logger.debug("waiting for rescan process completion")
