@@ -18,6 +18,11 @@ def get_proc_scsi_scsi():
         return fd.read()
 
 @func_logger
+def get_hosts():
+    from infi.hbaapi import get_ports_collection
+    return [port.hct[0] for port in get_ports_collection().get_ports()]
+
+@func_logger
 def get_channels(host):
     matching_host = [item for item in get_scsi_device_names_from_sysfs()
                      if item.startswith("{}:".format(host))]

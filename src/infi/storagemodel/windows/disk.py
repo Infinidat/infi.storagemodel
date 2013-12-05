@@ -34,13 +34,13 @@ class WindowsDiskDrive(disk.DiskDrive):
     def delete_partition_table(self):
         self._disk_object.destroy_partition_table()
 
-    def create_mbr_partition_table(self):
+    def create_mbr_partition_table(self, alignment_in_bytes=None):
         from .partition import WindowsMBRPartitionTable
-        return WindowsMBRPartitionTable.create_partition_table(self)
+        return WindowsMBRPartitionTable.create_partition_table(self, alignment_in_bytes)
 
-    def create_gpt_partition_table(self):
+    def create_gpt_partition_table(self, alignment_in_bytes=None):
         from .partition import WindowsGPTPartitionTable
-        return WindowsGPTPartitionTable.create_partition_table(self)
+        return WindowsGPTPartitionTable.create_partition_table(self, alignment_in_bytes)
 
     def is_online(self):
         return self._disk_object.is_online()

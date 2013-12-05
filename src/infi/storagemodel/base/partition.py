@@ -26,6 +26,10 @@ class Partition(object):
         """Calls :class:`.FileSystemFactoryImpl"""
         raise NotImplementedError()
 
+    def resize(self, size_in_bytes):
+        """Resizes the partition"""
+        raise NotImplementedError()
+
 class MBRPartition(Partition):
     # pylint: disable=W0223
     # This methods below are overriden by platform-specific implementations
@@ -62,10 +66,10 @@ class PartitionTable(object):
     #############################
 
     @classmethod
-    def create_partition_table(cls, disk_drive): # pragma: no cover
+    def create_partition_table(cls, disk_drive, alignment_in_bytes=None): # pragma: no cover
         """Changes are written immediately on disk
         Partition table is re-read and cache for the current object is cleared
-        
+
         :returns: The newly created :class:`.Partition` object"""
         raise NotImplementedError()
 
@@ -80,10 +84,10 @@ class PartitionTable(object):
         :rtype: :class:`.DiskDrive`"""
         raise NotImplementedError()
 
-    def create_partition_for_whole_table(self, file_system_object): # pragma: no cover
+    def create_partition_for_whole_table(self, file_system_object, alignment_in_bytes=None): # pragma: no cover
         """Changes are written immediately on disk
         Partition table is re-read and cache for the current object is cleared
-        
+
         :returns: a :class:`.Partition` object"""
         # This is one of the places where things can get complicated
         # I just want to be able to create a new partition in an empty partition table

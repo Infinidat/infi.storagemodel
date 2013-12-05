@@ -10,8 +10,8 @@ class WindowsPartitionTable(object):
         super(WindowsPartitionTable, self).__init__()
         self._disk_device = disk_device
 
-    def _create_partition_table(self, style):
-        return self._disk_device._disk_object.create_partition_table(style)
+    def _create_partition_table(self, style, alignment_in_bytes=None):
+        return self._disk_device._disk_object.create_partition_table(style, alignment_in_bytes)
 
     def _get_partitions(self):
         return self._disk_device._disk_object.get_partitions()
@@ -19,15 +19,15 @@ class WindowsPartitionTable(object):
     def get_disk_drive(self):
         return self._disk_device
 
-    def create_partition_for_whole_table(self, file_system_object):
-        self._disk_device._disk_object.create_first_partition()
+    def create_partition_for_whole_table(self, file_system_object, alignment_in_bytes=None):
+        self._disk_device._disk_object.create_first_partition(alignment_in_bytes)
         return self.get_partitions()[0]
 
 class WindowsGPTPartitionTable(WindowsPartitionTable, partition.GPTPartitionTable):
     @classmethod
-    def create_partition_table(cls, disk_drive):
+    def create_partition_table(cls, disk_drive, alignment_in_bytes=None):
         obj = cls(disk_drive)
-        obj._create_partition_table('gpt')
+        obj._create_partition_table('gpt', alignment_in_bytes)
         return cls(disk_drive)
 
     def get_partitions(self):
@@ -35,9 +35,9 @@ class WindowsGPTPartitionTable(WindowsPartitionTable, partition.GPTPartitionTabl
 
 class WindowsMBRPartitionTable(WindowsPartitionTable, partition.GPTPartitionTable):
     @classmethod
-    def create_partition_table(cls, disk_drive):
+    def create_partition_table(cls, disk_drive, alignment_in_bytes=None):
         obj = cls(disk_drive)
-        obj._create_partition_table('mbr')
+        obj._create_partition_table('mbr', alignment_in_bytes)
         return cls(disk_drive)
 
     def get_partitions(self):
@@ -69,6 +69,9 @@ class WindowsPartition(object):
 
     def get_current_filesystem(self): # pragma: no cover
         return WindowsFileSystem("NTFS")
+
+    def resize(self, size_in_bytes):
+        self._partition_object.resize(size_in_bytes)
 
 class WindowsPrimaryPartition(WindowsPartition, partition.PrimaryPartition):
     pass
