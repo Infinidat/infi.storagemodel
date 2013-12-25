@@ -4,6 +4,10 @@ from contextlib import contextmanager
 
 from .inquiry import InquiryInformationMixin
 from .diagnostic import SesInformationMixin
+from logging import getLogger
+
+
+logger = getLogger(__name__)
 
 
 class SCSIDevice(InquiryInformationMixin, object):
@@ -44,8 +48,22 @@ class SCSIDevice(InquiryInformationMixin, object):
         # platform implementation
         raise NotImplementedError()
 
+    @cached_method
+    def _get_scsi_serial_for_repr(self):
+        # get_scsi_serial_number is cached, but in case of a problem we don't want the call to __repr__
+        # raise an exception, we want it to just return the device info without the scsi serial number, and not to retry
+        # unless the cache of this object is cleared
+        try:
+            scsi_serial = self.get_scsi_serial_number()
+        except:
+            args = self.get_scsi_access_path(), self.get_display_name()
+            logger.exception("failed to get scsi serial number for device {}, {}".format(*args))
+            return "<unknown-scsi-serial-number>"
+
+
     def __repr__(self):
-        return "<SCSIDevice {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
+        return "<SCSIDevice {} for {} ({})>".format(self.get_scsi_access_path(), self.get_display_name(),
+                                                    self._get_scsi_serial_for_repr())
 
 
 class SCSIBlockDevice(SCSIDevice):
