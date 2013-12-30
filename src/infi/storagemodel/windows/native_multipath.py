@@ -133,7 +133,11 @@ class WindowsPath(multipath.Path):
     def get_hctl(self):
         from infi.dtypes.hctl import HCTL
         scsi_address = self._pdo_information.ScsiAddress
-        return HCTL(scsi_address.PortNumber, scsi_address.ScsiPathId, scsi_address.TargetId, scsi_address.Lun)
+        try:
+            return HCTL(scsi_address.PortNumber, scsi_address.ScsiPathId, scsi_address.TargetId, scsi_address.Lun)
+        except AttributeError:
+            # we lost a PDO
+            raise RescanIsNeeded()
 
     @cached_method
     def get_state(self):
