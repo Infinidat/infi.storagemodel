@@ -13,7 +13,7 @@ class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
     # This is the mechanism I found suitable:
     # On the first call to the dict, it fetches the key and values from WMI and uses them from here on
     def __init__(self, wmi_client):
-        # this (skipping the __init__ of LazyImmutableDict is on purpose 
+        # this (skipping the __init__ of LazyImmutableDict is on purpose
         super(LazyImmutableDict, self).__init__()
         self.wmi_client = wmi_client
 
