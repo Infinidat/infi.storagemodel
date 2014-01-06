@@ -48,18 +48,12 @@ class SCSIDevice(InquiryInformationMixin, object):
         # platform implementation
         raise NotImplementedError()
 
-    @cached_method
     def _get_scsi_serial_for_repr(self):
-        # get_scsi_serial_number is cached, but in case of a problem we don't want the call to __repr__
-        # raise an exception, we want it to just return the device info without the scsi serial number, and not to retry
-        # unless the cache of this object is cleared
-        try:
-            scsi_serial = self.get_scsi_serial_number()
-        except:
-            args = self.get_scsi_access_path(), self.get_display_name()
-            logger.exception("failed to get scsi serial number for device {}, {}".format(*args))
-            return "<unknown-scsi-serial-number>"
-
+        # we can't call get_scsi_serial_number because it may perform I/O which is wrapped with check_for_scsi_errors.
+        # check_for_scsi_errors logs the scsi device, which calls this function and then we enter an infinite recursion.
+        # Instead, if get_scsi_serial_number was already called, it will keep the serial number in self._serial, which
+        # we try to get
+        return getattr(self, "_serial", "<unknown-scsi-serial-number>")
 
     def __repr__(self):
         return "<SCSIDevice {} for {} ({})>".format(self.get_scsi_access_path(), self.get_display_name(),

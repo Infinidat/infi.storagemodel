@@ -90,6 +90,8 @@ class InquiryInformationMixin(object):
         serial = ''
         if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.get_scsi_inquiry_pages():
             serial = self.get_scsi_inquiry_pages()[INQUIRY_PAGE_UNIT_SERIAL_NUMBER].product_serial_number
+        # keep the serial in the class for _get_scsi_serial_for_repr
+        self._serial = serial
         return serial
 
     @cached_method
