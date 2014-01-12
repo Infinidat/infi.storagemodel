@@ -133,9 +133,9 @@ class InquiryInformationMixin(object):
         with self.asi_context() as asi:
             try:
                 command = TestUnitReadyCommand()
+                return sync_wait(command.execute(asi))
             except AsiCheckConditionError, e:
                 (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
                 if (key, code) == ('NOT_READY', 'MEDIUM NOT PRESENT'):
                     return False
                 raise
-            return sync_wait(command.execute(asi))
