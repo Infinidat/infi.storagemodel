@@ -67,7 +67,7 @@ class StorageModel(object):
         try:
             return predicate()
         except (RescanIsNeeded, TimeoutError, StorageModelError), error:
-            logger.debug("Predicate {!r} raised {} during rescan".format(predicate, error))
+            logger.debug("Predicate {!r} raised {!r} during rescan".format(predicate, error), exc_info=True)
             return None
         except:
             logger.exception("An un-expected exception was raised by predicate {!r}".format(predicate))
