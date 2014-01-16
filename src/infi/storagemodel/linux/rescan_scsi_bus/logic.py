@@ -81,6 +81,10 @@ def target_scan(host, channel, target):
     for lun in unmapped_luns:
         handle_device_removal(host, channel, target, lun)
     for lun in existing_luns:
+        if lun == 0:
+            # call to get_luns_from_report_luns already called lun_scan for LUN 0,
+            # so it is redudtant to do it again
+            continue
         lun_scan(host, channel, target, lun)
 
 @func_logger
