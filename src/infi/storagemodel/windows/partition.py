@@ -3,7 +3,8 @@ from infi.pyutils.lazy import cached_method
 from ..base import partition
 from ..errors import RescanIsNeeded
 from .filesystem import WindowsFileSystem
-
+from logging import getLogger
+logger = getLogger(__name__)
 # pylint: disable=W0212,E1002
 
 class WindowsPartitionTable(object):
