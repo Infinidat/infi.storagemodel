@@ -65,10 +65,15 @@ class WindowsPartition(object):
 
     @cached_method
     def get_block_access_path(self):
+        from infi.wioctl.api import WindowsException
         volume = self._get_volume()
         if volume is None:
             return None
-        return volume.get_volume_guid()
+        try:
+            return volume.get_volume_guid()
+        except WindowsException:
+            logger.exception("get_volume caught WindowsException")
+            raise RescanIsNeeded()
 
     def get_containing_disk(self):
         return self._disk_device
