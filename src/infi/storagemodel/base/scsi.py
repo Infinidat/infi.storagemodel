@@ -142,7 +142,7 @@ class SCSIModel(object):
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """:returns: only the items from the devices list that are of the specific type"""
-        return filter(lambda device: device.get_scsi_vid_pid() == vid_pid_tuple, devices)
+        return filter(lambda device: device.get_scsi_vendor_id_or_unknown_on_error() == vid_pid_tuple, devices)
 
     #############################
     # Platform Specific Methods #
