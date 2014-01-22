@@ -31,10 +31,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         from infi.wmpio import WmiClient, get_multipath_devices
 
         device_manager = DeviceManager()
-        try:
-            wmi_client = WmiClient()
-        except ImportError:
-            return []
+        wmi_client = WmiClient()
 
         devices = filter(lambda device: device.parent._instance_id.lower() == MPIO_BUS_DRIVER_INSTANCE_ID,
                          device_manager.disk_drives)
