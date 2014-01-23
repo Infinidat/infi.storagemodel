@@ -1,8 +1,8 @@
 from itertools import chain
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
-
 from .inquiry import InquiryInformationMixin
+
 
 class MultipathFrameworkModel(object):
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
@@ -19,10 +19,10 @@ class MultipathFrameworkModel(object):
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """:returns: only the items from the devices list that are of the specific type"""
-        return filter(lambda device: device.get_scsi_vid_pid() == vid_pid_tuple, devices)
+        return filter(lambda device: device.get_scsi_vendor_id_or_unknown_on_error() == vid_pid_tuple, devices)
 
     def find_multipath_device_by_block_access_path(self, path):
-        """:returns: :class:`MultipathBlockDevice` object that matches the given path. 
+        """:returns: :class:`MultipathBlockDevice` object that matches the given path.
         :raises: KeyError if no such device is found"""
         devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_multipath_block_devices()])
         return devices_dict[path]
@@ -224,7 +224,7 @@ class PathStatistics(object):
         self._bytes_written = bytes_written
         self._number_reads = number_reads
         self._number_writes = number_writes
-        
+
     @property
     def bytes_read(self):
         return self._bytes_read
@@ -256,7 +256,7 @@ class Path(object):
     @cached_method
     def get_path_id(self): # pragma: no cover
         """:returns: depending on the operating system:
-        
+
                     - sdX on linux
                     - PathId on Windows"""
         # platform implementation

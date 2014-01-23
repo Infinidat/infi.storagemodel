@@ -1,8 +1,10 @@
 
 from infi.pyutils.lazy import cached_method
 from ..base import partition
+from ..errors import RescanIsNeeded
 from .filesystem import WindowsFileSystem
-
+from logging import getLogger
+logger = getLogger(__name__)
 # pylint: disable=W0212,E1002
 
 class WindowsPartitionTable(object):
@@ -55,14 +57,24 @@ class WindowsPartition(object):
 
     @cached_method
     def _get_volume(self):
-        return self._partition_object.get_volume()
+        from infi.wioctl.api import WindowsException
+        try:
+            return self._partition_object.get_volume()
+        except WindowsException:
+            logger.exception("get_volume caught WindowsException")
+            raise RescanIsNeeded()
 
     @cached_method
     def get_block_access_path(self):
+        from infi.wioctl.api import WindowsException
         volume = self._get_volume()
         if volume is None:
             return None
-        return volume.get_volume_guid()
+        try:
+            return volume.get_volume_guid()
+        except WindowsException:
+            logger.exception("get_volume caught WindowsException")
+            raise RescanIsNeeded()
 
     def get_containing_disk(self):
         return self._disk_device

@@ -1,5 +1,7 @@
 from infi.pyutils.lazy import cached_method, LazyImmutableDict
-from infi.storagemodel.errors import check_for_scsi_errors
+from infi.storagemodel.errors import check_for_scsi_errors, StorageModelError
+from logging import getLogger
+logger = getLogger(__name__)
 #pylint: disable=E1002,W0622
 
 
@@ -21,6 +23,18 @@ class SupportedVPDPagesDict(LazyImmutableDict):
 
 
 class InquiryInformationMixin(object):
+    @cached_method
+    def get_scsi_vendor_id_or_unknown_on_error(self):
+        """:returns: ('<unknown>', '<unknown>') on unexpected error instead of raising exception"""
+        try:
+            return self.get_scsi_vid_pid()
+        except StorageModelError:
+            # expected errors, we don't want to silence them
+            raise
+        except:
+            logger.exception("failed to get scsi vid/pid")
+            return ('<unknown>', '<unknown>')
+
     @cached_method
     def get_scsi_vendor_id(self):
         """:returns: the T10 vendor identifier string, as give in SCSI Standard Inquiry
