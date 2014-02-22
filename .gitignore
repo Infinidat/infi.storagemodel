@@ -41,3 +41,4 @@ src/infi/hello/__version__.py
 src/infi/storagemodel/__version__.py
 *.sublime-*
 bootstrap.py
+.cache
