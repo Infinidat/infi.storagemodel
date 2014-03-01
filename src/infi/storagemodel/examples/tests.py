@@ -6,7 +6,7 @@ class ExamplesTestCase(unittest.TestCase):
     def setUp(self):
         from .. import get_storage_model
         try:
-            _ = get_storage_model()
+            get_storage_model()
         except ImportError:
             raise unittest.SkipTest()
 

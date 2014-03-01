@@ -42,6 +42,5 @@ class WindowsSCSIModel(scsi.SCSIModel):
 
     @cached_method
     def get_all_storage_controller_devices(self):
-        from infi.devicemanager.setupapi.constants import SYSTEM_DEVICE_GUID_STRING
         return filter(lambda device: u'ScsiArray' in device._device_object.hardware_ids,
                       [WindowsSCSIStorageController(device) for device in self.get_device_manager().scsi_devices])

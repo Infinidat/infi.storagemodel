@@ -1,5 +1,3 @@
-
-from infi.storagemodel.errors import DeviceDisappeared
 from infi.exceptools import InfiException, chain
 from infi.pyutils.lazy import cached_method
 import binascii
@@ -152,4 +150,3 @@ class InfiniBoxInquiryMixin(object):
         except ValueError:
             logger.debug("Inquiry response is invalid JSON format")
             raise chain(JSONInquiryException("ValueError"))
-

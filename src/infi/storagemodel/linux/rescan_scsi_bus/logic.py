@@ -1,9 +1,9 @@
 from os import getpid
 from logging import getLogger
 from .utils import func_logger, format_hctl, ScsiCommandFailed
-from .scsi import scsi_host_scan, scsi_add_single_device, scsi_remove_single_device, remove_device_via_sysfs
+from .scsi import scsi_host_scan, scsi_add_single_device, remove_device_via_sysfs
 from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready
-from .getters import is_device_exist, get_scsi_generic_device
+from .getters import get_scsi_generic_device
 from .getters import get_hosts, get_channels, get_targets, get_luns
 from .getters import is_there_a_bug_in_target_removal, is_there_a_bug_in_sysfs_async_scanning
 

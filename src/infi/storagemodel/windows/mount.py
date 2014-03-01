@@ -41,7 +41,7 @@ class WindowsMountManager(mount.MountManager):
 
     def get_available_file_systems(self):
         return [self.get_recommended_file_system(), ]
-        
+
     def get_creatable_file_systems(self):
         return [self.get_recommended_file_system(), ]
 
@@ -66,13 +66,13 @@ class WindowsMountRepository(mount.MountRepository):
         return [WindowsPersistentMount(mount) for mount in WindowsMountManager().get_mounts()]
 
     def remove_persistent_mountpoint(self, persistent_mount):
-        if all([mount.get_block_access_path() != item.get_block_access_path() and \
+        if all([mount.get_block_access_path() != item.get_block_access_path() and
                 mount.get_mount_point() != item.get_mount_point() for item in self.get_all_persistent_mounts()]):
                 return
         return WindowsMountManager().unmount(persistent_mount)
 
     def add_persistent_mountpoint(self, mount):
-        if any([mount.get_block_access_path() == item.get_block_access_path() and \
+        if any([mount.get_block_access_path() == item.get_block_access_path() and
                 mount.get_mount_point() == item.get_mount_point() for item in self.get_all_persistent_mounts()]):
                 return
         return WindowsMountManager().mount(mount)

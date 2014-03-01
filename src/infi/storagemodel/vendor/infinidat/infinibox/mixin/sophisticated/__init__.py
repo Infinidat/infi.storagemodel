@@ -26,7 +26,7 @@ class SophisticatedMixin(object):
 
     def _get_system_name_from_json_page(self):
         return self._get_key_from_json_page('system_name')
-    
+
     def _get_system_version_from_json_page(self):
         return self._get_key_from_json_page('system_version')
 

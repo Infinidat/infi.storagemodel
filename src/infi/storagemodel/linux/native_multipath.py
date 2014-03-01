@@ -86,7 +86,7 @@ class LinuxPath(multipath.Path):
     @cached_method
     def get_state(self):
         return "up" if self.multipath_object_path.state == "active" else "down"
-    
+
     def get_io_statistics(self):
         # http://www.kernel.org/doc/Documentation/block/stat.txt
         stat_file_path = "/sys/block/{}/stat".format(self.get_path_id())

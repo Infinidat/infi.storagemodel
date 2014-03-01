@@ -1,5 +1,5 @@
 
-from infi.pyutils.lazy import cached_method, clear_cache, LazyImmutableDict
+from infi.pyutils.lazy import cached_method
 from infi.dtypes.wwn import WWN
 from infi.hbaapi import Port
 

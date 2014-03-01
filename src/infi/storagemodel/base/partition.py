@@ -6,23 +6,23 @@ class PartitionTableNotEmpty(StorageModelError):
 
 class Partition(object):
     @cached_method
-    def get_size_in_bytes(self): # pragma: no cover
+    def get_size_in_bytes(self):  # pragma: no cover
         """:returns: the size in bytes of the partition"""
         raise NotImplementedError()
 
     @cached_method
-    def get_block_access_path(self): # pragma: no cover
+    def get_block_access_path(self):  # pragma: no cover
         """:returns: the block access path for the partition"""
         raise NotImplementedError()
 
     @cached_method
-    def get_containing_disk(self): # pragma: no cover
+    def get_containing_disk(self):  # pragma: no cover
         """:returns: the disk drive that holds the partition
         :rtype: :class:`.DiskDrive`"""
         raise NotImplementedError()
 
     @cached_method
-    def get_current_filesystem(self): # pragma: no cover
+    def get_current_filesystem(self):  # pragma: no cover
         """Calls :class:`.FileSystemFactoryImpl"""
         raise NotImplementedError()
 
@@ -66,7 +66,7 @@ class PartitionTable(object):
     #############################
 
     @classmethod
-    def create_partition_table(cls, disk_drive, alignment_in_bytes=None): # pragma: no cover
+    def create_partition_table(cls, disk_drive, alignment_in_bytes=None):  # pragma: no cover
         """Changes are written immediately on disk
         Partition table is re-read and cache for the current object is cleared
 
@@ -74,17 +74,17 @@ class PartitionTable(object):
         raise NotImplementedError()
 
     @cached_method
-    def get_partitions(self): # pragma: no cover
+    def get_partitions(self):  # pragma: no cover
         """returns: a list of :class:`.Partition` objects inside the partition table"""
         raise NotImplementedError()
 
     @cached_method
-    def get_disk_drive(self): # pragma: no cover
+    def get_disk_drive(self):  # pragma: no cover
         """:returns: the disk drive that holds the partition
         :rtype: :class:`.DiskDrive`"""
         raise NotImplementedError()
 
-    def create_partition_for_whole_table(self, file_system_object, alignment_in_bytes=None): # pragma: no cover
+    def create_partition_for_whole_table(self, file_system_object, alignment_in_bytes=None):  # pragma: no cover
         """Changes are written immediately on disk
         Partition table is re-read and cache for the current object is cleared
 
@@ -102,4 +102,3 @@ class GPTPartitionTable(PartitionTable):
     # pylint: disable=W0223
     # This methods below are overriden by platform-specific implementations
     pass
-

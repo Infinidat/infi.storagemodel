@@ -1,7 +1,5 @@
-
-from infi.pyutils.lazy import cached_method, cached_property, clear_cache, LazyImmutableDict
-from ..base import StorageModel, scsi, multipath, disk, mount, partition, filesystem
-from contextlib import contextmanager
+from infi.pyutils.lazy import cached_method
+from ..base import disk
 
 # pylint: disable=W0212,E1002
 

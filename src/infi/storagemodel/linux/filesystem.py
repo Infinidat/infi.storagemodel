@@ -49,10 +49,10 @@ class LinuxFileSystem(filesystem.FileSystem):
             raise LabelNotSupported()
         return pid.get_stdout().strip()
 
-    def get_label(self, block_access_path): # pragma: no cover
+    def get_label(self, block_access_path):  # pragma: no cover
         return self._e2label(block_access_path)
 
-    def set_label(self, block_access_path, label): # pragma: no cover
+    def set_label(self, block_access_path, label):  # pragma: no cover
         """sets a filesystem label on the specific block device
         :raises: :class:`.InvalidLabel` if the label is too long
         :raises: :class:`.LabelNotSupported` if not supported by the filesystem
