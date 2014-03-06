@@ -59,7 +59,7 @@ def check_for_scsi_errors(func):
     from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError
     @wraps(func)
     def decorator(*args, **kwargs):
-        counter = 5
+        counter = 10
         while counter > 0:
             try:
                 sg_device, cdb = args
