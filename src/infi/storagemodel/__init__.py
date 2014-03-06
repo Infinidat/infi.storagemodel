@@ -1,6 +1,6 @@
 __import__("pkg_resources").declare_namespace(__name__)
 
-__all__ = [ 'get_storage_model' ]
+__all__ = ['get_storage_model']
 
 __storage_model = None
 
@@ -15,7 +15,7 @@ def get_platform_name():
 
 def _get_platform_specific_storagemodel_class():
     # do platform-specific magic here.
-    from .base import StorageModel as PlatformStorageModel # helps IDEs
+    from .base import StorageModel as PlatformStorageModel  # helps IDEs
     from brownie.importing import import_string
     plat = get_platform_name()
     platform_module_string = "{}.{}".format(__name__, plat)

@@ -87,4 +87,4 @@ def is_there_a_bug_in_sysfs_async_scanning():
     from platform import linux_distribution
     # http://lkml.indiana.edu/hypermail/linux/kernel/0704.2/1108.html
     distname, version, _ = linux_distribution()
-    return distname.lower().split()[0] in ['red','redhat', 'centos'] and version.startswith('5')
+    return distname.lower().split()[0] in ['red', 'redhat', 'centos'] and version.startswith('5')

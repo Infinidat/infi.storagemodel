@@ -58,7 +58,6 @@ def asi_context(sg_device):
 
 def check_for_scsi_errors(func):
     from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError
-    from sys import exc_info
     @wraps(func)
     def decorator(*args, **kwargs):
         counter = 5

@@ -7,13 +7,13 @@ from .inquiry import InquiryInformationMixin
 class MultipathFrameworkModel(object):
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """:returns: items from the list that are not part of multipath devices claimed by this framework"""
-        hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()  \
+        hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()
                                                                      for multipath in self.get_all_multipath_block_devices())]
         return filter(lambda device: device.get_hctl() not in hctl_list, scsi_block_devices)
 
     def filter_non_multipath_scsi_storage_controller_devices(self, scsi_controller_devices):
         """:returns: items from the list that are not part of multipath devices claimed by this framework"""
-        hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()  \
+        hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()
                                                                      for multipath in self.get_all_multipath_storage_controller_devices())]
         return filter(lambda device: device.get_hctl() not in hctl_list, scsi_controller_devices)
 
@@ -32,13 +32,13 @@ class MultipathFrameworkModel(object):
     #############################
 
     @cached_method
-    def get_all_multipath_block_devices(self): # pragma: no cover
+    def get_all_multipath_block_devices(self):  # pragma: no cover
         """:returns: all multipath block devices claimed by this framework"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_all_multipath_storage_controller_devices(self): # pragma: no cover
+    def get_all_multipath_storage_controller_devices(self):  # pragma: no cover
         """:returns: all multipath storage controller devices claimed by this framework"""
         # platform implementation
         raise NotImplementedError()
@@ -52,7 +52,7 @@ class MultipathStorageController(InquiryInformationMixin, object):
     @cached_method
     def get_vendor(self):
         """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
-        from ..vendor  import VendorFactory
+        from ..vendor import VendorFactory
         return VendorFactory.create_multipath_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     #############################
@@ -60,31 +60,31 @@ class MultipathStorageController(InquiryInformationMixin, object):
     #############################
 
     @contextmanager
-    def asi_context(self): # pragma: no cover
+    def asi_context(self):  # pragma: no cover
         """:returns: an infi.asi context"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_multipath_access_path(self): # pragma: no cover
+    def get_multipath_access_path(self):  # pragma: no cover
         """:returns: a path for the device"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_display_name(self): # pragma: no cover
+    def get_display_name(self):  # pragma: no cover
         """:returns: a string represtation for the device"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_paths(self): # pragma: no cover
+    def get_paths(self):  # pragma: no cover
         """:rtype: list of :class:`.Path` instances"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_policy(self): # pragma: no cover
+    def get_policy(self):  # pragma: no cover
         """:rtype: an instance of :class:`.LoadBalancePolicy`"""
         # platform implementation
         raise NotImplementedError()
@@ -96,11 +96,11 @@ class MultipathBlockDevice(InquiryInformationMixin, object):
     @cached_method
     def get_vendor(self):
         """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
-        from ..vendor  import VendorFactory
+        from ..vendor import VendorFactory
         return VendorFactory.create_multipath_block_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     @cached_method
-    def get_disk_drive(self): # pragma: no cover
+    def get_disk_drive(self):  # pragma: no cover
         """:returns: a :class:`.DiskDevice` object
         :raises: NoSuchDisk"""
         from infi.storagemodel import get_storage_model
@@ -112,37 +112,37 @@ class MultipathBlockDevice(InquiryInformationMixin, object):
     #############################
 
     @contextmanager
-    def asi_context(self): # pragma: no cover
+    def asi_context(self):  # pragma: no cover
         """:returns: an infi.asi context"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_block_access_path(self): # pragma: no cover
+    def get_block_access_path(self):  # pragma: no cover
         """:returns: a path for the device"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_display_name(self): # pragma: no cover
+    def get_display_name(self):  # pragma: no cover
         """:returns: a string represtation for the device"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_size_in_bytes(self): # pragma: no cover
+    def get_size_in_bytes(self):  # pragma: no cover
         """:returns: size in bytes"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_paths(self): # pragma: no cover
+    def get_paths(self):  # pragma: no cover
         """:rtype: list of :class:`.Path` instances"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_policy(self): # pragma: no cover
+    def get_policy(self):  # pragma: no cover
         """:rtype: an instance of :class:`.LoadBalancePolicy`"""
         # platform implementation
         raise NotImplementedError()
@@ -160,7 +160,7 @@ class LoadBalancePolicy(object):
         """:returns: display name"""
         return self.name
 
-    def apply_on_device(self, device): # pragma: no cover
+    def apply_on_device(self, device):  # pragma: no cover
         raise NotImplementedError()
 
 class FailoverOnly(LoadBalancePolicy):
@@ -254,7 +254,7 @@ class Path(object):
     #############################
 
     @cached_method
-    def get_path_id(self): # pragma: no cover
+    def get_path_id(self):  # pragma: no cover
         """:returns: depending on the operating system:
 
                     - sdX on linux
@@ -263,13 +263,13 @@ class Path(object):
         raise NotImplementedError()
 
     @cached_method
-    def get_hctl(self): # pragma: no cover
+    def get_hctl(self):  # pragma: no cover
         """:returns: a :class:`infi.dtypes.hctl.HCTL` object"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
-    def get_state(self): # pragma: no cover
+    def get_state(self):  # pragma: no cover
         """:returns: either "up" or "down"."""
         # platform implementation
         raise NotImplementedError()

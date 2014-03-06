@@ -40,7 +40,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
 
         def _get_multipath_object(device_object):
             key = u"%s_0" % device_object._instance_id
-            if not multipath_dict.has_key(key):
+            if key not in multipath_dict:
                 raise RescanIsNeeded()
             return multipath_dict[key]
 

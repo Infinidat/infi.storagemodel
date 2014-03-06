@@ -1,5 +1,3 @@
-
-from infi.storagemodel.errors import DeviceDisappeared
 from infi.exceptools import InfiException, chain
 from infi.pyutils.lazy import cached_method
 import binascii
@@ -9,7 +7,7 @@ logger = getLogger(__name__)
 
 DEFAULT_PORT = 80
 
-class JSONInquiryException(InfiException):
+class InquiryException(InfiException):
     pass
 
 class DeviceIdentificationPage(object):
@@ -126,30 +124,52 @@ class InfiniBoxInquiryMixin(object):
         return InfinidatFiberChannelPort(self.get_relative_target_port_group(),
                                          self.get_target_port_group())
 
-    def _get_json_inquiry_page(self):
+    def _get_json_inquiry_page(self, page=0xc5):
         from infi.asi import AsiCheckConditionError
         try:
             from ...json_page import JSONInquiryPageData
-            page = self.device.get_scsi_inquiry_pages()[0xc5]
+            page = self.device.get_scsi_inquiry_pages()[page]
             return JSONInquiryPageData.create_from_string(page.write_to_string(page))
         except AsiCheckConditionError, error:
             if _is_exception_of_unsupported_inquiry_page(error):
-                raise chain(JSONInquiryException("JSON Inquiry command error"))
+                raise chain(InquiryException("JSON Inquiry command error"))
             raise
 
-    def _get_json_inquiry_data(self):
-        return self._get_json_inquiry_page().json_serialized_data
+    def _get_string_inquiry_page(self, page):
+        from infi.asi import AsiCheckConditionError
+        try:
+            from ...string_page import StringInquiryPageData
+            page = self.device.get_scsi_inquiry_pages()[page]
+            return StringInquiryPageData.create_from_string(page.write_to_string(page))
+        except KeyError:
+            raise chain(InquiryException("Inquiry command error"))
+        except AsiCheckConditionError, error:
+            if _is_exception_of_unsupported_inquiry_page(error):
+                raise chain(InquiryException("Inquiry command error"))
+            raise
+
+    def _get_json_inquiry_data(self, page):
+        return self._get_json_inquiry_page(page).json_serialized_data
+
+    def _get_string_inquiry_data(self, page):
+        return self._get_string_inquiry_page(page).string
 
     @cached_method
-    def get_json_data(self):
+    def get_json_data(self, page=0xc5):
         """:returns: the json inquiry data from the system
         :rtype: dict"""
         from json import loads
-        raw_data = self._get_json_inquiry_data()
+        raw_data = self._get_json_inquiry_data(page)
         try:
             logger.debug("Got JSON Inquiry data: {}".format(raw_data))
             return loads(raw_data)
         except ValueError:
             logger.debug("Inquiry response is invalid JSON format")
-            raise chain(JSONInquiryException("ValueError"))
+            raise chain(InquiryException("ValueError"))
 
+    @cached_method
+    def get_string_data(self, page):
+        """:returns: the json inquiry data from the system
+        :rtype: dict"""
+        from json import loads
+        return self._get_string_inquiry_data(page)

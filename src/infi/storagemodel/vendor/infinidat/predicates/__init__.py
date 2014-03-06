@@ -9,7 +9,6 @@ class InfinidatVolumeExists(object):
         self.volume_id = volume_id
 
     def __call__(self):
-        from infi.storagemodel import get_storage_model
         from ..shortcuts import get_infinidat_block_devices
         devices_to_query = get_infinidat_block_devices()
         log.debug("Looking for Infinidat volume id {} from system id {}".format(self.volume_id, self.system_serial))
@@ -19,7 +18,7 @@ class InfinidatVolumeExists(object):
             system_serial = device.get_vendor().get_naa().get_system_serial()
             log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))
         return any([self.volume_id == device.get_vendor().get_naa().get_volume_id() and
-                    self.system_serial == device.get_vendor().get_naa().get_system_serial() \
+                    self.system_serial == device.get_vendor().get_naa().get_system_serial()
                     for device in devices_to_query])
 
     def __repr__(self):

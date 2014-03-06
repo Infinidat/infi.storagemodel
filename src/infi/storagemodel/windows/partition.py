@@ -79,7 +79,7 @@ class WindowsPartition(object):
     def get_containing_disk(self):
         return self._disk_device
 
-    def get_current_filesystem(self): # pragma: no cover
+    def get_current_filesystem(self):  # pragma: no cover
         return WindowsFileSystem("NTFS")
 
     def resize(self, size_in_bytes):

@@ -93,7 +93,7 @@ class PredicateTestCase(unittest.TestCase):
         from inspect import getmembers
         disk = Disk('1')
         self.assertFalse(disk.called)
-        _ = getmembers(disk)
+        getmembers(disk)
         self.assertTrue(disk.called)
 
     def test_rescan_with_mock_predicate__returns_true(self):

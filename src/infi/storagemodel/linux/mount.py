@@ -28,7 +28,7 @@ class LinuxMountManager(mount.MountManager):
     def get_available_file_systems(self):
         from infi.mountoolinux.mount.manager import MountManager
         return [self._translate_filesystem_object(name) for name in MountManager().get_supported_file_systems()]
-        
+
     @cached_method
     def get_creatable_file_systems(self):
         from infi.mountoolinux.mount.manager import MountManager
@@ -70,7 +70,7 @@ class LinuxMountRepository(mount.MountRepository):
         if MountManager().is_entry_in_fstab(entry):
             MountManager().remove_entry_from_fstab(entry)
 
-    def add_persistent_mountpoint(self, mount): # pylint: disable=W0621
+    def add_persistent_mountpoint(self, mount):  # pylint: disable=W0621
         from infi.mountoolinux.mount.manager import MountManager
         entry = mount._entry
         if not MountManager().is_entry_in_fstab(entry):

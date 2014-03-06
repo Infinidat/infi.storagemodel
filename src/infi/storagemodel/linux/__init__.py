@@ -1,8 +1,7 @@
-import os
 import atexit
 
 from ..base import StorageModel
-from infi.pyutils.lazy import cached_method, cached_function
+from infi.pyutils.lazy import cached_method
 from datetime import datetime
 
 from logging import getLogger, NullHandler
@@ -11,7 +10,6 @@ logger = getLogger(__name__)
 
 class LinuxStorageModel(StorageModel):
     rescan_subprocess_timeout = 30
-
 
     def __init__(self):
         super(LinuxStorageModel, self).__init__()
