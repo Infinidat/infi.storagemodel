@@ -1,4 +1,5 @@
 from infi.pyutils.lazy import cached_method
+from ..inquiry import InquiryException
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -30,4 +31,7 @@ class InfiniBoxVolumeMixin(object):
         raise NotImplementedError()
 
     def _get_volume_name_from_json_page(self):
-        return self._get_key_from_json_page('vol')
+        try:
+            return self.get_string_data(0xc7)
+        except InquiryException:
+            return self._get_key_from_json_page('vol')
