@@ -7,7 +7,6 @@ from infi.pyutils.decorators import wraps
 CHECK_CONDITIONS_NOT_WORTH_RETRY = [
     ('ILLEGAL_REQUEST', 'LOGICAL UNIT NOT SUPPORTED'),
     ('ILLEGAL_REQUEST', 'INVALID FIELD IN CDB'),
-    ('UNIT_ATTENTION', 'POWER ON OCCURRED'),
 ]
 
 SEC = 1000
@@ -60,7 +59,7 @@ def check_for_scsi_errors(func):
     from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError
     @wraps(func)
     def decorator(*args, **kwargs):
-        counter = 5
+        counter = 10
         while counter > 0:
             try:
                 sg_device, cdb = args

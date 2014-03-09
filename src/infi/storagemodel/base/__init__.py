@@ -24,6 +24,8 @@ class StorageModel(object):
     When you think tha the cache no longer up-to-date, you can clear it using the refresh() method
     """
 
+    from .. import predicates
+
     def __init__(self):
         super(StorageModel, self).__init__()
 
