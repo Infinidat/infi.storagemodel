@@ -3,6 +3,7 @@ from logging import getLogger
 from .utils import func_logger, format_hctl, ScsiCommandFailed
 from .scsi import scsi_host_scan, scsi_add_single_device, remove_device_via_sysfs
 from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready
+from .scsi import ensure_subprocess_dead, Process
 from .getters import get_scsi_generic_device
 from .getters import get_hosts, get_channels, get_targets, get_luns
 from .getters import is_there_a_bug_in_target_removal, is_there_a_bug_in_sysfs_async_scanning
@@ -87,9 +88,17 @@ def target_scan(host, channel, target):
             continue
         lun_scan(host, channel, target, lun)
 
+def try_target_scan(host, channel, target):
+    try:
+        target_scan(host, channel, target)
+    except:
+        msg = "Failed to scan target: host={} channel={} target={}. Continuing"
+        logger.exception(msg.format(host, channel, target))
+
 @func_logger
 def rescan_scsi_host(host):
     channels = get_channels(host)
+    subprocesses = []
     if not channels and not is_there_a_bug_in_sysfs_async_scanning():
         # no devices from this scsi host, yet
         scsi_host_scan(host)
@@ -97,13 +106,13 @@ def rescan_scsi_host(host):
     for channel in channels:
         targets = get_targets(host, channel)
         for target in targets:
-            try:
-                target_scan(host, channel, target)
-            except:
-                msg = "Failed to scan target: host={} channel={} target={}. Continuing"
-                logger.exception(msg.format(host, channel, target))
+            subprocesses.extend([Process(target=try_target_scan, args=(host, channel, target))])
+    return subprocesses
 
 @func_logger
 def rescan_scsi_hosts():
+    subprocesses = []
     for host_number in get_hosts():
-        rescan_scsi_host(host_number)
+        subprocesses.extend(rescan_scsi_host(host_number))
+    for subprocess in subprocesses:
+        ensure_subprocess_dead(subprocess)
