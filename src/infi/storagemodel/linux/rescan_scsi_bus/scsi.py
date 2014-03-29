@@ -127,6 +127,7 @@ def read_from_queue(reader, subprocess):
         except:
             msg = "{} multiprocessing {} error"
             logger.exception(msg.format(getpid(), subprocess.pid))
+            return ScsiCommandFailed()
 
 def ensure_subprocess_dead(subprocess):
     if subprocess.is_alive():
