@@ -170,6 +170,8 @@ def do_test_unit_ready(sg_device):
         (key, code) = (error.sense_key, error.code_name)
         if (key, code) == ('NOT_READY', 'MEDIUM NOT PRESENT'):
             return False
+        if (key, code) == ('ILLEGAL_REQUEST', 'INVALID COMMAND OPERATION CODE'):
+            return False
         raise
     return do_scsi_cdb(sg_device, cdb)
 

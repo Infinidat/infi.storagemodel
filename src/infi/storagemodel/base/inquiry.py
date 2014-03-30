@@ -152,4 +152,6 @@ class InquiryInformationMixin(object):
                 (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
                 if (key, code) == ('NOT_READY', 'MEDIUM NOT PRESENT'):
                     return False
+                if (key, code) == ('ILLEGAL_REQUEST', 'INVALID COMMAND OPERATION CODE'):
+                    return False
                 raise
