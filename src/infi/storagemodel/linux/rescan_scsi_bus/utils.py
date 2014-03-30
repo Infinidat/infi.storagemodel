@@ -21,7 +21,7 @@ class ScsiCommandFailed(Exception):
 
 class ScsiCheckConditionError(ScsiCommandFailed):
     def __init__(self, sense_key, code_name):
-        super(ScsiCheckCondition, self).__init__(sense_key, code_name)
+        super(ScsiCheckConditionError, self).__init__(sense_key, code_name)
         self.sense_key = sense_key
         self.code_name = code_name
 
@@ -80,7 +80,7 @@ def check_for_scsi_errors(func):
                 logger.warn(msg)
                 counter -= 1
                 if (key, code) in CHECK_CONDITIONS_NOT_WORTH_RETRY or counter == 0:
-                    raise ScsiCheckCondition(key, code)
+                    raise ScsiCheckConditionError(key, code)
             except (IOError, OSError, AsiOSError, AsiSCSIError), error:
                 msg = "{} sg device {} got unrecoverable error {} during {}"
                 logger.error(msg.format(getpid(), sg_device, error, cdb))

@@ -3,7 +3,7 @@ from os import path, getpid
 from infi.pyutils.contexts import contextmanager
 
 from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute, TIMEOUT_IN_SEC
-from .utils import ScsiCommandFailed, ScsiCheckCondition
+from .utils import ScsiCommandFailed, ScsiCheckConditionError
 
 logger = getLogger(__name__)
 
@@ -149,8 +149,8 @@ def do_scsi_cdb(sg_device, cdb):
         return_value = read_from_queue(reader, subprocess)
         logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
         ensure_subprocess_dead(subprocess)
-    if isinstance(return_value, ScsiCheckCondition):
-        raise ScsiCheckCondition(return_value.sense_key, return_value.code_name)
+    if isinstance(return_value, ScsiCheckConditionError):
+        raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
     if isinstance(return_value, ScsiCommandFailed):
         raise ScsiCommandFailed()
     return return_value
@@ -166,7 +166,7 @@ def do_test_unit_ready(sg_device):
     from infi.asi.cdb.tur import TestUnitReadyCommand
     try:
         cdb = TestUnitReadyCommand()
-    except ScsiCheckCondition, error:
+    except ScsiCheckConditionError, error:
         (key, code) = (error.sense_key, error.code_name)
         if (key, code) == ('NOT_READY', 'MEDIUM NOT PRESENT'):
             return False
