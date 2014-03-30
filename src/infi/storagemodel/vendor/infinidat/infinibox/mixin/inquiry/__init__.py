@@ -152,7 +152,7 @@ class InfiniBoxInquiryMixin(object):
         return self._get_json_inquiry_page(page).json_serialized_data
 
     def _get_string_inquiry_data(self, page):
-        return self._get_string_inquiry_page(page).string
+        return self._get_string_inquiry_page(page).string.strip()
 
     @cached_method
     def get_json_data(self, page=0xc5):
