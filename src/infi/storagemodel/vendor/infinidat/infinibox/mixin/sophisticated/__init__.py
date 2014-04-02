@@ -13,7 +13,7 @@ class SophisticatedMixin(object):
 
     def _get_key_from_json_page(self, key, page=0xc5):
         try:
-            return self.get_json_data()[key]
+            return self.get_json_data(page)[key]
         except KeyError:
             logger.debug("key {} does not exists in JSON response".format(key))
             raise chain(InquiryException("KeyError: {}".format(key)))
