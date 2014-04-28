@@ -24,7 +24,11 @@ class MultipathFrameworkModel(object):
     def find_multipath_device_by_block_access_path(self, path):
         """:returns: :class:`MultipathBlockDevice` object that matches the given path.
         :raises: KeyError if no such device is found"""
+        from infi.storagemodel.linux.native_multipath import LinuxNativeMultipathBlockDevice
         devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_multipath_block_devices()])
+        for value in devices_dict.values():
+            if isinstance(value, LinuxNativeMultipathBlockDevice):
+                devices_dict[value.get_device_mapper_access_path()] = value
         return devices_dict[path]
 
     #############################
@@ -48,7 +52,10 @@ class NativeMultipathModel(MultipathFrameworkModel):
     # This methods below are overriden by platform-specific implementations
     pass
 
-class MultipathStorageController(InquiryInformationMixin, object):
+class MultipathDevice(object):
+    pass
+
+class MultipathStorageController(InquiryInformationMixin, MultipathDevice):
     @cached_method
     def get_vendor(self):
         """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
@@ -92,7 +99,7 @@ class MultipathStorageController(InquiryInformationMixin, object):
     def __repr__(self):
         return "<MultipathStorageController {} for {}>".format(self.get_multipath_access_path(), self.get_display_name())
 
-class MultipathBlockDevice(InquiryInformationMixin, object):
+class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
     @cached_method
     def get_vendor(self):
         """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
