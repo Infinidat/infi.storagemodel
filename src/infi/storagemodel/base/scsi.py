@@ -125,7 +125,13 @@ class SCSIModel(object):
     def find_scsi_block_device_by_block_access_path(self, path):
         """:returns: a :class:`SCSIBlockDevice` object that matches the given path.
         :raises: KeyError if no such device is found"""
+        from infi.storagemodel.windows.scsi import WindowsSCSIBlockDevice
         devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_scsi_block_devices()])
+        for value in devices_dict.values():
+            if isinstance(value, LinuxNativeMultipathBlockDevice):
+                devices_dict[value.get_device_mapper_access_path()] = value
+            if isinstance(value, WindowsSCSIBlockDevice):
+                devices_dict[r"\\.\{}".format(value.get_display_name())] = value
         return devices_dict[path]
 
     def find_scsi_block_device_by_scsi_access_path(self, path):
