@@ -25,12 +25,12 @@ class MultipathFrameworkModel(object):
         """:returns: :class:`MultipathBlockDevice` object that matches the given path.
         :raises: KeyError if no such device is found"""
         from infi.storagemodel.linux.native_multipath import LinuxNativeMultipathBlockDevice
-        from infi.storagemodel.windows.scsi import WindowsSCSIBlockDevice
+        from infi.storagemodel.windows.native_multipath import WindowsNativeMultipathBlockDevice
         devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_multipath_block_devices()])
         for value in devices_dict.values():
             if isinstance(value, LinuxNativeMultipathBlockDevice):
                 devices_dict[value.get_device_mapper_access_path()] = value
-            if isinstance(value, WindowsSCSIBlockDevice):
+            if isinstance(value, WindowsNativeMultipathBlockDevice):
                 devices_dict[r"\\.\{}".format(value.get_display_name())] = value
         if path in devices_dict:
             return devices_dict[path]
