@@ -40,8 +40,10 @@ class WindowsSCSIModel(scsi.SCSIModel):
             for disk_drive in self.get_device_manager().disk_drives:
                 try:
                     if disk_drive.parent._instance_id.lower() != MPIO_BUS_DRIVER_INSTANCE_ID:
-                        if not disk_drive.is_hidden() and disk_drive.get_physical_drive_number() != -1:
-                            yield WindowsSCSIBlockDevice(disk_drive)
+                        if not disk_drive.is_hidden():
+                            device = WindowsSCSIBlockDevice(disk_drive)
+                            if device.get_physical_drive_number() != -1:
+                                yield WindowsSCSIBlockDevice(disk_drive)
                 except KeyError:
                     raise DeviceDisappeared("disk drive either does not have a parent or drive number, cannot be")
         return list(_iter())
