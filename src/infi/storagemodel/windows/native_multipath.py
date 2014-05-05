@@ -37,7 +37,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
             for disk_drive in device_manager.disk_drives:
                 try:
                     if disk_drive.parent._instance_id.lower() == MPIO_BUS_DRIVER_INSTANCE_ID:
-                            yield WindowsSCSIBlockDevice(disk_drive)
+                            yield disk_drive
                 except KeyError:
                     raise DeviceDisappeared("disk drive either does not have a parent, cannot be")
 
