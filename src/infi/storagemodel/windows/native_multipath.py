@@ -1,7 +1,7 @@
 
 from infi.pyutils.lazy import cached_method, cached_property, LazyImmutableDict
 from ..base import multipath
-from ..errors import RescanIsNeeded
+from ..errors import RescanIsNeeded, DeviceDisappeared
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
 # pylint: disable=W0212,E1002
 
