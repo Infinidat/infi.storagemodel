@@ -1,6 +1,7 @@
 
 from infi.pyutils.lazy import cached_method
 from ..base import scsi
+from ..errors import DeviceDisappeared
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
 
 # pylint: disable=W0212,E1002
@@ -35,10 +36,15 @@ class WindowsSCSIModel(scsi.SCSIModel):
     @cached_method
     def get_all_scsi_block_devices(self):
         from .native_multipath import MPIO_BUS_DRIVER_INSTANCE_ID
-        return filter(lambda disk: disk.get_physical_drive_number() != -1,
-                      map(lambda device: WindowsSCSIBlockDevice(device),
-                          filter(lambda disk: disk.parent._instance_id.lower() != MPIO_BUS_DRIVER_INSTANCE_ID and not disk.is_hidden(),
-                                 self.get_device_manager().disk_drives)))
+        def _iter():
+            for disk_drive in self.get_device_manager().disk_drives:
+                try:
+                    if disk_drive.parent._instance_id.lower() != MPIO_BUS_DRIVER_INSTANCE_ID:
+                        if not disk_drive.is_hidden() and disk_drive.get_physical_drive_number() != -1:
+                            yield WindowsSCSIBlockDevice(disk_drive)
+                except KeyError:
+                    raise DeviceDisappeared("disk drive either does not have a parent or drive number, cannot be")
+        return list(_iter())
 
     @cached_method
     def get_all_storage_controller_devices(self):
