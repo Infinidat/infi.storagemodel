@@ -1,7 +1,7 @@
 
 from infi.pyutils.lazy import cached_method, cached_property, LazyImmutableDict
 from ..base import multipath
-from ..errors import RescanIsNeeded
+from ..errors import RescanIsNeeded, DeviceDisappeared
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
 # pylint: disable=W0212,E1002
 
@@ -33,8 +33,15 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         device_manager = DeviceManager()
         wmi_client = WmiClient()
 
-        devices = filter(lambda device: device.parent._instance_id.lower() == MPIO_BUS_DRIVER_INSTANCE_ID,
-                         device_manager.disk_drives)
+        def _iter():
+            for disk_drive in device_manager.disk_drives:
+                try:
+                    if disk_drive.parent._instance_id.lower() == MPIO_BUS_DRIVER_INSTANCE_ID:
+                            yield disk_drive
+                except KeyError:
+                    raise DeviceDisappeared("disk drive either does not have a parent, cannot be")
+
+        devices = list(_iter())
         multipath_dict = get_multipath_devices(wmi_client)
         policies_dict = LazyLoadBalancingInfomrationDict(wmi_client)
 
