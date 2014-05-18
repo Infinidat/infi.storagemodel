@@ -168,7 +168,7 @@ def do_test_unit_ready(sg_device):
         cdb = TestUnitReadyCommand()
     except ScsiCheckConditionError, error:
         (key, code) = (error.sense_key, error.code_name)
-        if (key, code) == ('NOT_READY', 'MEDIUM NOT PRESENT'):
+        if key == 'NOT_READY':
             return False
         if (key, code) == ('ILLEGAL_REQUEST', 'INVALID COMMAND OPERATION CODE'):
             return False
