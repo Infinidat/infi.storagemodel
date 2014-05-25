@@ -4,7 +4,6 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
 from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page_data
 from infi.dtypes.hctl import HCTL
-from gevent import getcurrent
 from logging import getLogger
 import infi.storagemodel
 
@@ -398,12 +397,21 @@ class StorageModelFactory(object):
         return cls.models_by_host_value[key]
 
     @classmethod
+    def get_id(cls):
+        try:
+            from gevent import getcurrent
+            return getcurrent()
+        except ImportError:
+            from thread import get_ident
+            return get_ident()
+
+    @classmethod
     def get(cls):
-        return cls.models_by_greenlet.get(getcurrent())
+        return cls.patches_by_greenlet.get(cls.get_id())
 
     @classmethod
     def set(cls, value):
-        current = getcurrent()
+        current = cls.get_id()
         if value is None:
             try:
                 del cls.models_by_greenlet[current]

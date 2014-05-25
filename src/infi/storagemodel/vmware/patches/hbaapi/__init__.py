@@ -5,7 +5,6 @@ from infi.hbaapi.generators import Generator
 from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import cached_method
 from logging import getLogger
-from gevent import getcurrent
 
 logger = getLogger(__name__)
 
@@ -98,6 +97,7 @@ class HostSystemPortGenerator(Generator):
         for fc_hba in self._get_all_fiber_channel_host_bus_adapters():
             yield self._populate_port(fc_hba)
 
+
 class HostSystemPortGeneratorFactory(object):
     patches_by_greenlet = {}
 
@@ -110,12 +110,22 @@ class HostSystemPortGeneratorFactory(object):
         return [Patched]
 
     @classmethod
+    def get_id(cls):
+        try:
+            from gevent import getcurrent
+            return getcurrent()
+        except ImportError:
+            from thread import get_ident
+            return get_ident()
+
+    @classmethod
     def get(cls):
-        return cls.patches_by_greenlet.get(getcurrent())
+        return cls.patches_by_greenlet.get(cls.get_id())
 
     @classmethod
     def set(cls, value):
-        cls.patches_by_greenlet[getcurrent()] = value
+        cls.patches_by_greenlet[cls.get_id()] = value
+
 
 import infi.hbaapi.generators
 from infi.pyutils.patch import monkey_patch
