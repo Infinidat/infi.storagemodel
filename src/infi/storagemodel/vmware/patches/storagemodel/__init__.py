@@ -407,7 +407,7 @@ class StorageModelFactory(object):
 
     @classmethod
     def get(cls):
-        return cls.patches_by_greenlet.get(cls.get_id())
+        return cls.models_by_greenlet.get(cls.get_id())
 
     @classmethod
     def set(cls, value):
