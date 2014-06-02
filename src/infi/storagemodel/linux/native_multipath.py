@@ -125,7 +125,8 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
     def get_all_multipath_block_devices(self):
         from infi.multipathtools import MultipathClient
-        client = MultipathClient()
+        from infi.multipathtools.connection import UnixDomainSocket
+        client = MultipathClient(UnixDomainSocket(timeout=120))
         if not client.is_running():
             logger.info("MultipathD is not running")
             return []
