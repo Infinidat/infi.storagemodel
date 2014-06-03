@@ -131,12 +131,13 @@ def read_from_queue(reader, subprocess):
             return ScsiCommandFailed()
 
 def ensure_subprocess_dead(subprocess):
-    if subprocess.is_alive():
+    from os import kill
+    if subprocess.is_alive() and subprocess.pid:
         logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))
         try:
-            subprocess.kill()
+            kill(subprocess.pid, 9)
         except:
-            logger.error("{} failed to terminate multiprocessing {}".format(getpid(), subprocess.pid))
+            pass
     subprocess.join()
 
 @func_logger
