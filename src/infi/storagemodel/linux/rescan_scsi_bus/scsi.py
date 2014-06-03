@@ -134,7 +134,7 @@ def ensure_subprocess_dead(subprocess):
     from os import kill
     pid = subprocess.pid
     if subprocess.is_alive() and pid:
-        logger.error("{} terminating multiprocessing {}".format(getpid(), pid))
+        logger.debug("{} terminating multiprocessing {}".format(getpid(), pid))
         try:
             kill(pid, 9)
         except:
