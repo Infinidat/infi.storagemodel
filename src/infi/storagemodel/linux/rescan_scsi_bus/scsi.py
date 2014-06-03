@@ -132,11 +132,13 @@ def read_from_queue(reader, subprocess):
 
 def ensure_subprocess_dead(subprocess):
     from os import kill
-    if subprocess.is_alive() and subprocess.pid:
-        logger.error("{} terminating multiprocessing {}".format(getpid(), subprocess.pid))
+    pid = subprocess.pid
+    if subprocess.is_alive() and pid:
+        logger.error("{} terminating multiprocessing {}".format(getpid(), pid))
         try:
-            kill(subprocess.pid, 9)
+            kill(pid, 9)
         except:
+            logger.debug("{} failed to terminate multiprocessing {}".format(getpid(), pid))
             pass
     subprocess.join()
 
