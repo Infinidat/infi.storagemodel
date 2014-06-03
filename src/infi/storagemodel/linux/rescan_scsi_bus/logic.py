@@ -115,4 +115,5 @@ def rescan_scsi_hosts():
     for host_number in get_hosts():
         subprocesses.extend(rescan_scsi_host(host_number))
     for subprocess in subprocesses:
-        ensure_subprocess_dead(subprocess)
+        subprocess.join()
+
