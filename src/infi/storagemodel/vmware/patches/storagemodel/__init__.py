@@ -290,9 +290,9 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
 
     @cached_method
     def get_paths(self):
-       logical_unit = self._get_multipath_logical_unit()
-       if logical_unit is None:
-           return []
+        logical_unit = self._get_multipath_logical_unit()
+        if logical_unit is None:
+            return []
         return [VMwarePath(self._client, self._host_moref, self._scsi_lun_data_object.key, path_data_object)
                 for path_data_object in logical_unit.path]
 
