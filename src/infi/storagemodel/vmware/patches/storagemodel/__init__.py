@@ -286,12 +286,15 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
         except IndexError:
             msg = "No paths were found for device {}, returning an empty list"
             logger.error(msg.format(self._scsi_lun_data_object.key))
-            return []
+            return None
 
     @cached_method
     def get_paths(self):
+       logical_unit = self._get_multipath_logical_unit()
+       if logical_unit is None:
+           return []
         return [VMwarePath(self._client, self._host_moref, self._scsi_lun_data_object.key, path_data_object)
-                for path_data_object in self._get_multipath_logical_unit().path]
+                for path_data_object in logical_unit.path]
 
     @cached_method
     def get_uuid(self):  # pragma: no cover
