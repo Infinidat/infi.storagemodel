@@ -10,7 +10,6 @@ def with_host(host):
 
 def install_all_property_collectors_on_client(client):
     from .patches import storagemodel, hbaapi
-    from pyvsdk import Vim
     storagemodel.install_property_collectors_on_client(client)
     hbaapi.install_property_collectors_on_client(client)
 
