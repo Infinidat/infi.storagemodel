@@ -28,9 +28,6 @@ class InquiryInformationMixin(object):
         """:returns: ('<unknown>', '<unknown>') on unexpected error instead of raising exception"""
         try:
             return self.get_scsi_vid_pid()
-        except StorageModelError:
-            # expected errors, we don't want to silence them
-            raise
         except:
             logger.exception("failed to get scsi vid/pid")
             return ('<unknown>', '<unknown>')
