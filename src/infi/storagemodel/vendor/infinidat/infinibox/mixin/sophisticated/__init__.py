@@ -79,9 +79,9 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_host_id(self):
-        return self._get_host_name_from_json_page()
+        return self._get_host_entity_id_from_json_page()
 
     @cached_method
     def get_cluster_id(self):
-        return self._get_cluster_name_from_json_page()
+        return self._get_cluster_entity_id_from_json_page()
 
