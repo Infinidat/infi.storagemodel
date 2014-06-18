@@ -53,6 +53,11 @@ def remove_device_via_sysfs(host, channel, target, lun):
         return False
     return True
 
+def clear_logging_handlers():
+    import logging
+    [logging.root.removeHandler(handler) for handler in logging.root.handlers]
+    logging.root.addHandler(logging.NullHandler())
+
 def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
     """:param queue: either a gipc pipe or a multiprocessing queue"""
     from infi.asi.coroutines.sync_adapter import sync_wait
@@ -62,9 +67,13 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
         with asi_context(sg_device) as executer:
             queue.put(sync_wait(cdb.execute(executer)))
 
+    # HIP-1113 workaround #1
+    # when we add print(getpid()) in the try/except/finally call below, we don't see second print for most calls
+    # when we clear the logging handlers we suddenly do see them
+    clear_logging_handlers()
     try:
         func(sg_device, cdb)
-    except:  # HIP-672 can't use logger in the child process
+    except:
         try:  # HIP-673 in case we failed to contact the parent process
             queue.put(ScsiCommandFailed())
         except:  # there's no point in raising exception or silencing it because it won't get logged
@@ -139,11 +148,9 @@ def ensure_subprocess_dead(subprocess):
             kill(pid, 9)
         except:
             logger.debug("{} failed to terminate multiprocessing {}".format(getpid(), pid))
-            pass
     subprocess.join()
 
-@func_logger
-def do_scsi_cdb(sg_device, cdb):
+def _call_sync_wait_in_a_child_process(sg_device, cdb):
     pipe_context = get_pipe_context()
     with pipe_context as (reader, writer):
         logger.debug("{} issuing cdb {!r} on {} with multiprocessing".format(getpid(), cdb, sg_device))
@@ -151,12 +158,37 @@ def do_scsi_cdb(sg_device, cdb):
         logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
         return_value = read_from_queue(reader, subprocess)
         logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
+
+    if isinstance(return_value, ScsiCommandFailed):
+        # the SCSI command failed either because of a timeout or a multiprocessing error
         ensure_subprocess_dead(subprocess)
+        raise ScsiCommandFailed()
+
+    subprocess.join() # if we ended up here, the child-process completed the I/O so no reason for it to get stuck now
+
     if isinstance(return_value, ScsiCheckConditionError):
         raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
-    if isinstance(return_value, ScsiCommandFailed):
-        raise ScsiCommandFailed()
+
     return return_value
+
+def _call_sync_wait_directly(sg_device, cdb):
+    from infi.asi.coroutines.sync_adapter import sync_wait
+
+    @check_for_scsi_errors
+    def func(sg_device, cdb):
+        with asi_context(sg_device) as executer:
+            return sync_wait(cdb.execute(executer))
+
+    try:
+        return func(sg_device, cdb)
+    except:
+        raise ScsiCommandFailed()
+
+@func_logger
+def do_scsi_cdb(sg_device, cdb):
+    # HIP-1113 leaving this here for debugging purposes
+    # return _call_sync_wait_directly(sg_device, cdb)
+    return _call_sync_wait_in_a_child_process(sg_device, cdb)
 
 @func_logger
 def do_report_luns(sg_device):
