@@ -10,13 +10,19 @@ class InfinidatVolumeExists(object):
 
     def __call__(self):
         from ..shortcuts import get_infinidat_block_devices
+        from infi.instruct.errors import InstructError
+        from infi.asi.errors import AsiException
         devices_to_query = get_infinidat_block_devices()
         log.debug("Looking for Infinidat volume id {} from system id {}".format(self.volume_id, self.system_serial))
         for device in devices_to_query:
             device.get_scsi_test_unit_ready()
-            volume_id = device.get_vendor().get_naa().get_volume_id()
-            system_serial = device.get_vendor().get_naa().get_system_serial()
-            log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))
+            try:
+                volume_id = device.get_vendor().get_naa().get_volume_id()
+                system_serial = device.get_vendor().get_naa().get_system_serial()
+                log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))
+            except (AsiException, InstructError):
+                log.exception("failed to identify Infinidat volume, returning False now as this should be fixed by rescan")
+                return False
         return any([self.volume_id == device.get_vendor().get_naa().get_volume_id() and
                     self.system_serial == device.get_vendor().get_naa().get_system_serial()
                     for device in devices_to_query])
