@@ -73,7 +73,7 @@ def check_for_scsi_errors(func):
                 msg = "{} attempting to send {} to sg device {}, {} more retries"
                 logger.debug(msg.format(getpid(), func.__name__, sg_device, counter))
                 response = func(*args, **kwargs)
-                return func(*args, **kwargs)
+                return response
             except AsiCheckConditionError, e:
                 (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
                 msg = "{} sg device {} got {} {}".format(getpid(), sg_device, key, code)
