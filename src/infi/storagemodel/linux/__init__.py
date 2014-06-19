@@ -84,7 +84,9 @@ class LinuxStorageModel(StorageModel):
                 self.initiate_rescan(wait_for_completion)
             else:
                 logger.debug("previous rescan process is still running")
-                return
+                if wait_for_completion:
+                    logger.debug("waiting for rescan process completion")
+                    self.rescan_process.join()
         else:
             if isinstance(self.rescan_process, Process):
                 logger.debug("previous rescan process exit code: {}".format(self.rescan_process.exitcode))

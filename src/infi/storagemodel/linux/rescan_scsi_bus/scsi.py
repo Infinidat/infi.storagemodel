@@ -119,7 +119,7 @@ def read_from_queue(reader, subprocess):
             from errno import EINTR
             # stackoverflow.com/questions/14136195/what-is-the-proper-way-to-handle-in-python-ioerror-errno-4-interrupted-syst
             if error.errno != EINTR:
-                raise
+                return ScsiCommandFailed()
             logger.debug("multiprocessing.Queue.get caught IOError: interrupted system call")
         except timeout_class:
             msg = "{} multiprocessing {} did not return within {} seconds timeout"
@@ -139,7 +139,6 @@ def ensure_subprocess_dead(subprocess):
             kill(pid, 9)
         except:
             logger.debug("{} failed to terminate multiprocessing {}".format(getpid(), pid))
-            pass
     subprocess.join()
 
 @func_logger
