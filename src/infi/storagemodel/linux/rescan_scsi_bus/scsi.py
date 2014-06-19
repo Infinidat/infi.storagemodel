@@ -53,11 +53,6 @@ def remove_device_via_sysfs(host, channel, target, lun):
         return False
     return True
 
-def clear_logging_handlers():
-    import logging
-    [logging.root.removeHandler(handler) for handler in logging.root.handlers]
-    logging.root.addHandler(logging.NullHandler())
-
 def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
     """:param queue: either a gipc pipe or a multiprocessing queue"""
     from infi.asi.coroutines.sync_adapter import sync_wait
@@ -67,10 +62,6 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
         with asi_context(sg_device) as executer:
             queue.put(sync_wait(cdb.execute(executer)))
 
-    # HIP-1113 workaround #1
-    # when we add print(getpid()) in the try/except/finally call below, we don't see second print for most calls
-    # when we clear the logging handlers we suddenly do see them
-    clear_logging_handlers()
     try:
         func(sg_device, cdb)
     except:
