@@ -119,7 +119,7 @@ def read_from_queue(reader, subprocess):
             from errno import EINTR
             # stackoverflow.com/questions/14136195/what-is-the-proper-way-to-handle-in-python-ioerror-errno-4-interrupted-syst
             if error.errno != EINTR:
-                raise
+                return ScsiCommandFailed()
             logger.debug("multiprocessing.Queue.get caught IOError: interrupted system call")
         except timeout_class:
             msg = "{} multiprocessing {} did not return within {} seconds timeout"
@@ -150,17 +150,11 @@ def do_scsi_cdb(sg_device, cdb):
         logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
         return_value = read_from_queue(reader, subprocess)
         logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
-
-    if isinstance(return_value, ScsiCommandFailed):
-        # the SCSI command failed either because of a timeout or a multiprocessing error
         ensure_subprocess_dead(subprocess)
-        raise ScsiCommandFailed()
-
-    subprocess.join() # if we ended up here, the child-process completed the I/O so no reason for it to get stuck now
-
     if isinstance(return_value, ScsiCheckConditionError):
         raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
-
+    if isinstance(return_value, ScsiCommandFailed):
+        raise ScsiCommandFailed()
     return return_value
 
 @func_logger
