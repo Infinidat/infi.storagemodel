@@ -64,7 +64,7 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
 
     try:
         func(sg_device, cdb)
-    except:
+    except:  # HIP-672 can't use logger in the child process
         try:  # HIP-673 in case we failed to contact the parent process
             queue.put(ScsiCommandFailed())
         except:  # there's no point in raising exception or silencing it because it won't get logged
@@ -141,7 +141,8 @@ def ensure_subprocess_dead(subprocess):
             logger.debug("{} failed to terminate multiprocessing {}".format(getpid(), pid))
     subprocess.join()
 
-def _call_sync_wait_in_a_child_process(sg_device, cdb):
+@func_logger
+def do_scsi_cdb(sg_device, cdb):
     pipe_context = get_pipe_context()
     with pipe_context as (reader, writer):
         logger.debug("{} issuing cdb {!r} on {} with multiprocessing".format(getpid(), cdb, sg_device))
@@ -161,25 +162,6 @@ def _call_sync_wait_in_a_child_process(sg_device, cdb):
         raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
 
     return return_value
-
-def _call_sync_wait_directly(sg_device, cdb):
-    from infi.asi.coroutines.sync_adapter import sync_wait
-
-    @check_for_scsi_errors
-    def func(sg_device, cdb):
-        with asi_context(sg_device) as executer:
-            return sync_wait(cdb.execute(executer))
-
-    try:
-        return func(sg_device, cdb)
-    except:
-        raise ScsiCommandFailed()
-
-@func_logger
-def do_scsi_cdb(sg_device, cdb):
-    # HIP-1113 leaving this here for debugging purposes
-    # return _call_sync_wait_directly(sg_device, cdb)
-    return _call_sync_wait_in_a_child_process(sg_device, cdb)
 
 @func_logger
 def do_report_luns(sg_device):
