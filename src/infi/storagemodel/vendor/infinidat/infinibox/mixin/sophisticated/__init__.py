@@ -6,6 +6,25 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 class SophisticatedMixin(object):
+    @cached_method
+    def get_management_address(self):
+        """:returns: the management IPv4 address of the InfiniBox
+        :rtype: string"""
+        try:
+            return self._get_key_from_json_page('ip', 0xcb)
+        except:
+            return self.get_device_identification_page().get_vendor_specific_dict()['ip']
+
+    @cached_method
+    def get_management_port(self):
+        """:returns: the management IPv4 port of the InfiniBox
+        :rtype: string"""
+        try:
+            return self._get_key_from_json_page('port', 0xcb)
+        except:
+            vendor_specific_dict = self.get_device_identification_page().get_vendor_specific_dict()
+        return int(vendor_specific_dict.get('port', str(DEFAULT_PORT)))
+
     def _get_management_address_and_port(self):
         address = self.get_management_address()
         port = self.get_management_port()
@@ -32,9 +51,12 @@ class SophisticatedMixin(object):
 
     def _get_system_name_from_json_page(self):
         try:
-            return self._get_key_from_json_page('system_name', 0xc6)
+            return self._get_key_from_json_page('system_name', 0xcb) # x >= 1.5.0.14
         except InquiryException:
-            return self._get_key_from_json_page('system_name')
+            try:
+                return self._get_key_from_json_page('system_name', 0xc6) # 1.4 < x < 1.0.5.14
+            except InquiryException:
+                return self._get_key_from_json_page('system_name') # x <= 1.4
 
     def _get_system_version_from_json_page(self):
         try:
