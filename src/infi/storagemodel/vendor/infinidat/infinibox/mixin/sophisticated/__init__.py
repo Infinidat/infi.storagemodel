@@ -4,6 +4,7 @@ from infi.exceptools import chain
 
 from logging import getLogger
 logger = getLogger(__name__)
+DEFAULT_PORT = 80
 
 class SophisticatedMixin(object):
     @cached_method

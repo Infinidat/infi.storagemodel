@@ -5,8 +5,6 @@ import infi.instruct
 from logging import getLogger
 logger = getLogger(__name__)
 
-DEFAULT_PORT = 80
-
 class InquiryException(InfiException):
     pass
 
