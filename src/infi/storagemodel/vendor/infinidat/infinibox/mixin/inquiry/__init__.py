@@ -73,19 +73,6 @@ class InfiniBoxInquiryMixin(object):
         return DeviceIdentificationPage(raw)
 
     @cached_method
-    def get_management_address(self):
-        """:returns: the management IPv4 address of the InfiniBox
-        :rtype: string"""
-        return self.get_device_identification_page().get_vendor_specific_dict()['ip']
-
-    @cached_method
-    def get_management_port(self):
-        """:returns: the management IPv4 port of the InfiniBox
-        :rtype: string"""
-        vendor_specific_dict = self.get_device_identification_page().get_vendor_specific_dict()
-        return int(vendor_specific_dict.get('port', str(DEFAULT_PORT)))
-
-    @cached_method
     def get_naa(self):
         """:returns: the infinidat naa
         :rtype: :class:`.InfinidatNAA`"""

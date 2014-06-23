@@ -34,19 +34,19 @@ class InquiryInformationMixin(object):
 
     @cached_method
     def get_scsi_vendor_id(self):
-        """:returns: the T10 vendor identifier string, as give in SCSI Standard Inquiry
+        """:returns: the stripped T10 vendor identifier string, as give in SCSI Standard Inquiry
         :rtype: string"""
         return self.get_scsi_standard_inquiry().t10_vendor_identification.strip()
 
     @cached_method
     def get_scsi_revision(self):
-        """:returns: the T10 revision string, as give in SCSI Standard Inquiry
+        """:returns: the stripped T10 revision string, as give in SCSI Standard Inquiry
         :rtype: string"""
         return self.get_scsi_standard_inquiry().product_revision_level.strip()
 
     @cached_method
     def get_scsi_product_id(self):
-        """:returns: the T10 product identifier string, as give in SCSI Standard Inquiry
+        """:returns: the stripped T10 product identifier string, as give in SCSI Standard Inquiry
         :rtype: string"""
         return self.get_scsi_standard_inquiry().product_identification.strip()
 
