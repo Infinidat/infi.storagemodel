@@ -184,11 +184,11 @@ class VMwareInquiryPagesDict(LazyImmutableDict):
 class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
     @cached_method
     def get_scsi_product_id(self):
-        return self._scsi_lun_data_object.model
+        return self._scsi_lun_data_object.model.strip()
 
     @cached_method
     def get_scsi_vendor_id(self):
-        return self._scsi_lun_data_object.vendor
+        return self._scsi_lun_data_object.vendor.strip()
 
     def get_scsi_test_unit_ready(self):  # pragma: no cover
         pass
