@@ -237,6 +237,7 @@ class VMwarePath(multipath.Path):
 
     @cached_method
     def get_hctl(self):
+        from infi.storagemodel.errors import RescanIsNeeded
         scsi_topology = self._get_properties()[SCSI_TOPOLOGY_PROPERTY_PATH]
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
         # adapter.key is key-vim.host.ScsiTopology.Interface-vmhba0
@@ -250,6 +251,8 @@ class VMwarePath(multipath.Path):
                         # self._lun_key = 'key-vim.host.ScsiDisk-02000200006742b0f000004e2b0000000000000069496e66696e69'
                         if lun.scsiLun.rsplit('-', 1)[-1] == self._lun_key.rsplit('-', 1)[-1]:
                             return HCTL(expected_vmhba, 0, target.target, lun.lun)
+        logger.exception("failed to find SCSI target for path object {}".format(self._path_data_object))
+        raise RescanIsNeeded()
 
     @cached_method
     def get_state(self):
