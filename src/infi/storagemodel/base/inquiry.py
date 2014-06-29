@@ -128,11 +128,17 @@ class InquiryInformationMixin(object):
     @check_for_scsi_errors
     def get_scsi_standard_inquiry(self):
         """:returns: the standard inquiry data"""
-        from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.cdb.inquiry.standard import StandardInquiryCommand, STANDARD_INQUIRY_MINIMAL_DATA_LENGTH
+
         with self.asi_context() as asi:
             command = StandardInquiryCommand()
-            return sync_wait(command.execute(asi))
+            result = sync_wait(command.execute(asi))
+            if result.additional_length >= 0:
+                allocation_length = STANDARD_INQUIRY_MINIMAL_DATA_LENGTH + result.additional_length
+                command = StandardInquiryCommand(allocation_length=allocation_length)
+                result = sync_wait(command.execute(asi))
+            return result
 
     @check_for_scsi_errors
     def get_scsi_test_unit_ready(self):
