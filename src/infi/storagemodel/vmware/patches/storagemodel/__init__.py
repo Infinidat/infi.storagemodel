@@ -251,7 +251,7 @@ class VMwarePath(multipath.Path):
                         # self._lun_key = 'key-vim.host.ScsiDisk-02000200006742b0f000004e2b0000000000000069496e66696e69'
                         if lun.scsiLun.rsplit('-', 1)[-1] == self._lun_key.rsplit('-', 1)[-1]:
                             return HCTL(expected_vmhba, 0, target.target, lun.lun)
-        logger.exception("failed to find SCSI target for path object".format(self._path_data_object))
+        logger.exception("failed to find SCSI target for path object {}".format(self._path_data_object))
         raise RescanIsNeeded()
 
     @cached_method
