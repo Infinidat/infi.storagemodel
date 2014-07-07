@@ -61,7 +61,7 @@ class HostSystemPortGenerator(Generator):
         # http://vijava.sourceforge.net/vSphereAPIDoc/ver5/ReferenceGuide/vim.host.ScsiTopology.Target.html
         port = Port()
         port.port_wwn = self._translate_long_to_wwn(properties.portWorldWideName)
-        logger.info("Found remote port with address {}".format(port.port_wwn))
+        logger.debug("Found remote port with address {}".format(port.port_wwn))
         port.node_wwn = self._translate_long_to_wwn(properties.nodeWorldWideName)
         port.hct = (fc_hba.device, 0, target.target)
         return port
@@ -79,7 +79,7 @@ class HostSystemPortGenerator(Generator):
         # http://vijava.sourceforge.net/vSphereAPIDoc/ver5/ReferenceGuide/vim.host.HostBusAdapter.html
         port = Port()
         port.port_wwn = self._translate_long_to_wwn(fc_hba.portWorldWideName)
-        logger.info("Found local port with address {}".format(port.port_wwn))
+        logger.debug("Found local port with address {}".format(port.port_wwn))
         port.node_wwn = self._translate_long_to_wwn(fc_hba.nodeWorldWideName)
         port.port_speed = int(fc_hba.speed)
         port.port_supported_speeds = [port.port_speed, ]

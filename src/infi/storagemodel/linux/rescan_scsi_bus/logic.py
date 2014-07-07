@@ -74,7 +74,7 @@ def target_scan(host, channel, target):
     logger.debug("{} unmapped_luns: {}".format(getpid(), unmapped_luns))
     logger.debug("{} existing_luns: {}".format(getpid(), existing_luns))
     if actual_luns and not expected_luns:
-        logger.info("{} target {}:{}:{} was removed".format(getpid(), host, channel, target))
+        logger.debug("{} target {}:{}:{} was removed".format(getpid(), host, channel, target))
         if is_there_a_bug_in_target_removal():
             return
     if missing_luns:

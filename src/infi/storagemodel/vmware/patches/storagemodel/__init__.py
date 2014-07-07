@@ -324,13 +324,11 @@ class VMwareHostSCSIModel(scsi.SCSIModel):
     @cached_method
     def get_all_scsi_block_devices(self):
         # Everything in VMware is controlled by some Multipathing Plug-in
-        logger.info("Everything in VMware is managed by some MPIO plugin")
         return []
 
     @cached_method
     def get_all_storage_controller_devices(self):
         # Everything in VMware is controlled by some Multipathing Plug-in
-        logger.info("Everything in VMware is managed by some MPIO plugin")
         return []
 
 
