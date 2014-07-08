@@ -166,7 +166,7 @@ class Sysfs(object):
         self._sd_structures = {} # hctl_str : list of device paths
 
         for d in os.listdir(SYSFS_CLASS_ALL_DEVICE_PATH):
-            # listdir returns /dev/sda and /dev/sda1
+            # listdir returns /dev/sda and /dev/sda1    
             if not d.startswith("sd") or d[-1].isdigit():
                 continue
             
@@ -208,6 +208,7 @@ class Sysfs(object):
                 self.sg_disks.append(sd_disk)
                 self.block_devices.append(sd_disk)
                 self.block_devno_to_device[sd_disk.get_block_devno()] = sd_disk
+        
 
     def _get_sysfs_block_devices_pathnames(self):
         """:returns a dict of name:path"""

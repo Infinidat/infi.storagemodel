@@ -36,7 +36,7 @@ class SysfsTestCase(TestCase):
             '/sys/class/scsi_device/5:0:0:0/device/scsi_generic': [ 'sg3' ],
 
             # Block Devices:
-            '/sys/block': [],
+            '/sys/block': ['sda','sde','sdf','sdg','sdb','sdc','sdd'],
 
             # Device names:
             '/dev' : ['sg0','sg4','sg2','sg5','sg1','sg7','sg6','sg3','sda','sde','sdf','sdg','sdb','sdc','sdd']
@@ -88,6 +88,23 @@ class SysfsTestCase(TestCase):
             '/sys/class/scsi_device/5:0:0:0/device/type': '12',
             '/sys/class/scsi_device/5:0:0:0/device/vendor': 'NFINIDAT',
             '/sys/class/scsi_device/5:0:0:0/device/queue_depth': '32',
+
+            '/sys/block/sda/dev' : '8:0',
+            '/sys/block/sda/size' : '16777216',
+            '/sys/block/sde/dev' : '8:4',
+            '/sys/block/sde/size' : '2097156',
+            '/sys/block/sdf/dev' : '8:5',
+            '/sys/block/sdf/size' : '1953792',
+            '/sys/block/sdg/dev' : '8:6',
+            '/sys/block/sdg/size' : '1953792',
+            '/sys/block/sdb/dev' : '8:1',
+            '/sys/block/sdb/size' : '2097156',
+            '/sys/block/sdc/dev' : '8:2',
+            '/sys/block/sdc/size' : '1953792',
+            '/sys/block/sdd/dev' : '8:3',
+            '/sys/block/sdd/size' : '1953792',
+
+
         }
 
         get_sd_hctl_map = {
