@@ -110,9 +110,7 @@ class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         # on redhat: /sys/class/scsi_device/0:0:1:0/device/block:sdb/
         self.block_device_name = block_dev_names[0].split(':')[-1]
         log.debug("block_device_name = {!r}".format(self.block_device_name))
-        self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)
-        if not os.path.exists(self.sysfs_block_device_path):
-            self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
+        self.sysfs_block_device_path = os.path.join(os.path.sep, 'sys', 'block', self.block_device_name)
         log.debug("sysfs_block_device_path = {!r}".format(self.sysfs_block_device_path))
 
     def __repr__(self):
@@ -168,7 +166,8 @@ class Sysfs(object):
         self._sd_structures = {} # hctl_str : list of device paths
 
         for d in os.listdir(SYSFS_CLASS_ALL_DEVICE_PATH):
-            if not d.startswith("sd"):
+            # listdir returns /dev/sda and /dev/sda1
+            if not d.startswith("sd") or d[-1].isdigit():
                 continue
             
             dev_path = os.path.join(SYSFS_CLASS_ALL_DEVICE_PATH,d)
