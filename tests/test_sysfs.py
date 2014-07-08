@@ -5,11 +5,12 @@ from infi.dtypes.hctl import HCTL
 from infi.storagemodel.linux.sysfs import Sysfs
 
 class SysfsTestCase(TestCase):
+    @patch('infi.storagemodel.linux.sysfs.get_hctl_for_sd_device')
     @patch('os.path.islink')
     @patch('os.path.exists')
     @patch('os.listdir')
     @patch('__builtin__.open')
-    def test_sysfs(self, open_mock, listdir_mock, exists_mock, islink_mock):
+    def test_sysfs(self, open_mock, listdir_mock, exists_mock, islink_mock, get_hctl_for_sd_device_mock):
         if name == "nt":
             raise SkipTest
 
@@ -36,6 +37,9 @@ class SysfsTestCase(TestCase):
 
             # Block Devices:
             '/sys/block': [],
+
+            # Device names:
+            '/dev' : ['sg0','sg4','sg2','sg5','sg1','sg7','sg6','sg3','sda','sde','sdf','sdg','sdb','sdc','sdd']
         }
 
         file_map = {
@@ -86,6 +90,16 @@ class SysfsTestCase(TestCase):
             '/sys/class/scsi_device/5:0:0:0/device/queue_depth': '32',
         }
 
+        get_sd_hctl_map = {
+            '/dev/sda' : HCTL.from_string('2:0:0:0'),
+            '/dev/sde' : HCTL.from_string('3:0:0:0'),
+            '/dev/sdf' : HCTL.from_string('3:0:1:1'),
+            '/dev/sdg' : HCTL.from_string('3:0:1:2'),
+            '/dev/sdb' : HCTL.from_string('4:0:0:0'),
+            '/dev/sdc' : HCTL.from_string('4:0:1:1'),
+            '/dev/sdd' : HCTL.from_string('4:0:1:2'),
+        }
+
         def create_file_context_manager(*args, **kwargs):
             path = args[0]
             file_mock = Mock()
@@ -109,6 +123,7 @@ class SysfsTestCase(TestCase):
         open_mock.side_effect = create_file_context_manager
         exists_mock.return_value = True
         islink_mock.return_value = False
+        get_hctl_for_sd_device_mock.side_effect = get_sd_hctl_map.get
 
         sysfs = Sysfs()
 
