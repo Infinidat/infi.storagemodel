@@ -29,6 +29,6 @@ class TestModel(unittest.TestCase):
         model = get_storage_model()
         scsi = model.get_scsi()
         native_multipath = model.get_native_multipath()
-        devices = scsi.get_all_scsi_block_devices() + native_multipath.get_all_multipath_devices()
+        devices = scsi.get_all_scsi_block_devices() + native_multipath.get_all_multipath_block_devices()
         for device in devices:
             populate_cache(device)
