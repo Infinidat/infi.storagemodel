@@ -70,7 +70,7 @@
 
   code {
     background: #e8e8e8;
-  } 
+  }
 
   pre {
     background: #e8e8e8;
@@ -865,4 +865,12 @@ table {
         page-break-after: avoid;
     }
 }
+
+/* Custom */
+
+div.column_list li {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 </%def>

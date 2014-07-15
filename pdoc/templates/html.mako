@@ -22,7 +22,7 @@
 
   def eprint(s):
       print >> sys.stderr, s
-  
+
   def decode(s):
       if sys.version_info[0] < 3 and isinstance(s, str):
           return s.decode('utf-8', 'ignore')
@@ -62,7 +62,7 @@
         s, _ = re.subn('\b\n\b', ' ', s)
         if not module_list:
             s, _ = re.subn('`[^`]+`', linkify, s)
-      
+
       extensions = []
       if use_pygments:
           extensions = ['codehilite(linenums=False)']
@@ -83,7 +83,7 @@
       separators. Also, packages are translated as directories
       containing `index.html` corresponding to the `__init__` module,
       while modules are translated as regular HTML files with an
-      `.m.html` suffix. (Given default values of 
+      `.m.html` suffix. (Given default values of
       `pdoc.html_module_suffix` and `pdoc.html_package_name`.)
       """
       if module.name == m.name:
@@ -186,7 +186,7 @@
 <%def name="show_inheritance(d)">
   % if hasattr(d, 'inherits'):
       <p class="inheritance">
-         <strong>Inheritance:</strong>
+         Inherited from
          % if hasattr(d.inherits, 'cls'):
            <code>${link(d.inherits.cls.refname)}</code>.<code>${link(d.inherits.refname)}</code>
          % else:
@@ -342,15 +342,22 @@
         smethods = c.functions()
         inst_vars = c.instance_variables()
         methods = c.methods()
-        mro = c.module.mro(c)
+        mro = c.module.mro(c)[1:-1]
       %>
       <div class="item">
-        <p id="${c.refname}" class="name">class ${ident(c.name)}</p>
+        <p id="${c.refname}" class="name">
+          % if issubclass(c.cls, BaseException):
+              exception
+          % else:
+              class
+          % endif
+          ${ident(c.name)}
+        </p>
         ${show_desc(c)}
 
         <div class="class">
           % if len(mro) > 0:
-              <h4>Ancestors (in MRO)</h4>
+              <h4>Parent classes</h4>
               <ul class="class_list">
               % for cls in mro:
                 <li>${link(cls.refname)}</li>
@@ -399,7 +406,6 @@
   % for m in submodules:
       <div class="item">
         <p class="name">${link(m.refname)}</p>
-        ${show_desc(m, limit=300)}
       </div>
   % endfor
   % endif
