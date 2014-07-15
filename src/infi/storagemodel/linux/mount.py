@@ -54,7 +54,7 @@ class LinuxMount(mount.Mount):
 
     def get_filesystem(self):
         from .filesystem import LinuxFileSystem
-        return LinuxFileSystem(self._entry.get_type())
+        return LinuxFileSystem(self._entry.get_typename())
 
 class LinuxPersistentMount(LinuxMount, mount.PersistentMount):
     pass
