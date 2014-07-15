@@ -13,7 +13,7 @@ class FCConnectivity(object):
 
     @cached_method
     def get_initiator_wwn(self):
-        """:returns: the wwpn of the initiator"""
+        """ Returns the wwpn of the initiator """
         if isinstance(self._local_port, WWN):
             return self._local_port
         if isinstance(self._local_port, Port):
@@ -22,7 +22,7 @@ class FCConnectivity(object):
 
     @cached_method
     def get_target_wwn(self):
-        """:returns: the wwpn of the target"""
+        """ Returns the wwpn of the target """
         if isinstance(self._remote_port, WWN):
             return self._remote_port
         if isinstance(self._remote_port, Port):

@@ -53,10 +53,6 @@ class LinuxFileSystem(filesystem.FileSystem):
         return self._e2label(block_access_path)
 
     def set_label(self, block_access_path, label):  # pragma: no cover
-        """sets a filesystem label on the specific block device
-        :raises: :class:`.InvalidLabel` if the label is too long
-        :raises: :class:`.LabelNotSupported` if not supported by the filesystem
-        """
         before = self.get_label(block_access_path)
         self._e2label(block_access_path, label)
         after = self.get_label(block_access_path)

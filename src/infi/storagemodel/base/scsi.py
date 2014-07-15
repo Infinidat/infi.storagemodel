@@ -13,7 +13,7 @@ logger = getLogger(__name__)
 class SCSIDevice(InquiryInformationMixin, object):
     @cached_method
     def get_connectivity(self):
-        """:returns: a :class:`.FCConnectivity` instance, for now."""
+        """Returns a `infi.storagemodel.connectivity.FCConnectivity` instance."""
         from ..connectivity import ConnectivityFactory
         return ConnectivityFactory.get_by_device_with_hctl(self)
 
@@ -23,28 +23,28 @@ class SCSIDevice(InquiryInformationMixin, object):
 
     @contextmanager
     def asi_context(self):  # pragma: no cover
-        """:returns: a context for asi"""
+        """Returns a context for `infi.asi`"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
     def get_hctl(self):  # pragma: no cover
-        """:returns: a :class:`infi.dtypes.hctl.HCTL` object"""
+        """Returns a `infi.dtypes.hctl.HCTL` object"""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
     def get_display_name(self):  # pragma: no cover
-        """:returns: a friendly device name. In Windows, its PHYSICALDRIVE%d, in linux, its sdX."""
+        """Returns a friendly device name. In Windows, it's PHYSICALDRIVE%d, in linux, its sdX."""
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
     def get_scsi_access_path(self):  # pragma: no cover
-        """:returns: a string path for the device
+        """Returns a string path for the device
 
-                    - In Windows, its something under globalroot like block_device_path
-                    - In linux, its /dev/sgX"""
+                    - In Windows, it's something under globalroot like block_device_path
+                    - In linux, it's /dev/sgX"""
         # platform implementation
         raise NotImplementedError()
 
@@ -63,24 +63,23 @@ class SCSIDevice(InquiryInformationMixin, object):
 class SCSIBlockDevice(SCSIDevice):
     @cached_method
     def get_vendor(self):
-        """:returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        """Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
         return VendorFactory.create_scsi_block_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     @cached_method
     def get_disk_drive(self):
-        """:returns: a :class:`.DiskDevice` object
-        :raises: NoSuchDisk"""
+        """Returns a `infi.storagemodel.base.disk.DiskDrive` object, or raises `infi.storagemodel.base.disk.NoSuchDisk`"""
         from infi.storagemodel import get_storage_model
         model = get_storage_model().get_disk()
         return model.find_disk_drive_by_block_access_path(self.get_block_access_path())
 
     @cached_method
     def get_block_access_path(self):  # pragma: no cover
-        """:returns: a string path for the device
+        """Returns a string path for the device
 
-                    - In Windows, its something under globalroot
-                    - In linux, its /dev/sdX"""
+                    - In Windows, it's something under globalroot
+                    - In linux, it's /dev/sdX"""
 
         # platform implementation
         raise NotImplementedError()
@@ -102,7 +101,7 @@ class SCSIBlockDevice(SCSIDevice):
 class SCSIStorageController(SCSIDevice):
     @cached_method
     def get_vendor(self):
-        """ :returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        """ Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
         return VendorFactory.create_scsi_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
 
@@ -113,7 +112,7 @@ class SCSIStorageController(SCSIDevice):
 class SCSIEnclosure(SesInformationMixin, SCSIDevice):
     @cached_method
     def get_vendor(self):
-        """ :returns: a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
+        """ Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
         from ..vendor import VendorFactory
         return VendorFactory.create_scsi_enclosure_by_vid_pid(self.get_scsi_vid_pid(), self)
 
@@ -123,7 +122,7 @@ class SCSIEnclosure(SesInformationMixin, SCSIDevice):
 
 class SCSIModel(object):
     def find_scsi_block_device_by_block_access_path(self, path):
-        """:returns: a :class:`SCSIBlockDevice` object that matches the given path.
+        """Returns a `infi.storagemodel.base.scsi.SCSIBlockDevice` object that matches the given path.
         :raises: KeyError if no such device is found"""
         from infi.storagemodel.windows.scsi import WindowsSCSIBlockDevice
         devices_dict = dict([(device.get_block_access_path(), device) for device in self.get_all_scsi_block_devices()])
@@ -133,19 +132,19 @@ class SCSIModel(object):
         return devices_dict[path]
 
     def find_scsi_block_device_by_scsi_access_path(self, path):
-        """:returns: :class:`SCSIBlockDevice` object that matches the given path.
-        :raises: KeyError if no such device is found"""
+        """Returns `infi.storagemodel.base.scsi.SCSIBlockDevice` object that matches the given path.
+        Raises `KeyError` if no such device is found."""
         devices_dict = dict([(device.get_scsi_access_path(), device) for device in self.get_all_scsi_block_devices()])
         return devices_dict[path]
 
     def find_scsi_block_device_by_hctl(self, get_hctl):
-        """:returns: a :class:`SCSIBlockDevice` object that matches the given get_hctl.
-        :raises: KeyError if no such device is found"""
+        """Returns a `infi.storagemodel.base.scsi.SCSIBlockDevice` object that matches the given get_hctl.
+        Raises `KeyError` if no such device is found."""
         devices_dict = dict([(device.get_hctl(), device) for device in self.get_all_scsi_block_devices()])
         return devices_dict[get_hctl]
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
-        """:returns: only the items from the devices list that are of the specific type"""
+        """Returns only the items from the devices list that are of the specific type"""
         return filter(lambda device: device.get_scsi_vendor_id_or_unknown_on_error() == vid_pid_tuple, devices)
 
     #############################
@@ -154,27 +153,25 @@ class SCSIModel(object):
 
     @cached_method
     def get_all_scsi_block_devices(self):  # pragma: no cover
-        """:returns: all SCSI block devices. Specifically, on:
+        """Returns a list of all `infi.storagemodel.base.scsi.SCSIBlockDevice`. Specifically, on:
 
         - Windows: Enumerate Disk Drives, Collecting SCSI devices that can work with SCSI_PASS_THROUGH.
           They can be either be multipath or non-multipath devices.
         - Linux: we scan all the sd\* (/sys/class/scsi_disk/\*)
-
-        :rtype: list of :class:`SCSIBlockDevice`
         """
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
     def get_all_storage_controller_devices(self):  # pragma: no cover
-        """:returns: a list of SCSIStorageController objects.
+        """Returns a list of all `infi.storagemodel.base.scsi.SCSIStorageController` objects.
         """
         # platform implementation
         raise NotImplementedError()
 
     @cached_method
     def get_all_enclosure_devices(self):  # pragma: no cover
-        """:returns: a list of SCSIEnclosure objects.
+        """Returns a list of all `infi.storagemodel.base.scsi.SCSIEnclosure` objects.
         """
         # platform implementation
         raise NotImplementedError()

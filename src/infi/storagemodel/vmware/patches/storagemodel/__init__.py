@@ -378,11 +378,11 @@ class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
                 if scsi_lun_data_object.alternateName]
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
-        """:returns: an empty list since there no non-multipath devices on VMware"""
+        """ Returns an empty list since there no non-multipath devices on VMware """
         return list()
 
     def filter_non_multipath_scsi_storage_controller_devices(self, scsi_controller_devices):
-        """:returns: an empty list since there no non-multipath devices on VMware"""
+        """ Returns an empty list since there no non-multipath devices on VMware """
         return list()
 
 

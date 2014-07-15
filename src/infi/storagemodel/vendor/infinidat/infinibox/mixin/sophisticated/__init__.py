@@ -9,8 +9,7 @@ DEFAULT_PORT = 80
 class SophisticatedMixin(object):
     @cached_method
     def get_management_address(self):
-        """:returns: the management IPv4 address of the InfiniBox
-        :rtype: string"""
+        """ Returns the management IPv4 address of the InfiniBox as string """
         try:
             return self._get_key_from_json_page('ip', 0xcb)
         except InquiryException:
@@ -18,8 +17,7 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_management_port(self):
-        """:returns: the management IPv4 port of the InfiniBox
-        :rtype: string"""
+        """ Returns the management port number of the InfiniBox """
         try:
             return self._get_key_from_json_page('port', 0xcb)
         except InquiryException:

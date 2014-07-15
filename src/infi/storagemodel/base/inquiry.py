@@ -4,6 +4,8 @@ from logging import getLogger
 logger = getLogger(__name__)
 #pylint: disable=E1002,W0622
 
+__all__ = ['InquiryInformationMixin']
+
 
 class SupportedVPDPagesDict(LazyImmutableDict):
     def __init__(self, dict, device):
@@ -25,7 +27,7 @@ class SupportedVPDPagesDict(LazyImmutableDict):
 class InquiryInformationMixin(object):
     @cached_method
     def get_scsi_vendor_id_or_unknown_on_error(self):
-        """:returns: ('<unknown>', '<unknown>') on unexpected error instead of raising exception"""
+        """Returns ('<unknown>', '<unknown>') on unexpected error instead of raising exception"""
         try:
             return self.get_scsi_vid_pid()
         except:
@@ -34,32 +36,27 @@ class InquiryInformationMixin(object):
 
     @cached_method
     def get_scsi_vendor_id(self):
-        """:returns: the stripped T10 vendor identifier string, as give in SCSI Standard Inquiry
-        :rtype: string"""
+        """Returns the stripped T10 vendor identifier string, as give in SCSI Standard Inquiry"""
         return self.get_scsi_standard_inquiry().t10_vendor_identification.strip()
 
     @cached_method
     def get_scsi_revision(self):
-        """:returns: the stripped T10 revision string, as give in SCSI Standard Inquiry
-        :rtype: string"""
+        """Returns the stripped T10 revision string, as give in SCSI Standard Inquiry"""
         return self.get_scsi_standard_inquiry().product_revision_level.strip()
 
     @cached_method
     def get_scsi_product_id(self):
-        """:returns: the stripped T10 product identifier string, as give in SCSI Standard Inquiry
-        :rtype: string"""
+        """Returns the stripped T10 product identifier string, as give in SCSI Standard Inquiry"""
         return self.get_scsi_standard_inquiry().product_identification.strip()
 
     @cached_method
     def get_scsi_vid_pid(self):
-        """:returns: a tuple of the vendor_id and product_id
-        :rtype: tuple"""
+        """Returns a tuple of the vendor_id and product_id"""
         return (self.get_scsi_vendor_id(), self.get_scsi_product_id())
 
     @cached_method
     def get_scsi_vid_pid_rev(self):
-        """:returns: a tuple of the vendor_id, product_id and revision
-        :rtype: tuple"""
+        """Returns a tuple of the vendor_id, product_id and revision"""
         return (self.get_scsi_vendor_id(), self.get_scsi_product_id(), self.get_scsi_revision())
 
     @cached_method
@@ -68,7 +65,7 @@ class InquiryInformationMixin(object):
         """Returns an immutable dict-like object of available inquiry pages from this device.
         For example:
 
-            >>> dev.scsi_inquiry_pages[0x80].product_serial_number
+            >>> device.get_scsi_inquiry_pages()[0x80].product_serial_number
         """
         from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_SUPPORTED_VPD_PAGES
         from infi.asi.cdb.inquiry.vpd_pages import SupportedVPDPagesCommand
@@ -95,8 +92,7 @@ class InquiryInformationMixin(object):
 
     @cached_method
     def get_scsi_serial_number(self):
-        """:returns: the SCSI serial of the device or an empty string ("") if not available
-        :rtype: string"""
+        """Returns the SCSI serial string of the device or an empty string ("") if not available"""
         from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_UNIT_SERIAL_NUMBER
         serial = ''
         if INQUIRY_PAGE_UNIT_SERIAL_NUMBER in self.get_scsi_inquiry_pages():
@@ -107,9 +103,7 @@ class InquiryInformationMixin(object):
 
     @cached_method
     def get_scsi_ata_information(self):
-        """:returns: the SCSI ata information of the device as a dict of dicts
-                     for SATL and identify device
-        :rtype: dict"""
+        """Returns the SCSI ata information of the device as a dict of dicts for SATL and identify device"""
         from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_ATA_INFORMATION
         ata_info = dict(sat=dict(), device=dict())
         if INQUIRY_PAGE_ATA_INFORMATION in self.get_scsi_inquiry_pages():
@@ -127,7 +121,7 @@ class InquiryInformationMixin(object):
     @cached_method
     @check_for_scsi_errors
     def get_scsi_standard_inquiry(self):
-        """:returns: the standard inquiry data"""
+        """Returns the standard inquiry data"""
         from infi.asi import AsiCheckConditionError
         from infi.asi.coroutines.sync_adapter import sync_wait
         from infi.asi.cdb.inquiry.standard import StandardInquiryCommand, STANDARD_INQUIRY_MINIMAL_DATA_LENGTH
@@ -155,7 +149,7 @@ class InquiryInformationMixin(object):
             return result
 
         # the correct and safe way to get all the inquiry data is to ask for the mandatory 96 bytes
-        # then look at the allocation lenght and ask again to get the extended data
+        # then look at the allocation length and ask again to get the extended data
         # other tools just ask for a large allocation length; until now, we did that approach and asked for 260 bytes
         # but we did not handle the case in which is was to much and the device returned INVALID FIELD IN CDB
         # so now we first ask for a large buffer of 254 bytes like other tools, and if that doesn't work
@@ -164,7 +158,7 @@ class InquiryInformationMixin(object):
 
     @check_for_scsi_errors
     def get_scsi_test_unit_ready(self):
-        """:returns: True if the device is ready, False if got NOT_READY check condition
+        """Returns True if the device is ready, False if got NOT_READY check condition
         """
         from infi.asi.cdb.tur import TestUnitReadyCommand
         from infi.asi.coroutines.sync_adapter import sync_wait

@@ -29,6 +29,7 @@ class DeviceIdentificationPage(object):
 
     @cached_method
     def get_naa(self):
+        """ Returns the Infinidat NAA (`infi.storagemodel.vendor.infinidat.infinibox.naa.InfinidatNAA`) """
         from infi.asi.cdb.inquiry.vpd_pages.device_identification import designators
         naa = designators.NAA_IEEE_Registered_Extended_Designator
         from ...naa import InfinidatNAA
@@ -38,8 +39,7 @@ class DeviceIdentificationPage(object):
 
     @cached_method
     def get_target_port_group(self):
-        """:returns: the target port group
-        :rtype: int"""
+        """ Returns the target port group number. """
         from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import TargetPortGroupDesignator
         for designator in self._page.designators_list:
             if isinstance(designator, TargetPortGroupDesignator):
@@ -47,8 +47,7 @@ class DeviceIdentificationPage(object):
 
     @cached_method
     def get_relative_target_port_group(self):
-        """:returns: the relative target port group
-        :rtype: int"""
+        """ Returns the relative target port group number. """
         from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import RelativeTargetPortDesignator
         for designator in self._page.designators_list:
             if isinstance(designator, RelativeTargetPortDesignator):
@@ -72,25 +71,22 @@ class InfiniBoxInquiryMixin(object):
 
     @cached_method
     def get_naa(self):
-        """:returns: the infinidat naa
-        :rtype: :class:`.InfinidatNAA`"""
+        """ Returns the Infinidat NAA (`infi.storagemodel.vendor.infinidat.infinibox.naa.InfinidatNAA`) """
         return self.get_device_identification_page().get_naa()
 
     @cached_method
     def get_target_port_group(self):
-        """:returns: the target port group
-        :rtype: int"""
+        """ Returns the target port group number. """
         return self.get_device_identification_page().get_target_port_group()
 
     @cached_method
     def get_relative_target_port_group(self):
-        """:returns: the relative target port group
-        :rtype: int"""
+        """ Returns the relative target port group number. """
         return self.get_device_identification_page().get_relative_target_port_group()
 
     @cached_method
     def get_fc_port(self):
-        """:rtype: :class:`.InfinidatFiberChannelPort`"""
+        """ Returns an `infi.storagemodel.vendor.infinidat.infinibox.fc_port.InfinidatFiberChannelPort`"""
         from ...fc_port import InfinidatFiberChannelPort
         return InfinidatFiberChannelPort(self.get_relative_target_port_group(),
                                          self.get_target_port_group())
@@ -127,8 +123,7 @@ class InfiniBoxInquiryMixin(object):
 
     @cached_method
     def get_json_data(self, page=0xc5):
-        """:returns: the json inquiry data from the system
-        :rtype: dict"""
+        """ Returns the json inquiry data from the system as a `dict` """
         from json import loads
         raw_data = self._get_json_inquiry_data(page)
         try:
@@ -140,7 +135,6 @@ class InfiniBoxInquiryMixin(object):
 
     @cached_method
     def get_string_data(self, page):
-        """:returns: the json inquiry data from the system
-        :rtype: dict"""
+        """ Returns the string inquiry data from the system as a `dict` """
         from json import loads
         return self._get_string_inquiry_data(page)

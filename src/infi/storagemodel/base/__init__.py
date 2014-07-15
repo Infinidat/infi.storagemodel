@@ -10,20 +10,19 @@ logger = getLogger(__name__)
 
 
 class StorageModel(object):
-    """StorageModel provides layered view of the storage stack.
-    The layers currently offered by the model are the SCSI layer and the Multipath layer.
+    """StorageModel provides a layered view of the storage stack.
+    The layers currently exposed by the model are:
 
-    All layers are fetched in a lazy and cached manner:
+    * SCSI
+    * Multipath
+    * Disks
+    * Mounts
 
-    - No information is gathers upon initialization
-
-    - Information is gathered when it is asked for, and stored in a cache within the object
-
-    - Every second request is pulled from the cache
-
-    When you think tha the cache no longer up-to-date, you can clear it using the refresh() method
+    All layers are fetched lazily and cached inside the model. When you think that the cache no longer up-to-date,
+    you can clear it using the refresh() method
     """
 
+    # This import is for making it easier to work with storagemodel over rpyc
     from .. import predicates
 
     def __init__(self):
@@ -31,28 +30,28 @@ class StorageModel(object):
 
     @cached_method
     def get_scsi(self):
-        """:returns: a :class:`.SCSIModel` object which represents the :ref:`scsi-layer`"""
+        """Returns a `infi.storagemodel.base.scsi.SCSIModel` object which represents the SCSI layer"""
         return self._create_scsi_model()
 
     @cached_method
     def get_native_multipath(self):
-        """:returns: an :class:`.MultipathFrameworkModel` object, as viewed by the OS built-in MPIO driver"""
+        """Returns a `infi.storagemodel.base.multipath.MultipathFrameworkModel` object, as seen by the operating system's built-in MPIO driver"""
         # TODO what to do in case native multipath is not installed?
         return self._create_native_multipath_model()
 
     @cached_method
     def get_disk(self):
-        """:returns: an :class:`.DiskModel` object"""
+        """Returns a `infi.storagemodel.base.disk.DiskModel` object which represents the disks layer"""
         return self._create_disk_model()
 
     @cached_method
     def get_mount_manager(self):
-        """:returns: an instance of Mount Manager"""
+        """Returns an instance of `infi.storagemodel.base.mount.MountManager` """
         return self._create_mount_manager()
 
     @cached_method
     def get_mount_repository(self):
-        """:returns: an instance of Mount Manager"""
+        """Returns an instance of `infi.storagemodel.base.mount.MountRepository` """
         return self._create_mount_repository()
 
     def refresh(self):
@@ -62,7 +61,7 @@ class StorageModel(object):
         clear_cache(ConnectivityFactory)
 
     def _try_predicate(self, predicate):
-        """:returns: True/False if predicate returned, None on RescanIsNeeded exception"""
+        """Returns True/False if the predicate returned, None on RescanIsNeeded exception"""
         from infi.storagemodel.errors import RescanIsNeeded, TimeoutError, StorageModelError
         try:
             return predicate()
@@ -74,20 +73,18 @@ class StorageModel(object):
             raise
 
     def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60, wait_on_rescan=False):
-        """Rescan devices and polls the prediate until either it returns True or a timeout is reached.
+        """Rescan devices and poll the predicate until either it returns True or a timeout is reached.
 
-        The model is refreshed automatically, there is no need to refresh() after calling this method or in the
+        The model is refreshed automatically, there is no need to `refresh` after calling this method or in the
         implementation of the predicate.
 
-        For more information and usage examples, see :doc:`rescan`
+        **predicate**: a callable object that returns either True or False.
 
-        :param predicate: a callable object that returns either True or False.
+        **timeout_in_seconds**: time in seconds to poll the predicate.
 
-        :param timeout_in_seconds: time in seconds to poll the predicate.
+        **wait_on_rescan**: whether to wait until the rescan process is completed before checking the predicate.
 
-        :param wait_on_rescan: waits until the rescan process is completed before checking the predicates
-
-        :raises: :exc:`infi.storagemodel.errors.TimeoutError` exception.
+        Raises `infi.storagemodel.errors.TimeoutError` exception if the timeout is reached.
         """
         from time import time
         from sys import maxint
@@ -121,7 +118,7 @@ class StorageModel(object):
     #############################
 
     def initiate_rescan(self, wait_for_completion=False):  # pragma: no cover
-        """A premitive rescan method, if you do not wish to use the waiting mechanism"""
+        """A primitive rescan method that can be used in case you do not need the more elaborate rescan_and_wait_for method. """
         # platform implementation
         raise NotImplementedError()
 

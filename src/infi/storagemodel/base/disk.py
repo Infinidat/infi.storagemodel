@@ -13,48 +13,46 @@ class NoPartitionTable(StorageModelFindError):
 class DiskDrive(object):
     @cached_method
     def get_size_in_bytes(self):
-        """:returns: the disk size in bytes"""
+        """Returns the disk size in bytes"""
         return self.get_storage_device().get_size_in_bytes()
 
     #############################
     # Platform Specific Methods #
     #############################
     def is_empty(self):  # pragma: no cover
-        """:returns: True if there is a partition table on the disk"""
+        """Returns True if the disk has no partition table."""
         raise NotImplementedError()
 
     def get_partition_table(self):  # pragma: no cover
-        """:raises: ValueError if there is no partition table on disk
-
-        :returns: A :class:`.PartitionTable` object"""
+        """
+        Returns the disk's partition table (`infi.storagemodel.base.partition.PartitionTable`).
+        Raises `ValueError` if there is no partition table on disk.
+        """
         raise NotImplementedError()
 
     def delete_partition_table(self):  # pragma: no cover
-        """deletes the partition table from the disk"""
+        """Deletes the partition table from the disk"""
         raise NotImplementedError()
 
     def create_mbr_partition_table(self, alignment_in_bytes=None):  # pragma: no cover
-        """creates a MBR partition table
-
-        :returns: a :class:`.MBRPartitionTable` object"""
+        """Creates an MBR partition table and returns it (`infi.storagemodel.base.partition.MBRPartitionTable`)"""
         raise NotImplementedError()
 
     def create_gpt_partition_table(self, alignment_in_bytes=None):  # pragma: no cover
-        """creates a GPT partition table
-
-        :returns: a :class:`.GPTPartitionTable` object"""
+        """Creates a GPT partition table and returns it (`infi.storagemodel.base.partition.GPTPartitionTable`)"""
         raise NotImplementedError()
 
     @cached_method
     def get_block_access_path(self):  # pragma: no cover
-        """:returns: the block access path for the disk"""
+        """Returns the block access path for the disk"""
         raise NotImplementedError()
 
     @cached_method
     def get_storage_device(self):  # pragma: no cover
-        """The storage device that is represented by this disk drive.
-
-        :returns: a :class:`.MultipathDevice` or a :class:`.SCSIBlockDevice`"""
+        """
+        Returns the storage device that is represented by this disk drive - either
+        a `infi.storagemodel.base.multipath.MultipathDevice` or `infi.storagemodel.base.scsi.SCSIBlockDevice`
+        """
         raise NotImplementedError()
 
 class DiskModel(object):
@@ -63,8 +61,10 @@ class DiskModel(object):
     #############################
 
     def find_disk_drive_by_block_access_path(self, path):  # pragma: no cover
-        """:returns: a :class:`.DiskDrive` object that matches the given path.
-        :raises: KeyError if no such device is found"""
+        """
+        Returns a `infi.storagemodel.base.disk.DiskDrive` object that matches the given path,
+        or raises a KeyError if no such device is found
+        """
         # platform implementation
         raise NotImplementedError()
 
