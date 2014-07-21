@@ -232,6 +232,7 @@ class VMwarePath(multipath.Path):
     @cached_method
     def _get_properties(self):
         # We want to use the data the entire model uses, so we read from cache
+        install_property_collectors_on_client(self._client)
         properties = self._client.facades[PROPERTY_COLLECTOR_KEY].getProperties()[self._host_moref]
         return properties
 
@@ -278,6 +279,7 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
     @cached_method
     def _get_properties(self):
         # We want to use the data the entire model uses, so we read from cache
+        install_property_collectors_on_client(self._client)
         properties = self._client.facades[PROPERTY_COLLECTOR_KEY].getProperties()[self._host_moref]
         return properties
 
@@ -324,13 +326,11 @@ class VMwareHostSCSIModel(scsi.SCSIModel):
     @cached_method
     def get_all_scsi_block_devices(self):
         # Everything in VMware is controlled by some Multipathing Plug-in
-        logger.info("Everything in VMware is managed by some MPIO plugin")
         return []
 
     @cached_method
     def get_all_storage_controller_devices(self):
         # Everything in VMware is controlled by some Multipathing Plug-in
-        logger.info("Everything in VMware is managed by some MPIO plugin")
         return []
 
 
@@ -342,6 +342,7 @@ class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
 
     @cached_method
     def _get_properties(self):
+        install_property_collectors_on_client(self._client)
         properties = self._client.facades[PROPERTY_COLLECTOR_KEY].getProperties()[self._moref]
         return properties
 

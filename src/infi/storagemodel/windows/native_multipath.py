@@ -54,7 +54,10 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         def _get_multipath_device(device_object):
             return WindowsNativeMultipathBlockDevice(device_object, _get_multipath_object(device_object), policies_dict)
 
-        return map(_get_multipath_device, devices)
+        def _is_physical_drive(device_object):
+            return device_object.get_physical_drive_number() != -1
+
+        return filter(_is_physical_drive, map(_get_multipath_device, devices))
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         return filter(lambda device: device.get_parent()._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,

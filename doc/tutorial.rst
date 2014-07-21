@@ -46,12 +46,12 @@ Now, lets get the multipath devices. In mose cases, we'd want to work with the n
 :class:`.NativeMultipathModel`:
 
    >>> mpio = model.get_native_multipath()
-   >>> devices = mpio.get_all_multipath_devices()
+   >>> devices = mpio.get_all_multipath_block_devices()
 
 Usually, you'd also want to differ between the multipath disks and the non-multipath disks:
 
    >>> block_devices = scsi.get_all_scsi_block_devices()
-   >>> mp_disks = mpio.get_all_multipath_devices()
+   >>> mp_disks = mpio.get_all_multipath_block_devices()
    >>> non_mp_disks = mpio.filter_non_multipath_scsi_block_devices(block_devices)
 
 Also, if you want disks of a specific product:

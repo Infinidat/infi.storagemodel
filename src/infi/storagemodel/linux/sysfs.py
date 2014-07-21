@@ -3,10 +3,12 @@ import glob
 from infi.dtypes.hctl import HCTL
 from infi.pyutils.lazy import cached_method
 from ..errors import DeviceDisappeared
+from infi.sgutils.sg_map import get_hctl_for_sd_device
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
 SYSFS_CLASS_BLOCK_DEVICE_PATH = "/sys/class/block"
 SYSFS_CLASS_ENCLOSURE_DEVICE_PATH = "/sys/class/enclosure"
+SYSFS_CLASS_ALL_DEVICE_PATH = "/dev"
 
 SCSI_TYPE_DISK = 0x00
 SCSI_TYPE_STORAGE_CONTROLLER = 0x0C
@@ -101,17 +103,6 @@ class SysfsSCSIDevice(object):
         return self.sysfs_dev_path
 
 
-def get_sd_paths(sysfs_dev_path):
-    basepath = os.path.join(sysfs_dev_path, "block")
-    log.debug("basepath = {!r}".format(basepath))
-    if os.path.exists(basepath):
-        block_dev_names = os.listdir(basepath)
-    else:
-        block_dev_names = glob.glob(os.path.join(sysfs_dev_path, "block*"))
-    log.debug("block_dev_names = {!r}".format(block_dev_names))
-    return block_dev_names
-
-
 class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
     def __init__(self, sysfs_dev_path, hctl, block_dev_names):
         super(SysfsSDDisk, self).__init__(sysfs_dev_path, hctl)
@@ -119,9 +110,7 @@ class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         # on redhat: /sys/class/scsi_device/0:0:1:0/device/block:sdb/
         self.block_device_name = block_dev_names[0].split(':')[-1]
         log.debug("block_device_name = {!r}".format(self.block_device_name))
-        self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block", self.block_device_name)
-        if not os.path.exists(self.sysfs_block_device_path):
-            self.sysfs_block_device_path = os.path.join(self.sysfs_dev_path, "block:{}".format(self.block_device_name))
+        self.sysfs_block_device_path = os.path.join(os.path.sep, 'sys', 'block', self.block_device_name)
         log.debug("sysfs_block_device_path = {!r}".format(self.sysfs_block_device_path))
 
     def __repr__(self):
@@ -174,6 +163,18 @@ class Sysfs(object):
 
     @cached_method
     def _populate(self):
+        self._sd_structures = {} # hctl_str : list of device paths
+
+        for d in os.listdir(SYSFS_CLASS_ALL_DEVICE_PATH):
+            # listdir returns /dev/sda and /dev/sda1    
+            if not d.startswith("sd") or d[-1].isdigit():
+                continue
+            
+            dev_path = os.path.join(SYSFS_CLASS_ALL_DEVICE_PATH,d)
+            hctl = get_hctl_for_sd_device(dev_path)
+            self._sd_structures.setdefault(hctl, []).append(d)
+
+
         for hctl_str in os.listdir(SYSFS_CLASS_SCSI_DEVICE_PATH):
             dev_path = os.path.join(SYSFS_CLASS_SCSI_DEVICE_PATH, hctl_str, "device")
             try:
@@ -184,7 +185,7 @@ class Sysfs(object):
 
         for name, path in self._get_sysfs_block_devices_pathnames().items():
             dev = SysfsBlockDevice(name, path)
-            try:
+            try:    
                 devno = dev.get_block_devno()
                 if devno not in self.block_devno_to_device:
                     self.block_devno_to_device[devno] = dev
@@ -198,8 +199,8 @@ class Sysfs(object):
         elif scsi_type == SCSI_TYPE_ENCLOSURE:
             self.enclosures.append(SysfsEnclosureDevice(dev_path, HCTL.from_string(hctl_str)))
         elif scsi_type == SCSI_TYPE_DISK:
-            block_dev_names = get_sd_paths(dev_path)
-            if block_dev_names == []:
+            block_dev_names = self._sd_structures.get(hctl_str)
+            if not block_dev_names:
                 self.sg_disks.append(SysfsSCSIDevice(dev_path, HCTL.from_string(hctl_str)))
             else:
                 sd_disk = SysfsSDDisk(dev_path, HCTL.from_string(hctl_str), block_dev_names)
@@ -207,6 +208,7 @@ class Sysfs(object):
                 self.sg_disks.append(sd_disk)
                 self.block_devices.append(sd_disk)
                 self.block_devno_to_device[sd_disk.get_block_devno()] = sd_disk
+        
 
     def _get_sysfs_block_devices_pathnames(self):
         """:returns a dict of name:path"""

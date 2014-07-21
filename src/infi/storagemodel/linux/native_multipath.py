@@ -128,7 +128,7 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         from infi.multipathtools.connection import UnixDomainSocket
         client = MultipathClient(UnixDomainSocket(timeout=120))
         if not client.is_running():
-            logger.info("MultipathD is not running")
+            logger.debug("MultipathD is not running")
             return []
 
         try:

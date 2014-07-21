@@ -128,11 +128,39 @@ class InquiryInformationMixin(object):
     @check_for_scsi_errors
     def get_scsi_standard_inquiry(self):
         """:returns: the standard inquiry data"""
-        from infi.asi.cdb.inquiry.standard import StandardInquiryCommand
+        from infi.asi import AsiCheckConditionError
         from infi.asi.coroutines.sync_adapter import sync_wait
-        with self.asi_context() as asi:
-            command = StandardInquiryCommand()
-            return sync_wait(command.execute(asi))
+        from infi.asi.cdb.inquiry.standard import StandardInquiryCommand, STANDARD_INQUIRY_MINIMAL_DATA_LENGTH
+
+        def _get_scsi_standard_inquiry_the_fastest_way(allocation_length=219):
+            try:
+                with self.asi_context() as asi:
+                    command = StandardInquiryCommand(allocation_length=allocation_length)
+                    return sync_wait(command.execute(asi))
+            except AsiCheckConditionError, e:
+                (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
+                if (key, code) == ('ILLEGAL_REQUEST', 'INVALID FIELD IN CDB'):
+                    return
+                raise
+
+        def _get_scsi_standard_inquiry_the_right_way():
+            allocation_length = STANDARD_INQUIRY_MINIMAL_DATA_LENGTH
+            with self.asi_context() as asi:
+                command = StandardInquiryCommand(allocation_length=allocation_length)
+                result = sync_wait(command.execute(asi))
+                if result.additional_length >= 0:
+                    allocation_length += result.additional_length
+                    command = StandardInquiryCommand(allocation_length=allocation_length)
+                    result = sync_wait(command.execute(asi))
+            return result
+
+        # the correct and safe way to get all the inquiry data is to ask for the mandatory 96 bytes
+        # then look at the allocation lenght and ask again to get the extended data
+        # other tools just ask for a large allocation length; until now, we did that approach and asked for 260 bytes
+        # but we did not handle the case in which is was to much and the device returned INVALID FIELD IN CDB
+        # so now we first ask for a large buffer of 254 bytes like other tools, and if that doesn't work
+        # then we fail-back to the safe way
+        return _get_scsi_standard_inquiry_the_fastest_way() or _get_scsi_standard_inquiry_the_right_way()
 
     @check_for_scsi_errors
     def get_scsi_test_unit_ready(self):
