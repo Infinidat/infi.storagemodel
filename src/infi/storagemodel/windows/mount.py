@@ -32,7 +32,7 @@ class WindowsMountManager(mount.MountManager):
         return mounts
 
     def is_mount_point_in_use(self, mount_point):
-        return any([mount_point == mount.get_mount_point() for mount in self.get_mounts()])
+        return any(mount_point == mount.get_mount_point() for mount in self.get_mounts())
 
     def is_device_mounted(self, device):
         # TODO we only support partitions
@@ -66,14 +66,14 @@ class WindowsMountRepository(mount.MountRepository):
         return [WindowsPersistentMount(mount) for mount in WindowsMountManager().get_mounts()]
 
     def remove_persistent_mountpoint(self, persistent_mount):
-        if all([mount.get_block_access_path() != item.get_block_access_path() and
-                mount.get_mount_point() != item.get_mount_point() for item in self.get_all_persistent_mounts()]):
+        if all(mount.get_block_access_path() != item.get_block_access_path() and
+               mount.get_mount_point() != item.get_mount_point() for item in self.get_all_persistent_mounts()):
                 return
         return WindowsMountManager().unmount(persistent_mount)
 
     def add_persistent_mountpoint(self, mount):
-        if any([mount.get_block_access_path() == item.get_block_access_path() and
-                mount.get_mount_point() == item.get_mount_point() for item in self.get_all_persistent_mounts()]):
+        if any(mount.get_block_access_path() == item.get_block_access_path() and
+               mount.get_mount_point() == item.get_mount_point() for item in self.get_all_persistent_mounts()):
                 return
         return WindowsMountManager().mount(mount)
 

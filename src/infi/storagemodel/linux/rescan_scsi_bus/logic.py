@@ -49,7 +49,7 @@ def lun_scan(host, channel, target, lun):
 @func_logger
 def handle_add_devices(host, channel, target, missing_luns):
     if is_there_a_bug_in_sysfs_async_scanning():
-        return all([scsi_add_single_device(host, channel, target, lun) for lun in missing_luns])
+        return all(scsi_add_single_device(host, channel, target, lun) for lun in missing_luns)
     return scsi_host_scan(host)
 
 @func_logger

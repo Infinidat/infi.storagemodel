@@ -23,9 +23,9 @@ class InfinidatVolumeExists(object):
             except (AsiException, InstructError):
                 log.exception("failed to identify Infinidat volume, returning False now as this should be fixed by rescan")
                 return False
-        return any([self.volume_id == device.get_vendor().get_naa().get_volume_id() and
-                    self.system_serial == device.get_vendor().get_naa().get_system_serial()
-                    for device in devices_to_query])
+        return any(self.volume_id == device.get_vendor().get_naa().get_volume_id() and
+                   self.system_serial == device.get_vendor().get_naa().get_system_serial()
+                   for device in devices_to_query)
 
     def __repr__(self):
         return "<InfinidatVolumeExists(system_serial={!r}, volume_id={!r})>".format(self.system_serial,
