@@ -2,27 +2,26 @@
 Created on Jul 11, 2014
 @author: aviad@infinidat.com
 '''
-from infi.storagemodel import get_storage_model
-import sys
 
-if __name__ == '__main__':
-    pass
+def main():
+    from infi.storagemodel import get_storage_model
+    import sys
 
     print("\nPython Inquiry utility, Version V0.1 (using storagemodel by INFINIDAT)\n")
     print("-----------------------------------------------------------------------------------------------------------------------------------------------")
     print("DEVICE          \t:VEND     \t:PROD            \t:REV   \t:SER NUM                         \t:CAP(kb)            \t:PATHS")
     print("-----------------------------------------------------------------------------------------------------------------------------------------------")
-    
-    
-    model = get_storage_model();
+
+
+    model = get_storage_model()
     scsi = model.get_scsi()
     mpio = model.get_native_multipath()
     mpaths = mpio.get_all_multipath_block_devices()
-    block_devices = scsi.get_all_scsi_block_devices()    
+    block_devices = scsi.get_all_scsi_block_devices()
     non_mp_disks = mpio.filter_non_multipath_scsi_block_devices(block_devices)
-    
+
     all_devices= non_mp_disks + mpaths
-    
+
     for dev2dis in all_devices:
         sys.stdout.write("%-16s\t" % dev2dis.get_display_name())
         sys.stdout.write(":%-9s\t" % dev2dis.get_scsi_vendor_id())
@@ -34,4 +33,7 @@ if __name__ == '__main__':
             sys.stdout.write(":%s\t\n" % len(dev2dis.get_paths()))
         else:
             sys.stdout.write(":1\t\n")
-        
+
+
+if __name__ == '__main__':
+    main()
