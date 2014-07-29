@@ -13,7 +13,7 @@ class SophisticatedMixin(object):
         :rtype: string"""
         try:
             return self._get_key_from_json_page('ip', 0xcb)
-        except:
+        except InquiryException:
             return self.get_device_identification_page().get_vendor_specific_dict()['ip']
 
     @cached_method
@@ -22,7 +22,7 @@ class SophisticatedMixin(object):
         :rtype: string"""
         try:
             return self._get_key_from_json_page('port', 0xcb)
-        except:
+        except InquiryException:
             vendor_specific_dict = self.get_device_identification_page().get_vendor_specific_dict()
         return int(vendor_specific_dict.get('port', str(DEFAULT_PORT)))
 
