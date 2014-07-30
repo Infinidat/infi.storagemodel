@@ -40,8 +40,8 @@ class DiskExists(object):
         devices = mp_devices + non_mp_devices
         for device in devices:
             device.get_scsi_test_unit_ready()
-        return any([device.get_scsi_serial_number() == self.scsi_serial_number
-                    for device in devices])
+        return any(device.get_scsi_serial_number() == self.scsi_serial_number
+                   for device in devices)
 
     def __repr__(self):
         return "<DiskExists: {}>".format(self.scsi_serial_number)

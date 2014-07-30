@@ -109,7 +109,7 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         self.sysfs = sysfs
 
     def _is_device_active(self, multipath_device):
-        return any([any([path.state == 'active' for path in group.paths]) for group in multipath_device.path_groups])
+        return any(any(path.state == 'active' for path in group.paths) for group in multipath_device.path_groups)
 
     def _get_list_of_active_devices(self, client):
         from infi.multipathtools.errors import ConnectionError, TimeoutExpired
