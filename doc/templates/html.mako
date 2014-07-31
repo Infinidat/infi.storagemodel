@@ -77,7 +77,6 @@
   def module_url(m):
       """
       Returns a URL for `m`, which must be an instance of `Module`.
-      Also, `m` must be a submodule of the module being documented.
 
       Namely, '.' import separators are replaced with '/' URL
       separators. Also, packages are translated as directories
@@ -89,11 +88,16 @@
       if module.name == m.name:
           return ''
 
-      if len(link_prefix) > 0:
-          base = m.name
-      else:
-          base = m.name[len(module.name)+1:]
-      url = base.replace('.', '/')
+      # ignore common prefix of m and the current module
+      my_parts = module.name.split('.')
+      target_parts = m.name.split('.')
+      while my_parts and target_parts and my_parts[0] == target_parts[0]:
+          my_parts.pop(0)
+          target_parts.pop(0)
+      # Build relative url, moving up the hierarchy to the common ancestor and then down
+      url = '../' * (len(my_parts) - 1) + '/'.join(target_parts)
+
+      # Add filename
       if m.is_package():
           url += '/%s' % pdoc.html_package_name
       else:
@@ -117,20 +121,20 @@
   def lookup(refname):
       """
       Given a fully qualified identifier name, return its refname
-      with respect to the current module and a value for a `href`
+      with respect to the base module and a value for a `href`
       attribute. If `refname` is not in the public interface of
-      this module or its submodules, then `None` is returned for
+      the base module or its submodules, then `None` is returned for
       both return values. (Unless this module has enabled external
       linking.)
 
       In particular, this takes into account sub-modules and external
       identifiers. If `refname` is in the public API of the current
       module, then a local anchor link is given. If `refname` is in the
-      public API of a sub-module, then a link to a different page with
+      public API of another module, then a link to a different page with
       the appropriate anchor is given. Otherwise, `refname` is
       considered external and no link is used.
       """
-      d = module.find_ident(refname)
+      d = basemodule.find_ident(refname)
       if isinstance(d, pdoc.External):
           if is_external_linkable(refname):
               return d.refname, external_url(d.refname)
@@ -186,7 +190,7 @@
 <%def name="show_inheritance(d)">
   % if hasattr(d, 'inherits'):
       <p class="inheritance">
-         Inherited from
+         <strong>Inheritance:</strong>
          % if hasattr(d.inherits, 'cls'):
            <code>${link(d.inherits.cls.refname)}</code>.<code>${link(d.inherits.refname)}</code>
          % else:
@@ -343,6 +347,7 @@
         inst_vars = c.instance_variables()
         methods = c.methods()
         mro = c.module.mro(c)[1:-1]
+        descendents = c.module.descendents(c)
       %>
       <div class="item">
         <p id="${c.refname}" class="name">
@@ -357,9 +362,17 @@
 
         <div class="class">
           % if len(mro) > 0:
-              <h4>Parent classes</h4>
+              <h4>Ancestors (in MRO)</h4>
               <ul class="class_list">
               % for cls in mro:
+                <li>${link(cls.refname)}</li>
+              % endfor
+              </ul>
+          % endif
+          % if len(descendents) > 0:
+              <h4>Descendents</h4>
+              <ul class="class_list">
+              % for cls in descendents:
                 <li>${link(cls.refname)}</li>
               % endfor
               </ul>
@@ -406,6 +419,7 @@
   % for m in submodules:
       <div class="item">
         <p class="name">${link(m.refname)}</p>
+        ${show_desc(m, limit=300)}
       </div>
   % endfor
   % endif

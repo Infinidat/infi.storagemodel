@@ -25,7 +25,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo']
+#extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -56,17 +56,19 @@ def run(cmd):
 curdir = os.path.abspath(os.curdir)
 pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
-if not os.path.exists(".cache"):
-    run("mkdir .cache")
-run("easy_install -U zc.buildout")
-run("python bootstrap.py -d")
-run("bin/buildout buildout:develop= install setup.py __version__.py")
-run("bin/buildout install development-scripts")
+
+run("sudo easy_install -U infi.projector")
+run("projector devenv build")
+
+# Clone our customized version of pdoc
+run("rm -rf pdoc")
+run("git clone https://github.com/ishirav/pdoc.git pdoc")
+
+# Use pdoc to build the docs instead of sphinx
+run("bin/python pdoc/scripts/pdoc --html --html-dir %s/_build/html --html-no-source --all-submodules --overwrite --template-dir %s/templates infi.storagemodel" % (curdir, curdir))
+
 os.chdir(curdir)
 
-sys.path.append(os.path.join(pardir, "src"))
-for egg in os.listdir(os.path.join(pardir, "eggs")):
-  sys.path.append(os.path.join(pardir, "eggs", egg))
 ###
 
 # The version info for the project you're documenting, acts as replacement for
