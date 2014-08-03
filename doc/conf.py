@@ -57,14 +57,18 @@ curdir = os.path.abspath(os.curdir)
 pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
 
-run("easy_install -U infi.projector")
+# Install requirements and build the project
+run("easy_install -U infi.projector argparse mako markdown")
 run("projector devenv build")
 
 # Clone our customized version of pdoc
 run("rm -rf pdoc")
 run("git clone https://github.com/ishirav/pdoc.git pdoc")
 
-# Use pdoc to build the docs instead of sphinx
+# A hack to make the pdoc script find the pdoc module
+run("ln -s ../pdoc/pdoc src/pdoc")
+
+# Build the docs using pdoc
 run("bin/python pdoc/scripts/pdoc --html --html-dir %s/_build/html --html-no-source --all-submodules --overwrite --template-dir %s/templates infi.storagemodel" % (curdir, curdir))
 
 os.chdir(curdir)
