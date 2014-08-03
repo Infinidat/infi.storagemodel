@@ -80,6 +80,7 @@ os.chdir(curdir)
 # built documents.
 #
 # The short X.Y version.
+sys.path.append(curdir + '/src')
 from infi.storagemodel.__version__ import __version__
 version = __version__
 # The full version, including alpha/beta/rc tags.
