@@ -73,6 +73,11 @@ run("bin/python pdoc/scripts/pdoc --html --html-dir %s/_build/html --html-no-sou
 
 os.chdir(curdir)
 
+# Add everything to the pythonpath so that Sphinx can find it
+sys.path.append(os.path.join(pardir, "src"))
+for egg in os.listdir(os.path.join(pardir, "eggs")):
+  sys.path.append(os.path.join(pardir, "eggs", egg))
+
 ###
 
 # The version info for the project you're documenting, acts as replacement for
@@ -80,7 +85,6 @@ os.chdir(curdir)
 # built documents.
 #
 # The short X.Y version.
-sys.path.append(curdir + '/src')
 from infi.storagemodel.__version__ import __version__
 version = __version__
 # The full version, including alpha/beta/rc tags.
