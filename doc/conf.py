@@ -57,7 +57,7 @@ curdir = os.path.abspath(os.curdir)
 pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
 
-run("sudo easy_install -U infi.projector")
+run("easy_install -U infi.projector")
 run("projector devenv build")
 
 # Clone our customized version of pdoc
