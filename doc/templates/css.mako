@@ -2,17 +2,13 @@
   html, body {
     margin: 0;
     padding: 0;
-    background: #ddd;
+    background: #fdfdfd;
     height: 100%;
   }
 
   #container {
-    width: 840px;
-    background-color: #fdfdfd;
     color: #111;
-    margin: 0 auto;
-    border-left: 1px solid #000;
-    border-right: 1px solid #000;
+    margin: 0;
     padding: 10px 25px;
     min-height: 100%;
   }
@@ -26,7 +22,7 @@
     display: block;
     position: fixed;
     top: 5px;
-    left: 5px;
+    right: 5px;
     font-size: 140%;
   }
 

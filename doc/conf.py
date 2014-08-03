@@ -80,6 +80,30 @@ for egg in os.listdir(os.path.join(pardir, "eggs")):
 
 ###
 
+# Build main index
+
+def find_all_dirs(root):
+    for path,dirs,files in os.walk(root):
+        for d in dirs:
+            yield os.path.join(path, d)
+
+def get_all_module_names():
+    import infi.storagemodel
+    path = infi.storagemodel.__path__[0]
+    prefix_length = len(os.path.dirname(os.path.dirname(path)))
+    names = [d[prefix_length+1:].replace('/', '.') for d in find_all_dirs(path)]
+    names.append('infi.storagemodel')
+    return sorted(names)
+
+def build_index_file():
+    from mako.template import Template
+    html = Template(filename='templates/index.mako').render(modules=get_all_module_names())
+    with open('_build/html/index.html', 'w') as f:
+        f.write(html)
+
+build_index_file()
+
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
