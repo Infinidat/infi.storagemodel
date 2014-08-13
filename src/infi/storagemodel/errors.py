@@ -69,7 +69,7 @@ class LabelNotSupported(StorageModelError):
     pass
 
 
-_CHECK_CONDITIONS_TO_CHECK = [
+CHECK_CONDITIONS_TO_CHECK = [
     # 2-tuple of (sense_key, additional_sense_code)
     ('UNIT_ATTENTION', 'POWER ON OCCURRED'),
     ('UNIT_ATTENTION', 'REPORTED LUNS DATA HAS CHANGED'),
