@@ -4,9 +4,21 @@ from itertools import product
 
 logger = getLogger(__name__)
 
+__all__ = [
+    'PredicateList',
+    'DiskExists',
+    'DiskNotExists',
+    'MultipleFiberChannelMappingExist',
+    'FiberChannelMappingExists',
+    'MultipleFiberChannelMappingNotExist',
+    'FiberChannelMappingNotExists',
+    'WaitForNothing',
+    'ScsiDevicesAreReady',
+    'MultipathDevicesAreReady'
+]
 
 class PredicateList(object):
-    """:returns: True if all predicates in a given list return True"""
+    """Returns True if all predicates in a given list return True"""
     def __init__(self, list_of_predicates):
         super(PredicateList, self).__init__()
         self._list_of_predicates = list_of_predicates
@@ -25,7 +37,7 @@ class PredicateList(object):
 
 
 class DiskExists(object):
-    """:returns: True if a disk was discovered with scsi_serial_number"""
+    """Returns True if a disk was discovered with the given scsi_serial_number"""
 
     def __init__(self, scsi_serial_number):
         super(DiskExists, self).__init__()
@@ -48,7 +60,7 @@ class DiskExists(object):
 
 
 class DiskNotExists(DiskExists):
-    """:returns: True if a disk with scsi_serial_number has gone away"""
+    """Returns True if a disk with the given scsi_serial_number has gone away"""
 
     def __call__(self):
         return not super(DiskNotExists, self).__call__()
@@ -58,6 +70,7 @@ class DiskNotExists(DiskExists):
 
 
 def build_connectivity_object_from_wwn(initiator_wwn, target_wwn):
+    """Returns a `infi.storagemodel.connectivity.FCConnectivity` instance for the given WWNs"""
     from infi.hbaapi import Port
     from ..connectivity import FCConnectivity
     local_port = Port()
@@ -68,7 +81,7 @@ def build_connectivity_object_from_wwn(initiator_wwn, target_wwn):
 
 
 class MultipleFiberChannelMappingExist(object):
-    """:returns: True if a lun mapping was discovered"""
+    """Returns True if a lun mapping was discovered"""
     def __init__(self, initiators, targets, lun_numbers):
 
         super(MultipleFiberChannelMappingExist, self).__init__()
@@ -133,14 +146,14 @@ class MultipleFiberChannelMappingExist(object):
 
 
 class FiberChannelMappingExists(MultipleFiberChannelMappingExist):
-    """:returns: True if a lun mapping was discovered"""
+    """Returns True if a lun mapping was discovered"""
 
     def __init__(self, initiator_wwn, target_wwn, lun_number):
         super(FiberChannelMappingExists, self).__init__([initiator_wwn], [target_wwn], [lun_number])
 
 
 class MultipleFiberChannelMappingNotExist(MultipleFiberChannelMappingExist):
-    """:returns: True if a lun un-mapping was discovered"""
+    """Returns True if a lun un-mapping was discovered"""
 
     def __call__(self):
         from .. import get_storage_model
@@ -166,13 +179,15 @@ class MultipleFiberChannelMappingNotExist(MultipleFiberChannelMappingExist):
 
 
 class FiberChannelMappingNotExists(MultipleFiberChannelMappingNotExist):
-    """:returns: True if a lun un-mapping was discovered"""
+    """Returns True if a lun un-mapping was discovered"""
 
     def __init__(self, initiator_wwn, target_wwn, lun_number):
         super(FiberChannelMappingNotExists, self).__init__([initiator_wwn], [target_wwn], [lun_number])
 
 
 class WaitForNothing(object):
+    """Returns True immediately without waiting for anything"""
+
     def __call__(self):
         return True
 
@@ -181,6 +196,8 @@ class WaitForNothing(object):
 
 
 class ScsiDevicesAreReady(object):
+    """Returns True when all SCSI devices are ready"""
+
     def __call__(self):
         from infi.storagemodel import get_storage_model
         model = get_storage_model()
@@ -194,6 +211,8 @@ class ScsiDevicesAreReady(object):
 
 
 class MultipathDevicesAreReady(object):
+    """Returns True when all multipath devices are ready"""
+
     def __call__(self):
         from infi.storagemodel import get_storage_model
         model = get_storage_model()

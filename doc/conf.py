@@ -25,7 +25,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo']
+#extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.todo']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -56,18 +56,53 @@ def run(cmd):
 curdir = os.path.abspath(os.curdir)
 pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
-if not os.path.exists(".cache"):
-    run("mkdir .cache")
-run("easy_install -U zc.buildout")
-run("python bootstrap.py -d")
-run("bin/buildout buildout:develop= install setup.py __version__.py")
-run("bin/buildout install development-scripts")
+
+# Install requirements and build the project
+run("easy_install -U infi.projector argparse mako markdown")
+run("projector devenv build")
+
+# Clone our customized version of pdoc
+run("rm -rf pdoc")
+run("git clone https://github.com/ishirav/pdoc.git pdoc")
+
+# A hack to make the pdoc script find the pdoc module
+run("ln -s ../pdoc/pdoc src/pdoc")
+
+# Build the docs using pdoc
+run("bin/python pdoc/scripts/pdoc --html --html-dir %s/_build/html --html-no-source --all-submodules --overwrite --template-dir %s/templates infi.storagemodel" % (curdir, curdir))
+
 os.chdir(curdir)
 
+# Add everything to the pythonpath so that Sphinx can find it
 sys.path.append(os.path.join(pardir, "src"))
 for egg in os.listdir(os.path.join(pardir, "eggs")):
   sys.path.append(os.path.join(pardir, "eggs", egg))
+
 ###
+
+# Build main index
+
+def find_all_dirs(root):
+    for path,dirs,files in os.walk(root):
+        for d in dirs:
+            yield os.path.join(path, d)
+
+def get_all_module_names():
+    import infi.storagemodel
+    path = infi.storagemodel.__path__[0]
+    prefix_length = len(os.path.dirname(os.path.dirname(path)))
+    names = [d[prefix_length+1:].replace('/', '.') for d in find_all_dirs(path)]
+    names.append('infi.storagemodel')
+    return sorted(names)
+
+def build_index_file():
+    from mako.template import Template
+    html = Template(filename='templates/index.mako').render(modules=get_all_module_names())
+    with open('_build/html/index.html', 'w') as f:
+        f.write(html)
+
+build_index_file()
+
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

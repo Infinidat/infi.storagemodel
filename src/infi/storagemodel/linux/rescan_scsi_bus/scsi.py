@@ -54,7 +54,7 @@ def remove_device_via_sysfs(host, channel, target, lun):
     return True
 
 def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
-    """:param queue: either a gipc pipe or a multiprocessing queue"""
+    """ **queue** - either a gipc pipe or a multiprocessing queue """
     from infi.asi.coroutines.sync_adapter import sync_wait
 
     @check_for_scsi_errors
@@ -101,7 +101,7 @@ def get_pipe_context():
         yield reader, writer
 
 def get_timeout():
-    """:returns: the timeout object and exception class"""
+    """ Returns the timeout object and exception class"""
     try:  # gipc-based implementation
         from gevent import Timeout
         return Timeout(TIMEOUT_IN_SEC), Timeout
