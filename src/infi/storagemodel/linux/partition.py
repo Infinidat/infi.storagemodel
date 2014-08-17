@@ -86,7 +86,7 @@ class LinuxMBRPartitionTable(LinuxPartitionTable, partition.MBRPartitionTable):
         disk_drive._get_parted_disk_drive().create_a_new_partition_table("msdos", alignment_in_bytes)
         return cls(disk_drive)
 
-class LinuxGPTPartitionTable(LinuxPartitionTable, partition.GPTPartitionTable):
+class LinuxGUIDPartitionTable(LinuxPartitionTable, partition.GUIDPartitionTable):
     @classmethod
     def create_partition_table(cls, disk_drive, alignment_in_bytes=None):
         disk_drive._get_parted_disk_drive().create_a_new_partition_table("gpt", alignment_in_bytes)
