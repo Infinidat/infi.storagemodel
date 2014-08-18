@@ -6,8 +6,8 @@ from infi.asi.cdb.inquiry.vpd_pages import EVPDInquiryCommand
 class JSONInquiryPageBuffer(Buffer):
     peripheral_device = buffer_field(where=bytes_ref[0:], type=PeripheralDeviceDataBuffer)
     page_code = be_uint_field(where=bytes_ref[1])
-    page_length = be_uint_field(where=bytes_ref[3], set_before_pack=len_ref(self_ref.json_data))
-    json_data = json_field(where=bytes_ref[4:4+page_length])
+    page_length = be_uint_field(where=bytes_ref[2:4], set_before_pack=len_ref(self_ref.json_data))
+    json_data = json_field(where=bytes_ref[4:4+page_length], unpack_after=page_length)
 
 
 class JSONInquiryPageCommand(EVPDInquiryCommand):
