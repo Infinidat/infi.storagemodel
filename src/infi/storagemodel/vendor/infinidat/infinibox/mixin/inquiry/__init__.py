@@ -93,10 +93,12 @@ class InfiniBoxInquiryMixin(object):
 
     def _get_json_inquiry_page(self, page=0xc5):
         from infi.asi import AsiCheckConditionError
+        from infi.storagemodel.vendor.infinidat.infinibox.json_page import JSONInquiryPageBuffer
         try:
-            from ...json_page import JSONInquiryPageData
-            page = self.device.get_scsi_inquiry_pages()[page]
-            return JSONInquiryPageData.create_from_string(page.write_to_string(page))
+            unknown_page = self.device.get_scsi_inquiry_pages()[page]
+            json_page = JSONInquiryPageBuffer()
+            json_page.unpack(unknown_page.pack())
+            return json_page
         except AsiCheckConditionError, error:
             if _is_exception_of_unsupported_inquiry_page(error):
                 raise chain(InquiryException("JSON Inquiry command error"))
@@ -104,10 +106,12 @@ class InfiniBoxInquiryMixin(object):
 
     def _get_string_inquiry_page(self, page):
         from infi.asi import AsiCheckConditionError
+        from infi.storagemodel.vendor.infinidat.infinibox.string_page import StringInquiryPageBuffer
         try:
-            from ...string_page import StringInquiryPageData
-            page = self.device.get_scsi_inquiry_pages()[page]
-            return StringInquiryPageData.create_from_string(page.write_to_string(page))
+            unknown_page = self.device.get_scsi_inquiry_pages()[page]
+            string_page = StringInquiryPageBuffer()
+            string_page.unpack(unknown_page.pack())
+            return string_page
         except KeyError:
             raise chain(InquiryException("Inquiry command error"))
         except AsiCheckConditionError, error:
@@ -116,7 +120,7 @@ class InfiniBoxInquiryMixin(object):
             raise
 
     def _get_json_inquiry_data(self, page):
-        return self._get_json_inquiry_page(page).json_serialized_data
+        return self._get_json_inquiry_page(page).json_data
 
     def _get_string_inquiry_data(self, page):
         return self._get_string_inquiry_page(page).string.strip()
@@ -124,13 +128,10 @@ class InfiniBoxInquiryMixin(object):
     @cached_method
     def get_json_data(self, page=0xc5):
         """ Returns the json inquiry data from the system as a `dict` """
-        from json import loads
-        raw_data = self._get_json_inquiry_data(page)
         try:
-            logger.debug("Got JSON Inquiry data: {}".format(raw_data))
-            return loads(raw_data)
+            return self._get_json_inquiry_data(page)
         except ValueError:
-            logger.debug("Inquiry response is invalid JSON format")
+            logger.exception("Inquiry response is invalid JSON format")
             raise chain(InquiryException("ValueError"))
 
     @cached_method
