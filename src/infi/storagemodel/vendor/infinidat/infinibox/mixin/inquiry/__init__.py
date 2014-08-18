@@ -13,7 +13,7 @@ class DeviceIdentificationPage(object):
         self._page = page
 
     def is_designator_vendor_specific(self, designator):
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import VendorSpecificDesignator
+        from infi.asi.cdb.inquiry.vpd_pages.designators import VendorSpecificDesignator
         return isinstance(designator, VendorSpecificDesignator)
 
     def filter_vendor_specific_designators(self):
@@ -30,7 +30,7 @@ class DeviceIdentificationPage(object):
     @cached_method
     def get_naa(self):
         """ Returns the Infinidat NAA (`infi.storagemodel.vendor.infinidat.infinibox.naa.InfinidatNAA`) """
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification import designators
+        from infi.asi.cdb.inquiry.vpd_pages import designators
         naa = designators.NAA_IEEE_Registered_Extended_Designator
         from ...naa import InfinidatNAA
         for designator in self._page.designators_list:
@@ -40,7 +40,7 @@ class DeviceIdentificationPage(object):
     @cached_method
     def get_target_port_group(self):
         """ Returns the target port group number. """
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import TargetPortGroupDesignator
+        from infi.asi.cdb.inquiry.vpd_pages.designators import TargetPortGroupDesignator
         for designator in self._page.designators_list:
             if isinstance(designator, TargetPortGroupDesignator):
                 return designator.target_port_group
@@ -48,7 +48,7 @@ class DeviceIdentificationPage(object):
     @cached_method
     def get_relative_target_port_group(self):
         """ Returns the relative target port group number. """
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import RelativeTargetPortDesignator
+        from infi.asi.cdb.inquiry.vpd_pages.designators import RelativeTargetPortDesignator
         for designator in self._page.designators_list:
             if isinstance(designator, RelativeTargetPortDesignator):
                 return designator.relative_target_port_identifier
