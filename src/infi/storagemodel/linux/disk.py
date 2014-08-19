@@ -23,12 +23,12 @@ class LinuxDiskDrive(disk.DiskDrive):
 
     @cached_method
     def get_partition_table(self):
-        from .partition import LinuxGPTPartitionTable, LinuxMBRPartitionTable
+        from .partition import LinuxGUIDPartitionTable, LinuxMBRPartitionTable
         parted = self._get_parted_disk_drive()
         if not parted.has_partition_table():
             raise disk.NoPartitionTable()
         if parted.get_partition_table_type() == "gpt":
-            return LinuxGPTPartitionTable(self)
+            return LinuxGUIDPartitionTable(self)
         elif parted.get_partition_table_type() == "msdos":
             return LinuxMBRPartitionTable(self)
         raise disk.NoPartitionTable()
@@ -39,9 +39,9 @@ class LinuxDiskDrive(disk.DiskDrive):
     def delete_partition_table(self):
         raise NotImplementedError()
 
-    def create_gpt_partition_table(self, alignment_in_bytes=None):
-        from .partition import LinuxGPTPartitionTable
-        return LinuxGPTPartitionTable.create_partition_table(self, alignment_in_bytes)
+    def create_guid_partition_table(self, alignment_in_bytes=None):
+        from .partition import LinuxGUIDPartitionTable
+        return LinuxGUIDPartitionTable.create_partition_table(self, alignment_in_bytes)
 
     def create_mbr_partition_table(self, alignment_in_bytes=None):
         from .partition import LinuxMBRPartitionTable

@@ -38,8 +38,8 @@ class DiskDrive(object):
         """Creates an MBR partition table and returns it (`infi.storagemodel.base.partition.MBRPartitionTable`)"""
         raise NotImplementedError()
 
-    def create_gpt_partition_table(self, alignment_in_bytes=None):  # pragma: no cover
-        """Creates a GPT partition table and returns it (`infi.storagemodel.base.partition.GPTPartitionTable`)"""
+    def create_guid_partition_table(self, alignment_in_bytes=None):  # pragma: no cover
+        """Creates a GUID partition table and returns it (`infi.storagemodel.base.partition.GUIDPartitionTable`)"""
         raise NotImplementedError()
 
     @cached_method

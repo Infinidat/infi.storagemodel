@@ -24,9 +24,9 @@ class WindowsDiskDrive(disk.DiskDrive):
         return len(self._disk_object.get_partitions()) == 0
 
     def get_partition_table(self):
-        from .partition import WindowsMBRPartitionTable, WindowsGPTPartitionTable
+        from .partition import WindowsMBRPartitionTable, WindowsGUIDPartitionTable
         if self._disk_object.is_gpt():
-            return WindowsGPTPartitionTable(self)
+            return WindowsGUIDPartitionTable(self)
         return WindowsMBRPartitionTable(self)
 
     def delete_partition_table(self):
@@ -36,9 +36,9 @@ class WindowsDiskDrive(disk.DiskDrive):
         from .partition import WindowsMBRPartitionTable
         return WindowsMBRPartitionTable.create_partition_table(self, alignment_in_bytes)
 
-    def create_gpt_partition_table(self, alignment_in_bytes=None):
-        from .partition import WindowsGPTPartitionTable
-        return WindowsGPTPartitionTable.create_partition_table(self, alignment_in_bytes)
+    def create_guid_partition_table(self, alignment_in_bytes=None):
+        from .partition import WindowsGUIDPartitionTable
+        return WindowsGUIDPartitionTable.create_partition_table(self, alignment_in_bytes)
 
     def is_online(self):
         return self._disk_object.is_online()

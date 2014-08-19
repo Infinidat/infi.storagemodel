@@ -33,7 +33,7 @@ class UnauthenticatedController(scsi_controller_class):
                         u'vol_entity_id': 0,
                     },
                 }
-        return dumps(pages[page])
+        return pages[page]
 
     def get_naa(self):
         return self
@@ -74,7 +74,7 @@ class MappedVolumed(scsi_block_class):
                     },
                 }
 
-        return dumps(pages[page])
+        return pages[page]
 
     def get_naa(self):
         return self
@@ -90,11 +90,11 @@ class LegacyDevice(object):
 class NewDevice(object):
     def get_scsi_inquiry_pages(self):
         from infi.asi.cdb.inquiry import PeripheralDeviceDataBuffer
-        from ...string_page import StringInquiryPageData
+        from infi.storagemodel.vendor.infinidat.infinibox.string_page import StringInquiryPageBuffer
         device = PeripheralDeviceDataBuffer(qualifier=0, type=0)
-        volume_name = StringInquiryPageData(peripheral_device=device, page_code=0xc7, string="volume_name")
-        host_name = StringInquiryPageData(peripheral_device=device, page_code=0xc8, string="host_name")
-        cluster_name = StringInquiryPageData(peripheral_device=device, page_code=0xc9, string="cluster_name")
+        volume_name = StringInquiryPageBuffer(peripheral_device=device, page_code=0xc7, string="volume_name")
+        host_name = StringInquiryPageBuffer(peripheral_device=device, page_code=0xc8, string="host_name")
+        cluster_name = StringInquiryPageBuffer(peripheral_device=device, page_code=0xc9, string="cluster_name")
         return {
             0xc7: volume_name,
             0xc8: host_name,

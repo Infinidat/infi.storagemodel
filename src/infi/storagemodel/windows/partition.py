@@ -25,7 +25,7 @@ class WindowsPartitionTable(object):
         self._disk_device._disk_object.create_first_partition(alignment_in_bytes)
         return self.get_partitions()[0]
 
-class WindowsGPTPartitionTable(WindowsPartitionTable, partition.GPTPartitionTable):
+class WindowsGUIDPartitionTable(WindowsPartitionTable, partition.GUIDPartitionTable):
     @classmethod
     def create_partition_table(cls, disk_drive, alignment_in_bytes=None):
         obj = cls(disk_drive)
@@ -35,7 +35,7 @@ class WindowsGPTPartitionTable(WindowsPartitionTable, partition.GPTPartitionTabl
     def get_partitions(self):
         return [WindowsGUIDPartition(self, partition) for partition in self._get_partitions()]
 
-class WindowsMBRPartitionTable(WindowsPartitionTable, partition.GPTPartitionTable):
+class WindowsMBRPartitionTable(WindowsPartitionTable, partition.MBRPartitionTable):
     @classmethod
     def create_partition_table(cls, disk_drive, alignment_in_bytes=None):
         obj = cls(disk_drive)

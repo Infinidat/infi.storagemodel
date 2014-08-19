@@ -13,7 +13,7 @@ class DeviceIdentificationPage(object):
         self._page = page
 
     def is_designator_vendor_specific(self, designator):
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import VendorSpecificDesignator
+        from infi.asi.cdb.inquiry.vpd_pages.designators import VendorSpecificDesignator
         return isinstance(designator, VendorSpecificDesignator)
 
     def filter_vendor_specific_designators(self):
@@ -30,7 +30,7 @@ class DeviceIdentificationPage(object):
     @cached_method
     def get_naa(self):
         """ Returns the Infinidat NAA (`infi.storagemodel.vendor.infinidat.infinibox.naa.InfinidatNAA`) """
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification import designators
+        from infi.asi.cdb.inquiry.vpd_pages import designators
         naa = designators.NAA_IEEE_Registered_Extended_Designator
         from ...naa import InfinidatNAA
         for designator in self._page.designators_list:
@@ -40,7 +40,7 @@ class DeviceIdentificationPage(object):
     @cached_method
     def get_target_port_group(self):
         """ Returns the target port group number. """
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import TargetPortGroupDesignator
+        from infi.asi.cdb.inquiry.vpd_pages.designators import TargetPortGroupDesignator
         for designator in self._page.designators_list:
             if isinstance(designator, TargetPortGroupDesignator):
                 return designator.target_port_group
@@ -48,7 +48,7 @@ class DeviceIdentificationPage(object):
     @cached_method
     def get_relative_target_port_group(self):
         """ Returns the relative target port group number. """
-        from infi.asi.cdb.inquiry.vpd_pages.device_identification.designators import RelativeTargetPortDesignator
+        from infi.asi.cdb.inquiry.vpd_pages.designators import RelativeTargetPortDesignator
         for designator in self._page.designators_list:
             if isinstance(designator, RelativeTargetPortDesignator):
                 return designator.relative_target_port_identifier
@@ -93,10 +93,12 @@ class InfiniBoxInquiryMixin(object):
 
     def _get_json_inquiry_page(self, page=0xc5):
         from infi.asi import AsiCheckConditionError
+        from infi.storagemodel.vendor.infinidat.infinibox.json_page import JSONInquiryPageBuffer
         try:
-            from ...json_page import JSONInquiryPageData
-            page = self.device.get_scsi_inquiry_pages()[page]
-            return JSONInquiryPageData.create_from_string(page.write_to_string(page))
+            unknown_page = self.device.get_scsi_inquiry_pages()[page]
+            json_page = JSONInquiryPageBuffer()
+            json_page.unpack(unknown_page.pack())
+            return json_page
         except AsiCheckConditionError, error:
             if _is_exception_of_unsupported_inquiry_page(error):
                 raise chain(InquiryException("JSON Inquiry command error"))
@@ -104,10 +106,12 @@ class InfiniBoxInquiryMixin(object):
 
     def _get_string_inquiry_page(self, page):
         from infi.asi import AsiCheckConditionError
+        from infi.storagemodel.vendor.infinidat.infinibox.string_page import StringInquiryPageBuffer
         try:
-            from ...string_page import StringInquiryPageData
-            page = self.device.get_scsi_inquiry_pages()[page]
-            return StringInquiryPageData.create_from_string(page.write_to_string(page))
+            unknown_page = self.device.get_scsi_inquiry_pages()[page]
+            string_page = StringInquiryPageBuffer()
+            string_page.unpack(unknown_page.pack())
+            return string_page
         except KeyError:
             raise chain(InquiryException("Inquiry command error"))
         except AsiCheckConditionError, error:
@@ -116,7 +120,7 @@ class InfiniBoxInquiryMixin(object):
             raise
 
     def _get_json_inquiry_data(self, page):
-        return self._get_json_inquiry_page(page).json_serialized_data
+        return self._get_json_inquiry_page(page).json_data
 
     def _get_string_inquiry_data(self, page):
         return self._get_string_inquiry_page(page).string.strip()
@@ -124,13 +128,10 @@ class InfiniBoxInquiryMixin(object):
     @cached_method
     def get_json_data(self, page=0xc5):
         """ Returns the json inquiry data from the system as a `dict` """
-        from json import loads
-        raw_data = self._get_json_inquiry_data(page)
         try:
-            logger.debug("Got JSON Inquiry data: {}".format(raw_data))
-            return loads(raw_data)
+            return self._get_json_inquiry_data(page)
         except ValueError:
-            logger.debug("Inquiry response is invalid JSON format")
+            logger.exception("Inquiry response is invalid JSON format")
             raise chain(InquiryException("ValueError"))
 
     @cached_method

@@ -110,7 +110,7 @@ class MBRPartitionTable(PartitionTable):
     # pylint: disable=W0223
     pass
 
-class GPTPartitionTable(PartitionTable):
+class GUIDPartitionTable(PartitionTable):
     """ Represents a GUID partition table """
     # pylint: disable=W0223
     # This methods below are overriden by platform-specific implementations
