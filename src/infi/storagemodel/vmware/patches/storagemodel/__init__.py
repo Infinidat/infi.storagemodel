@@ -178,7 +178,9 @@ class VMwareInquiryPagesDict(LazyImmutableDict):
 
     def _create_value(self, key):
         buffer = self._get_dict_of_vpd_pages_and_their_raw_buffer()[key]
-        return get_vpd_page_data(key).create_from_string(buffer)
+        page_buffer = get_vpd_page_data(key)
+        page_buffer.unpack(buffer)
+        return page_buffer
 
 
 class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
