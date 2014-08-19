@@ -201,13 +201,15 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
         return StandardInquiryData.create_from_string(buffer)
 
     def _get_supported_vpd_pages(self):
-        from infi.asi.cdb.inquiry.vpd_pages.supported_pages import SupportedVPDPagesData
+        from infi.asi.cdb.inquiry.vpd_pages.supported_pages import SupportedVPDPagesBuffer
         # http://vijava.sourceforge.net/vSphereAPIDoc/ver5/ReferenceGuide/vim.host.ScsiLun.DurableName.html
         def _filter(durable_name):
             return durable_name.namespace == 'GENERIC_VPD' and durable_name.namespaceId == 5 and \
                 durable_name.data[1] == 0
         byte_array = filter(_filter, self._scsi_lun_data_object.alternateName)[0].data
-        return SupportedVPDPagesData.create_from_string(byte_array_to_string(byte_array))
+        page_buffer = SupportedVPDPagesBuffer()
+        page_buffer.unpack(byte_array_to_string(byte_array))
+        return page_buffer
 
     def get_scsi_inquiry_pages(self):
         supported_pages = self._get_supported_vpd_pages()
