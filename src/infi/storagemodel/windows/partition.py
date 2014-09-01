@@ -83,7 +83,13 @@ class WindowsPartition(object):
         return WindowsFileSystem("NTFS")
 
     def resize(self, size_in_bytes):
-        self._partition_object.resize(size_in_bytes)
+        old_size = self.get_size_in_bytes():
+        if size_in_bytes > old_size:
+            self._partition_object.resize(size_in_bytes)
+            self._partition_object.get_volume().resize(size_in_bytes)
+        elif old_size > size_in_bytes:
+            self._partition_object.get_volume().resize(size_in_bytes)
+            self._partition_object.resize(size_in_bytes)
 
 class WindowsPrimaryPartition(WindowsPartition, partition.PrimaryPartition):
     pass
