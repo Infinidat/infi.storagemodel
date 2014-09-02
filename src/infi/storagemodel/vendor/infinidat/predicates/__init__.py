@@ -17,10 +17,10 @@ class InfinidatVolumeExists(object):
         for device in devices_to_query:
             device.get_scsi_test_unit_ready()
             try:
-                volume_id = device.get_vendor().get_naa().get_volume_id()
                 if 0x83 not in device.get_scsi_inquiry_pages():
                     log.debug("No inquiry page 0x83 for device {!r}, returning False now as this should be fixed by rescan".format(device))
                     return False
+                volume_id = device.get_vendor().get_naa().get_volume_id()
                 system_serial = device.get_vendor().get_naa().get_system_serial()
                 log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))
             except (AsiException, InstructError):
