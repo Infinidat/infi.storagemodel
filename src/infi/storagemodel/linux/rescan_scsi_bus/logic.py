@@ -31,8 +31,6 @@ def is_scsi_generic_device_online(sg_device):
         logger.error("{} Standard Inquiry {} raised an exception".format(getpid(), sg_device))
         return False
     logger.debug("{} Standard inquiry for sg device {}: {}".format(getpid(), standard_inquiry, sg_device))
-    if standard_inquiry.peripheral_device.qualifier != 0:
-        return False
     return True
 
 @func_logger
