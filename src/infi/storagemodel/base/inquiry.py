@@ -169,8 +169,6 @@ class InquiryInformationMixin(object):
                 return sync_wait(command.execute(asi))
             except AsiCheckConditionError, e:
                 (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
-                if key == 'NOT_READY':
-                    return False
-                if (key, code) == ('ILLEGAL_REQUEST', 'INVALID COMMAND OPERATION CODE'):
+                if key in ('NOT_READY', 'ILLEGAL_REQUEST'):
                     return False
                 raise
