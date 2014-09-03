@@ -13,10 +13,11 @@ logger = getLogger(__name__)
 @func_logger
 def get_luns_from_report_luns(host, channel, target):
     device_exists = lun_scan(host, channel, target, 0)
+    controller_lun_set = set([0]) # some devices, like IBM FlashSystem, does not return LUN0 in the list
     if device_exists:
         sg_device = get_scsi_generic_device(host, channel, target, 0)
-        return set(do_report_luns(sg_device).lun_list)
-    return set()
+        return controller_lun_set.union(set(do_report_luns(sg_device).lun_list))
+    return controller_lun_set
 
 @func_logger
 def is_scsi_generic_device_online(sg_device):
