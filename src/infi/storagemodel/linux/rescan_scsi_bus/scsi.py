@@ -171,12 +171,12 @@ def do_test_unit_ready(sg_device):
     from infi.asi.cdb.tur import TestUnitReadyCommand
     try:
         cdb = TestUnitReadyCommand()
+        return do_scsi_cdb(sg_device, cdb)
     except ScsiCheckConditionError, error:
         (key, code) = (error.sense_key, error.code_name)
         if key in ('NOT_READY', "ILLEGAL_REQUEST"):
             return False
         raise
-    return do_scsi_cdb(sg_device, cdb)
 
 @func_logger
 def do_standard_inquiry(sg_device):
