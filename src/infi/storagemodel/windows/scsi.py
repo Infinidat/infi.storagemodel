@@ -35,17 +35,18 @@ class WindowsSCSIModel(scsi.SCSIModel):
 
     @cached_method
     def get_all_scsi_block_devices(self):
-        from .native_multipath import MPIO_BUS_DRIVER_INSTANCE_ID
+        from .device_helpers import is_disk_drive_managed_by_windows_mpio, safe_get_physical_drive_number
+
         def _iter():
             for disk_drive in self.get_device_manager().disk_drives:
-                try:
-                    if disk_drive.parent._instance_id.lower() != MPIO_BUS_DRIVER_INSTANCE_ID:
-                        if not disk_drive.is_hidden():
-                            device = WindowsSCSIBlockDevice(disk_drive)
-                            if device.get_physical_drive_number() != -1:
-                                yield WindowsSCSIBlockDevice(disk_drive)
-                except KeyError:
-                    raise DeviceDisappeared("disk drive either does not have a parent or drive number, cannot be")
+                if is_disk_drive_managed_by_windows_mpio(disk_drive):
+                    continue
+                if disk_drive.is_hidden():
+                    continue
+                device = WindowsSCSIBlockDevice(disk_drive)
+                if safe_get_physical_drive_number(device) == -1:
+                    continue
+                yield WindowsSCSIBlockDevice(disk_drive)
         return list(_iter())
 
     @cached_method

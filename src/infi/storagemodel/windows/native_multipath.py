@@ -3,6 +3,7 @@ from infi.pyutils.lazy import cached_method, cached_property, LazyImmutableDict
 from ..base import multipath
 from ..errors import RescanIsNeeded, DeviceDisappeared
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
+from .device_helpers import is_disk_drive_managed_by_windows_mpio
 # pylint: disable=W0212,E1002
 
 class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
@@ -22,24 +23,20 @@ class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
         from infi.wmpio import get_load_balace_policies
         return get_load_balace_policies(self.wmi_client)
 
-MPIO_BUS_DRIVER_INSTANCE_ID = u"Root\\MPIO\\0000".lower()
 
 class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
     def get_all_multipath_block_devices(self):
         from infi.devicemanager import DeviceManager
         from infi.wmpio import WmiClient, get_multipath_devices
-
         device_manager = DeviceManager()
         wmi_client = WmiClient()
 
         def _iter():
             for disk_drive in device_manager.disk_drives:
-                try:
-                    if disk_drive.parent._instance_id.lower() == MPIO_BUS_DRIVER_INSTANCE_ID:
-                            yield disk_drive
-                except KeyError:
-                    raise DeviceDisappeared("disk drive either does not have a parent, cannot be")
+                if not is_disk_drive_managed_by_windows_mpio(disk_drive):
+                    continue
+                yield disk_drive
 
         devices = list(_iter())
         multipath_dict = get_multipath_devices(wmi_client)
@@ -60,8 +57,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         return filter(_is_physical_drive, map(_get_multipath_device, devices))
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
-        return filter(lambda device: device.get_parent()._instance_id != MPIO_BUS_DRIVER_INSTANCE_ID,
-                         scsi_block_devices)
+        return filter(lambda device: not is_disk_drive_managed_by_windows_mpio(device), scsi_block_devices)
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
