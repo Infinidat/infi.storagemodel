@@ -1,8 +1,9 @@
 
 from infi.pyutils.lazy import cached_method
 from ..base import scsi
-from ..errors import DeviceDisappeared
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
+from .device_helpers import is_disk_drive_managed_by_windows_mpio, safe_get_physical_drive_number
+from .device_helpers import is_disk_visible_in_device_manager
 
 # pylint: disable=W0212,E1002
 
@@ -33,22 +34,20 @@ class WindowsSCSIModel(scsi.SCSIModel):
         from infi.devicemanager import DeviceManager
         return DeviceManager()
 
+    def _iter(self):
+        for disk_drive in self.get_device_manager().disk_drives:
+            if is_disk_drive_managed_by_windows_mpio(disk_drive):
+                continue
+            if not is_disk_visible_in_device_manager(disk_drive):
+                continue
+            device = WindowsSCSIBlockDevice(disk_drive)
+            if safe_get_physical_drive_number(device) == -1:
+                continue
+            yield WindowsSCSIBlockDevice(disk_drive)
+
     @cached_method
     def get_all_scsi_block_devices(self):
-        from .device_helpers import is_disk_drive_managed_by_windows_mpio, safe_get_physical_drive_number
-        from .device_helpers import is_disk_visible_in_device_manager
-
-        def _iter():
-            for disk_drive in self.get_device_manager().disk_drives:
-                if is_disk_drive_managed_by_windows_mpio(disk_drive):
-                    continue
-                if not is_disk_visible_in_device_manager(disk_drive):
-                    continue
-                device = WindowsSCSIBlockDevice(disk_drive)
-                if safe_get_physical_drive_number(device) == -1:
-                    continue
-                yield WindowsSCSIBlockDevice(disk_drive)
-        return list(_iter())
+        return list(self._iter())
 
     @cached_method
     def get_all_storage_controller_devices(self):

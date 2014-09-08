@@ -127,11 +127,35 @@ class MockModelTestCase(ModelTestCase):
     def test_find_devices(self):
         pass
 
+    def _raise(self, exception_class=KeyError):
+        raise exception_class()
+
     def test_is_disk_visible_in_device_manager(self):
         from .device_helpers import is_disk_visible_in_device_manager
         from munch import Munch
-        def _raise():
-            raise KeyError()
         self.assertTrue(is_disk_visible_in_device_manager(Munch(is_hidden=lambda: False)))
         self.assertFalse(is_disk_visible_in_device_manager(Munch(is_hidden=lambda: True)))
-        self.assertFalse(is_disk_visible_in_device_manager(Munch(is_hidden=lambda: _raise())))
+        self.assertFalse(is_disk_visible_in_device_manager(Munch(is_hidden=lambda: self._raise())))
+
+    def test_private_iter_failures(self):
+        from .scsi import WindowsSCSIModel
+        from .device_helpers import MPIO_BUS_DRIVER_INSTANCE_ID
+        from munch import Munch
+
+        def _build(managed_by_mpio, visible):
+            return Munch(parent=Munch(_instance_id=Munch(lower=lambda:MPIO_BUS_DRIVER_INSTANCE_ID if managed_by_mpio else self._raise())),
+                         is_hidden=lambda:False if visible else self._raise())
+
+        device_manager = Munch(disk_drives=[])
+        for managed_by_mpio in (True, False):
+            device_manager.disk_drives.append(_build(managed_by_mpio, False))
+
+
+        class MockWindowsSCSIModel(WindowsSCSIModel):
+            def get_device_manager(self):
+                return device_manager
+
+        model = MockWindowsSCSIModel()
+        devices = list(model._iter())
+        self.assertEqual(len(devices), 0)
+
