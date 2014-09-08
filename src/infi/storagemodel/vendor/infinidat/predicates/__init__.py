@@ -22,7 +22,8 @@ class InfinidatVolumeExists(object):
                     return False
                 if device.get_vendor().get_naa() is None:
                     log.debug("NAA not found for device {!r}, returning False now as this should be fixed by rescan, next log message will be the EVPD '83h".format(device))
-                    log.debug(repr(device.get_device_identification_page()))
+                    log.debug(repr(device.get_scsi_inquiry_pages()[0x83]))
+                    return False
                 volume_id = device.get_vendor().get_naa().get_volume_id()
                 system_serial = device.get_vendor().get_naa().get_system_serial()
                 log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))
