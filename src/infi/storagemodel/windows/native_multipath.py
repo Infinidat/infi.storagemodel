@@ -57,7 +57,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         return filter(_is_physical_drive, map(_get_multipath_device, devices))
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
-        return filter(lambda device: not is_disk_drive_managed_by_windows_mpio(device), scsi_block_devices)
+        return filter(lambda device: not is_disk_drive_managed_by_windows_mpio(device._device_object), scsi_block_devices)
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
