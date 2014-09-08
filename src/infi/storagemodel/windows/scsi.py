@@ -36,12 +36,13 @@ class WindowsSCSIModel(scsi.SCSIModel):
     @cached_method
     def get_all_scsi_block_devices(self):
         from .device_helpers import is_disk_drive_managed_by_windows_mpio, safe_get_physical_drive_number
+        from .device_helpers import is_disk_visible_in_device_manager
 
         def _iter():
             for disk_drive in self.get_device_manager().disk_drives:
                 if is_disk_drive_managed_by_windows_mpio(disk_drive):
                     continue
-                if disk_drive.is_hidden():
+                if not is_disk_visible_in_device_manager(disk_drive):
                     continue
                 device = WindowsSCSIBlockDevice(disk_drive)
                 if safe_get_physical_drive_number(device) == -1:

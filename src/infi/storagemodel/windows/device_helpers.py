@@ -18,3 +18,10 @@ def safe_get_physical_drive_number(device):
     except KeyError:
         logger.debug("failed to get physical drive number for {!r} ({!r})".format(device, device._device_object))
         return -1
+
+
+def is_disk_visible_in_device_manager(disk_drive):
+    try:
+        return not disk_drive.is_hidden()
+    except KeyError:
+        return False
