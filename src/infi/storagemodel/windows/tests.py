@@ -126,3 +126,12 @@ class MockModelTestCase(ModelTestCase):
 
     def test_find_devices(self):
         pass
+
+    def test_is_disk_visible_in_device_manager(self):
+        from .device_helpers import is_disk_visible_in_device_manager
+        from munch import Munch
+        def _raise():
+            raise KeyError()
+        self.assertTrue(is_disk_visible_in_device_manager(Munch(is_hidden=lambda: False)))
+        self.assertFalse(is_disk_visible_in_device_manager(Munch(is_hidden=lambda: True)))
+        self.assertFalse(is_disk_visible_in_device_manager(Munch(is_hidden=lambda: _raise())))
