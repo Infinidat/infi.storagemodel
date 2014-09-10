@@ -115,12 +115,14 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         from infi.multipathtools.errors import ConnectionError, TimeoutExpired
         from infi.exceptools import chain
         try:
-            devices = [device for device in client.get_list_of_multipath_devices() if self._is_device_active(device)]
+            all_devices = client.get_list_of_multipath_devices()
+            logger.debug("all multipath devices = {}".format(all_devices))
+            active_devices = [device for device in all_devices if self._is_device_active(device)]
         except TimeoutExpired:
             raise chain(MultipathDaemonTimeoutError())
         except ConnectionError:
             raise chain(StorageModelFindError())
-        return devices
+        return active_devices
 
     @cached_method
     def get_all_multipath_block_devices(self):

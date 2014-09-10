@@ -64,11 +64,14 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
 
     try:
         func(sg_device, cdb)
-    except:  # HIP-672 can't use logger in the child process
+    except ScsiCommandFailed, error:  # HIP-672 can't use logger in the child process
         try:  # HIP-673 in case we failed to contact the parent process
-            queue.put(ScsiCommandFailed())
+            queue.put(error)
         except:  # there's no point in raising exception or silencing it because it won't get logged
-            pass
+            try:
+                queue.put(ScsiCommandFailed())
+            except:
+                pass
 
 def Process(target, args=(), kwargs={}):
     """mocking mutliprocess.Process; uses gipc where available"""
@@ -168,14 +171,12 @@ def do_test_unit_ready(sg_device):
     from infi.asi.cdb.tur import TestUnitReadyCommand
     try:
         cdb = TestUnitReadyCommand()
+        return do_scsi_cdb(sg_device, cdb)
     except ScsiCheckConditionError, error:
         (key, code) = (error.sense_key, error.code_name)
-        if key == 'NOT_READY':
-            return False
-        if (key, code) == ('ILLEGAL_REQUEST', 'INVALID COMMAND OPERATION CODE'):
+        if key in ('NOT_READY', "ILLEGAL_REQUEST"):
             return False
         raise
-    return do_scsi_cdb(sg_device, cdb)
 
 @func_logger
 def do_standard_inquiry(sg_device):

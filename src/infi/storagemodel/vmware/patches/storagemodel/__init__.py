@@ -197,10 +197,12 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
 
     @cached_method
     def get_scsi_standard_inquiry(self):  # pragma: no cover
-        from infi.asi.cdb.inquiry.standard import StandardInquiryData
+        from infi.asi.cdb.inquiry.standard import StandardInquiryDataBuffer
         byte_array = self._scsi_lun_data_object.standardInquiry
         buffer = byte_array_to_string(byte_array)
-        return StandardInquiryData.create_from_string(buffer)
+        inquiry_buffer = StandardInquiryDataBuffer()
+        inquiry_buffer.unpack(byte_array_to_string(byte_array))
+        return inquiry_buffer
 
     def _get_supported_vpd_pages(self):
         from infi.asi.cdb.inquiry.vpd_pages.supported_pages import SupportedVPDPagesBuffer

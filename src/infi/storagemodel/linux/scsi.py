@@ -104,14 +104,10 @@ class LinuxSCSIModel(scsi.SCSIModel):
     def __init__(self, sysfs):
         self.sysfs = sysfs
 
-    def _raise_exception_if_sd_devices_are_missing(self, devices):
-        for disk in [disk for disk in devices if not isinstance(disk, SCSIBlockDevice)]:
-            raise DeviceDisappeared("No block dev names for {}".format(disk.get_scsi_access_path()))
-
     @cached_method
     def get_all_scsi_block_devices(self):
-        devices = self.get_all_linux_scsi_generic_disk_devices()
-        self._raise_exception_if_sd_devices_are_missing(devices)
+        devices = [item for item in self.get_all_linux_scsi_generic_disk_devices() if
+                   isinstance(item, SCSIBlockDevice)]
         return devices
 
     @device_disappered

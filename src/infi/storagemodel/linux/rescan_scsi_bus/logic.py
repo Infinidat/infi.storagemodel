@@ -2,8 +2,7 @@ from os import getpid
 from logging import getLogger
 from .utils import func_logger, format_hctl, ScsiCommandFailed
 from .scsi import scsi_host_scan, scsi_add_single_device, remove_device_via_sysfs
-from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready
-from .scsi import ensure_subprocess_dead, Process
+from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready, Process
 from .getters import get_scsi_generic_device
 from .getters import get_hosts, get_channels, get_targets, get_luns
 from .getters import is_there_a_bug_in_target_removal, is_there_a_bug_in_sysfs_async_scanning
@@ -13,27 +12,32 @@ logger = getLogger(__name__)
 @func_logger
 def get_luns_from_report_luns(host, channel, target):
     device_exists = lun_scan(host, channel, target, 0)
+    controller_lun_set = set([0]) # some devices, like IBM FlashSystem, does not return LUN0 in the list
     if device_exists:
         sg_device = get_scsi_generic_device(host, channel, target, 0)
-        return set(do_report_luns(sg_device).lun_list)
+        return controller_lun_set.union(set(do_report_luns(sg_device).lun_list))
     return set()
 
 @func_logger
 def is_scsi_generic_device_online(sg_device):
-    try:
-        do_test_unit_ready(sg_device)
-    except ScsiCommandFailed:
-        logger.error("{} Test Unit Ready on {} raised an exception".format(getpid(), sg_device))
-        return False
-    try:
-        standard_inquiry = do_standard_inquiry(sg_device)
-    except ScsiCommandFailed:
-        logger.error("{} Standard Inquiry {} raised an exception".format(getpid(), sg_device))
-        return False
-    logger.debug("{} Standard inquiry for sg device {}: {}".format(getpid(), standard_inquiry, sg_device))
-    if standard_inquiry.peripheral_device.qualifier != 0:
-        return False
-    return True
+    def is_responding_to_test_unit_ready():
+        try:
+            logger.debug("{} Test Unit Ready response on {} is {}".format(getpid(), sg_device, do_test_unit_ready(sg_device)))
+            return True
+        except ScsiCommandFailed:
+            logger.error("{} Test Unit Ready on {} raised an exception".format(getpid(), sg_device))
+            return False
+
+    def is_responding_to_standard_inquiry():
+        try:
+            logger.debug("{} Standard inquiry for sg device {}: {}".format(getpid(), do_standard_inquiry(sg_device), sg_device))
+            return True
+        except ScsiCommandFailed:
+            logger.error("{} Standard Inquiry {} raised an exception".format(getpid(), sg_device))
+            return False
+
+    # some devices, like the IBM FlashSystem LUN0, answer to standard inquiry but not to test unit ready
+    return any([is_responding_to_test_unit_ready(), is_responding_to_standard_inquiry()])
 
 @func_logger
 def lun_scan(host, channel, target, lun):
