@@ -44,7 +44,6 @@ class LocalConnectivity(object):
     pass
 
 class ConnectivityFactoryImpl(object):
-    @cached_method
     def get_fc_hctl_mappings(self):
         from infi.hbaapi import get_ports_generator
         result = {}
