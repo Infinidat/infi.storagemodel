@@ -232,6 +232,14 @@ class VMwarePath(multipath.Path):
         self._path_data_object = path_data_object
 
     @cached_method
+    def get_connectivity(self):
+        """
+        Returns an `infi.storagemodel.connectivity.FCConnectivity` instance.
+        """
+        from ..connectivity import ConnectivityFactoryImpl
+        return ConnectivityFactoryImpl().get_by_device_with_hctl(self)
+
+    @cached_method
     def get_path_id(self):
         return self._path_data_object.name
 

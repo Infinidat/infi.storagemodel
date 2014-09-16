@@ -63,4 +63,9 @@ class ConnectivityFactoryImpl(object):
         # TODO add iSCSI support
         return LocalConnectivity()
 
-ConnectivityFactory = ConnectivityFactoryImpl()
+class CachedConnectivityFactoryImpl(ConnectivityFactoryImpl):
+    @cached_method
+    def get_fc_hctl_mappings(self):
+        return super(CachedConnectivityFactoryImpl, self).get_fc_hctl_mappings()
+
+ConnectivityFactory = CachedConnectivityFactoryImpl()
