@@ -236,7 +236,7 @@ class VMwarePath(multipath.Path):
         """
         Returns an `infi.storagemodel.connectivity.FCConnectivity` instance.
         """
-        from ..connectivity import ConnectivityFactoryImpl
+        from infi.storagemodel.connectivity import ConnectivityFactoryImpl
         return ConnectivityFactoryImpl().get_by_device_with_hctl(self)
 
     @cached_method
