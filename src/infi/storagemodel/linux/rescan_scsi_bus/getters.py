@@ -1,5 +1,6 @@
 from logging import getLogger
 from os import path, getpid
+from re import search
 from glob import glob
 from .utils import func_logger
 
@@ -19,8 +20,7 @@ def get_proc_scsi_scsi():
 
 @func_logger
 def get_hosts():
-    from infi.hbaapi import get_ports_collection
-    return [port.hct[0] for port in get_ports_collection().get_ports()]
+    return [int(search(r"host(\d+)", dirpath).group(1)) for dirpath in glob("/sys/class/scsi_host/host*")]
 
 @func_logger
 def get_channels(host):
