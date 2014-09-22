@@ -17,6 +17,7 @@ class StorageModel(object):
     * Multipath
     * Disks
     * Mounts
+    * Utils
 
     All layers are fetched lazily and cached inside the model. When you think that the cache no longer up-to-date,
     you can clear it using the refresh() method
@@ -53,6 +54,11 @@ class StorageModel(object):
     def get_mount_repository(self):
         """Returns an instance of `infi.storagemodel.base.mount.MountRepository` """
         return self._create_mount_repository()
+
+    @cached_method
+    def get_utils(self):
+        """Returns an instance of `infi.storagemodel.base.utils.Utils` """
+        return self._create_utils()
 
     def refresh(self):
         """clears the model cache"""
@@ -139,5 +145,9 @@ class StorageModel(object):
         raise NotImplementedError()
 
     def _create_mount_repository(self):  # pragma: no cover
+        # platform implementation
+        raise NotImplementedError()
+
+    def _create_utils(self):  # pragma: no cover
         # platform implementation
         raise NotImplementedError()
