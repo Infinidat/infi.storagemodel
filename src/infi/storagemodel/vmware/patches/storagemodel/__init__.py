@@ -16,13 +16,13 @@ MULTIPATH_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.multipathInfo'
 
 
 def install_property_collectors_on_client(client):
-    from pyvisdk.facade.property_collector import HostSystemCachedPropertyCollector
-    if PROPERTY_COLLECTOR_KEY in client.facades:
+    from infi.pyvmomi_wrapper.property_collector import HostSystemCachedPropertyCollector
+    if PROPERTY_COLLECTOR_KEY in client.property_collectors:
         return
     collector = HostSystemCachedPropertyCollector(client,
                                                   [SCSI_TOPOLOGY_PROPERTY_PATH, SCSI_LUNS_PROPERTY_PATH,
                                                    MULTIPATH_TOPOLOGY_PROPERTY_PATH])
-    client.facades[PROPERTY_COLLECTOR_KEY] = collector
+    client.property_collectors[PROPERTY_COLLECTOR_KEY] = collector
 
 
 
@@ -65,15 +65,16 @@ def format_stack_trace(f, limit=None):
 
 
 @contextmanager
-def with_host(host):
+def with_host(client, host):
     from traceback import extract_stack
+    from infi.pyvmomi_wrapper import get_reference_to_managed_object
     monkey_patch(infi.storagemodel, "get_storage_model", StorageModelFactory.get)
     previous = StorageModelFactory.get()
     stack_trace = get_stack_trace()
     caller = extract_stack(stack_trace, 6)[1][2]
-    moref = host.core.getReferenceToManagedObject(host)
+    moref = get_reference_to_managed_object(host)
     try:
-        current = StorageModelFactory.set(StorageModelFactory.create(host))
+        current = StorageModelFactory.set(StorageModelFactory.create(client, host))
         if previous is current:
             formatted_stacktrace = format_stack_trace(stack_trace)
             logger.debug("entered context for the same host {} as part of {}:\nTraceback:\n{}".format(moref, caller, formatted_stacktrace))
@@ -86,10 +87,10 @@ def with_host(host):
 
 
 class VMwareHostStorageModel(StorageModel):
-    def __init__(self, pyvisdk_client, moref):
+    def __init__(self, client, moref):
         super(VMwareHostStorageModel, self).__init__()
         self._moref = moref
-        self._client = pyvisdk_client
+        self._client = client
         self._install_property_collector()
 
     def _refresh_host_storage(self, storage_system):
@@ -101,8 +102,7 @@ class VMwareHostStorageModel(StorageModel):
         from urllib2 import URLError
         # we've seen several time in the tests that host.configManager is a list; how weird is that?
         # so for debugging, we do this:
-        moref = self._moref
-        host = self._client.getManagedObjectByReference(moref)
+        host = self._client.get_managed_object_by_reference(self._moref)
         config_manager = host.configManager
         # according to the API documntation, this is not a list; not sure how how to deal with this case
         summary = host.summary
@@ -224,12 +224,20 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
 
 
 class VMwarePath(multipath.Path):
-    def __init__(self, pyvisdk_client, host_moref, lun_key, path_data_object):
+    def __init__(self, client, host_moref, lun_key, path_data_object):
         super(VMwarePath, self).__init__()
-        self._client = pyvisdk_client
+        self._client = client
         self._host_moref = host_moref
         self._lun_key = lun_key
         self._path_data_object = path_data_object
+
+    @cached_method
+    def get_connectivity(self):
+        """
+        Returns an `infi.storagemodel.connectivity.FCConnectivity` instance.
+        """
+        from infi.storagemodel.connectivity import ConnectivityFactoryImpl
+        return ConnectivityFactoryImpl().get_by_device_with_hctl(self)
 
     @cached_method
     def get_path_id(self):
@@ -239,7 +247,7 @@ class VMwarePath(multipath.Path):
     def _get_properties(self):
         # We want to use the data the entire model uses, so we read from cache
         install_property_collectors_on_client(self._client)
-        properties = self._client.facades[PROPERTY_COLLECTOR_KEY].getProperties()[self._host_moref]
+        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties()[self._host_moref]
         return properties
 
     @cached_method
@@ -267,9 +275,9 @@ class VMwarePath(multipath.Path):
 
 
 class VMwareMultipathDevice(VMwareInquiryInformationMixin):
-    def __init__(self, pyvisdk_client, host_moref, scsi_lun_data_object):
+    def __init__(self, client, host_moref, scsi_lun_data_object):
         super(VMwareMultipathDevice, self).__init__()
-        self._client = pyvisdk_client
+        self._client = client
         self._host_moref = host_moref
         self._scsi_lun_data_object = scsi_lun_data_object
         logger.debug("Created {!r}".format(self))
@@ -286,7 +294,7 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
     def _get_properties(self):
         # We want to use the data the entire model uses, so we read from cache
         install_property_collectors_on_client(self._client)
-        properties = self._client.facades[PROPERTY_COLLECTOR_KEY].getProperties()[self._host_moref]
+        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties()[self._host_moref]
         return properties
 
     def _get_multipath_logical_unit(self):
@@ -341,15 +349,15 @@ class VMwareHostSCSIModel(scsi.SCSIModel):
 
 
 class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
-    def __init__(self, pyvisdk_client, moref):
+    def __init__(self, client, moref):
         super(VMwareNativeMultipathModel, self).__init__()
-        self._client = pyvisdk_client
+        self._client = client
         self._moref = moref
 
     @cached_method
     def _get_properties(self):
         install_property_collectors_on_client(self._client)
-        properties = self._client.facades[PROPERTY_COLLECTOR_KEY].getProperties()[self._moref]
+        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties()[self._moref]
         return properties
 
     def _get_luns(self):
@@ -402,10 +410,11 @@ class StorageModelFactory(object):
         cls.models_by_host_value.clear()
 
     @classmethod
-    def create(cls, hostsystem):
-        key = hostsystem.ref.value
+    def create(cls, client, hostsystem):
+        from infi.pyvmomi_wrapper import get_reference_to_managed_object
+        key = get_reference_to_managed_object(hostsystem)
         if key not in cls.models_by_host_value:
-            value = VMwareHostStorageModel(hostsystem.core, "HostSystem:{}".format(key))
+            value = VMwareHostStorageModel(client, key)
             cls.models_by_host_value[key] = value
         return cls.models_by_host_value[key]
 

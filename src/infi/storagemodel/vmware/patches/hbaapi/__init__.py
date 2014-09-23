@@ -1,4 +1,3 @@
-
 from infi.dtypes.wwn import WWN
 from infi.hbaapi import Port
 from infi.hbaapi.generators import Generator
@@ -11,22 +10,22 @@ logger = getLogger(__name__)
 PROPERTY_COLLECTOR_KEY = 'infi.hbaapi'
 HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
 TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology.adapter'
-FCHBA_CLASS_NAME = 'HostFibreChannelHba'
+FCHBA_CLASS_NAME = 'vim.host.FibreChannelHba'
 TARGET_PROPERTY_PATH = TOPOLOGY_PROPERTY_PATH + '["{}"].target["{}"]'
 
 def install_property_collectors_on_client(client):
-    from pyvisdk.facade.property_collector import HostSystemCachedPropertyCollector
-    if PROPERTY_COLLECTOR_KEY in client.facades:
+    from infi.pyvmomi_wrapper.property_collector import HostSystemCachedPropertyCollector
+    if PROPERTY_COLLECTOR_KEY in client.property_collectors:
         return
     collector = HostSystemCachedPropertyCollector(client,
                                                   [HBAAPI_PROPERTY_PATH, TOPOLOGY_PROPERTY_PATH])
-    client.facades[PROPERTY_COLLECTOR_KEY] = collector
+    client.property_collectors[PROPERTY_COLLECTOR_KEY] = collector
 
 class HostSystemPortGenerator(Generator):
-    def __init__(self, pyvisdk_client, moref):
+    def __init__(self, client, moref):
         super(HostSystemPortGenerator, self).__init__()
         self._moref = moref
-        self._client = pyvisdk_client
+        self._client = client
 
     @classmethod
     def is_available(cls):
@@ -37,7 +36,7 @@ class HostSystemPortGenerator(Generator):
 
     @cached_method
     def _get_properties(self):
-        properties = self._client.facades[PROPERTY_COLLECTOR_KEY].getProperties()[self._moref]
+        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties()[self._moref]
         return properties
 
     def _get_all_host_bus_adapters(self):
@@ -102,11 +101,12 @@ class HostSystemPortGeneratorFactory(object):
     patches_by_greenlet = {}
 
     @classmethod
-    def create(cls, hostsystem):
-        key = hostsystem.ref.value
+    def create(cls, client, hostsystem):
+        from infi.pyvmomi_wrapper import get_reference_to_managed_object
+        key = get_reference_to_managed_object(hostsystem)
         class Patched(HostSystemPortGenerator):
             def __init__(self):
-                super(Patched, self).__init__(hostsystem.core, "HostSystem:{}".format(key))
+                super(Patched, self).__init__(client, key)
         return [Patched]
 
     @classmethod
@@ -131,11 +131,11 @@ import infi.hbaapi.generators
 from infi.pyutils.patch import monkey_patch
 
 @contextmanager
-def with_host(host):
+def with_host(client, host):
     monkey_patch(infi.hbaapi.generators, "get_list_of_generators", HostSystemPortGeneratorFactory.get)
     previous = HostSystemPortGeneratorFactory.get()
     try:
-        HostSystemPortGeneratorFactory.set(HostSystemPortGeneratorFactory.create(host))
+        HostSystemPortGeneratorFactory.set(HostSystemPortGeneratorFactory.create(client, host))
         yield
     finally:
         HostSystemPortGeneratorFactory.set(previous)

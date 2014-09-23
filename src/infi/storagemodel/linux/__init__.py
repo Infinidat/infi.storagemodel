@@ -42,6 +42,10 @@ class LinuxStorageModel(StorageModel):
         from .mount import LinuxMountRepository
         return LinuxMountRepository()
 
+    def _create_utils(self):
+        from .utils import LinuxUtils
+        return LinuxUtils()
+
     def terminate_rescan_process(self, silent=False):
         try:
             from gipc.gipc import _GProcess as Process
