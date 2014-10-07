@@ -12,11 +12,11 @@ logger = getLogger(__name__)
 @func_logger
 def get_luns_from_report_luns(host, channel, target):
     device_exists = lun_scan(host, channel, target, 0)
+    if not device_exists:
+        return set()
     controller_lun_set = set([0]) # some devices, like IBM FlashSystem, does not return LUN0 in the list
-    if device_exists:
-        sg_device = get_scsi_generic_device(host, channel, target, 0)
-        return controller_lun_set.union(set(do_report_luns(sg_device).lun_list))
-    return set()
+    sg_device = get_scsi_generic_device(host, channel, target, 0)
+    return controller_lun_set.union(set(do_report_luns(sg_device).lun_list))
 
 @func_logger
 def is_scsi_generic_device_online(sg_device):
@@ -30,7 +30,7 @@ def is_scsi_generic_device_online(sg_device):
 
     def is_responding_to_standard_inquiry():
         try:
-            logger.debug("{} Standard inquiry for sg device {}: {}".format(getpid(), do_standard_inquiry(sg_device), sg_device))
+            logger.debug("{} Standard inquiry for sg device {}: {}".format(getpid(), sg_device, do_standard_inquiry(sg_device)))
             return True
         except ScsiCommandFailed:
             logger.error("{} Standard Inquiry {} raised an exception".format(getpid(), sg_device))
