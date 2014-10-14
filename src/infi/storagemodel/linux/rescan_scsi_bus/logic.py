@@ -9,46 +9,46 @@ from .getters import is_there_a_bug_in_target_removal, is_there_a_bug_in_sysfs_a
 
 logger = getLogger(__name__)
 
+DIRECT_ACCESS_BLOCK_DEVICE = 0
+STORAGE_ARRAY_CONTROLLER_DEVICE = 12
+
 @func_logger
 def get_luns_from_report_luns(host, channel, target):
-    device_exists = lun_scan(host, channel, target, 0)
+    lun_type = get_lun_type(host, channel, target, 0)
+    if lun_type is None:
+        return set()
+    if lun_type not in (DIRECT_ACCESS_BLOCK_DEVICE, STORAGE_ARRAY_CONTROLLER_DEVICE):
+        logger.debug("{} Skipping lun type {}".format(getpid(), lun_type))
+        return set()
     controller_lun_set = set([0]) # some devices, like IBM FlashSystem, does not return LUN0 in the list
-    if device_exists:
-        sg_device = get_scsi_generic_device(host, channel, target, 0)
-        return controller_lun_set.union(set(do_report_luns(sg_device).lun_list))
-    return set()
+    sg_device = get_scsi_generic_device(host, channel, target, 0)
+    return controller_lun_set.union(set(do_report_luns(sg_device).lun_list))
 
 @func_logger
-def is_scsi_generic_device_online(sg_device):
-    def is_responding_to_test_unit_ready():
-        try:
-            logger.debug("{} Test Unit Ready response on {} is {}".format(getpid(), sg_device, do_test_unit_ready(sg_device)))
-            return True
-        except ScsiCommandFailed:
-            logger.error("{} Test Unit Ready on {} raised an exception".format(getpid(), sg_device))
-            return False
-
-    def is_responding_to_standard_inquiry():
-        try:
-            logger.debug("{} Standard inquiry for sg device {}: {}".format(getpid(), do_standard_inquiry(sg_device), sg_device))
-            return True
-        except ScsiCommandFailed:
-            logger.error("{} Standard Inquiry {} raised an exception".format(getpid(), sg_device))
-            return False
-
-    # some devices, like the IBM FlashSystem LUN0, answer to standard inquiry but not to test unit ready
-    return any([is_responding_to_test_unit_ready(), is_responding_to_standard_inquiry()])
+def get_scsi_standard_inquiry(sg_device):
+    try:
+        standard_inquiry = do_standard_inquiry(sg_device)
+        logger.debug("{} Standard inquiry for sg device {}: {}".format(getpid(), sg_device, standard_inquiry))
+        return standard_inquiry
+    except ScsiCommandFailed:
+        logger.error("{} Standard Inquiry {} raised an exception".format(getpid(), sg_device))
+        return None
 
 @func_logger
-def lun_scan(host, channel, target, lun):
+def get_lun_type(host, channel, target, lun):
     sg_device = get_scsi_generic_device(host, channel, target, lun)
     if sg_device is None:
         logger.debug("{} No sg device for {}".format(getpid(), format_hctl(host, channel, target, lun)))
-        return False
-    if not is_scsi_generic_device_online(sg_device):
-        logger.debug("{} scsi generic device {} is not online".format(getpid(), sg_device.format()))
-        return False
-    return True
+        return None
+    standard_inquiry = get_scsi_standard_inquiry(sg_device)
+    if standard_inquiry is None:
+        msg = "{} scsi generic device {} does not respond to standard inquiry"
+        logger.debug(msg.format(getpid(), sg_device.format()))
+        return None
+    return standard_inquiry.peripheral_device.type
+
+def lun_scan(host, channel, target, lun):
+    return get_lun_type(host, channel, target, lun)
 
 @func_logger
 def handle_add_devices(host, channel, target, missing_luns):
