@@ -17,3 +17,7 @@ class InfiniBoxWWN_TestCase(unittest.TestCase):
         self.assertEquals(item.get_soft_target_id(), 1)
         with self.assertRaises(KeyError):
             item.get_node_id()
+
+    def test_invalid_wwn(self):
+        with self.assertRaises(wwn.InvalidInfinidatWWN):
+            wwn.InfinidatWWN("20:01:71:2B:0F:00:04:1D")
