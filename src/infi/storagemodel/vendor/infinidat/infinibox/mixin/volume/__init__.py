@@ -51,7 +51,7 @@ class InfiniBoxVolumeMixin(object):
                 return True
             raise
 
-    def is_read_only(self):
+    def check_if_write_protected(self):
         from infi.storagemodel.linux.native_multipath import LinuxNativeMultipathBlockDevice
         if isinstance(self.device, LinuxNativeMultipathBlockDevice):
             # on linux, device-mapper swallows the I/Os and doesn't pass them to the device, so we bypass it
