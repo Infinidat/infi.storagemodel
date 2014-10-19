@@ -33,7 +33,7 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
 
     @cached_method
     def get_display_name(self):
-        return self.multipath_object.dm_name
+        return self.multipath_object.device_name
 
     @cached_method
     def get_block_access_path(self):
