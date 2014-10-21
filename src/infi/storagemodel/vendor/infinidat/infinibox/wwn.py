@@ -27,10 +27,13 @@ class InfinidatWWN(WWN):
         return int(self._groupdict['system_serial'], 16)
 
     def get_node_id(self):
+        """:raises KeyError: in case of soft target port"""
         return int(self._groupdict['node_id'])
 
     def get_port_id(self):
+        """:raises KeyError: in case of soft target port"""
         return int(self._groupdict['port_id'])
 
     def get_soft_target_id(self):
+        """:raises KeyError: in case of non-NPIV target port"""
         return int(self._groupdict['soft_target_id'])
