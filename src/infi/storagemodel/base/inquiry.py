@@ -50,16 +50,6 @@ class InquiryInformationMixin(object):
         return self.get_scsi_standard_inquiry().product_identification.strip()
 
     @cached_method
-    def get_scsi_extended_inquiry(self):
-        """Returns the T10 extended inquiry buffer, as give in SCSI Standard Inquiry"""
-        return self.get_scsi_standard_inquiry().extended
-
-    @cached_method
-    def get_scsi_vendor_specific(self):
-        """Returns the stripped T10 vendor specific buffer, as give in SCSI Standard Inquiry"""
-        return self.get_scsi_extended_inquiry().vendor_specific_1
-
-    @cached_method
     def get_scsi_vid_pid(self):
         """Returns a tuple of the vendor_id and product_id"""
         return (self.get_scsi_vendor_id(), self.get_scsi_product_id())
