@@ -33,3 +33,28 @@ class InfiniBoxVolumeMixin(object):
             return self.get_string_data(0xc7)
         except InquiryException:
             return self._get_key_from_json_page('vol')
+
+    def _send_null_write(self, device):
+        from infi.asi.cdb.write import Write10Command
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        cdb = Write10Command(0, '') # empty write
+        with device.asi_context() as asi:
+            sync_wait(cdb.execute(asi))
+
+    def _is_null_write_returns_write_protected_check_condition(self, device):
+        from infi.asi.errors import AsiCheckConditionError
+        try:
+            self._send_null_write(device)
+            return False
+        except AsiCheckConditionError, error:
+            if error.sense_obj.sense_key == "DATA_PROTECT":
+                return True
+            raise
+
+    def check_if_write_protected(self):
+        from infi.storagemodel.linux.native_multipath import LinuxNativeMultipathBlockDevice
+        if isinstance(self.device, LinuxNativeMultipathBlockDevice):
+            # on linux, device-mapper swallows the I/Os and doesn't pass them to the device, so we bypass it
+            return self._is_null_write_returns_write_protected_check_condition(self.device.get_paths()[0])
+        else:
+            return self._is_null_write_returns_write_protected_check_condition(self.device)

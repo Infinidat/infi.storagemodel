@@ -18,11 +18,11 @@ class LinuxFileSystem(filesystem.FileSystem):
 
     def unmount(self, block_access_path, mount_point):
         from infi.mountoolinux.mount.manager import MountManager, MountEntry
-        from infi.mountoolinux.mount.errors import BaseMountException
+        from infi.mountoolinux.mount.errors import MountException
         entry = MountEntry(None, mount_point, None, {}, 0, 0)
         try:
             MountManager().umount_entry(entry)
-        except BaseMountException:
+        except MountException:
             raise UnmountFailedDeviceIsBusy(block_access_path, mount_point)
 
     def format(self, block_device, *args, **kwargs):
