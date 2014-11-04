@@ -1,9 +1,12 @@
 
 from infi.exceptools import InfiException, chain
 from infi.pyutils.decorators import wraps
-
 from logging import getLogger
-logger = getLogger(__name__)
+
+
+# STORAGEMODEL-301
+# When __name_ is used, log function calls say "storagemodel.errors" in the log file, this makes it look like there was an error
+logger = getLogger("infi.storagemodel.checker")
 
 # pylint: disable=E1002
 # InfiException inherits from Exception
