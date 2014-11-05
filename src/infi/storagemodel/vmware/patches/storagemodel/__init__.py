@@ -4,7 +4,6 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
 from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page_data
 from infi.dtypes.hctl import HCTL
-from pyVmomi import vim
 from logging import getLogger
 import infi.storagemodel
 
@@ -253,6 +252,7 @@ class VMwarePath(multipath.Path):
 
     @cached_method
     def get_hctl(self):
+        from pyVmomi import vim
         from infi.storagemodel.errors import RescanIsNeeded
         scsi_topology = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, vim.HostScsiTopology())
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
@@ -299,6 +299,7 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
         return properties
 
     def _get_multipath_logical_unit(self):
+        from pyVmomi import vim
         # scsiLun.key == HostMultipathInfoLogicalUnit.lun
         host_luns = self._get_properties().get(MULTIPATH_TOPOLOGY_PROPERTY_PATH, vim.HostMultipathInfo()).lun
         try:
