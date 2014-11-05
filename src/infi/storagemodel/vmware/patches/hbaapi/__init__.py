@@ -36,11 +36,11 @@ class HostSystemPortGenerator(Generator):
 
     @cached_method
     def _get_properties(self):
-        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties()[self._moref]
+        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties().get(self._moref, dict())
         return properties
 
     def _get_all_host_bus_adapters(self):
-        return self._get_properties()[HBAAPI_PROPERTY_PATH]
+        return self._get_properties().get(HBAAPI_PROPERTY_PATH, [])
 
     def _get_all_fiber_channel_host_bus_adapters(self):
         return filter(lambda hba: hba.__class__.__name__ == FCHBA_CLASS_NAME,
@@ -50,7 +50,7 @@ class HostSystemPortGenerator(Generator):
         return WWN(hex(wwn_long)[:-1])
 
     def _get_all_scsi_topologies(self):
-        return self._get_properties()[TOPOLOGY_PROPERTY_PATH]
+        return self._get_properties().get(TOPOLOGY_PROPERTY_PATH, [])
 
     def _get_target_transport_properties(self, fc_hba, target):
         return target.transport

@@ -4,6 +4,7 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
 from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page_data
 from infi.dtypes.hctl import HCTL
+from pyVmomi import vim
 from logging import getLogger
 import infi.storagemodel
 
@@ -247,13 +248,13 @@ class VMwarePath(multipath.Path):
     def _get_properties(self):
         # We want to use the data the entire model uses, so we read from cache
         install_property_collectors_on_client(self._client)
-        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties()[self._host_moref]
+        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties().get(self._host_moref, dict())
         return properties
 
     @cached_method
     def get_hctl(self):
         from infi.storagemodel.errors import RescanIsNeeded
-        scsi_topology = self._get_properties()[SCSI_TOPOLOGY_PROPERTY_PATH]
+        scsi_topology = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, vim.HostScsiTopology())
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
         # adapter.key is key-vim.host.ScsiTopology.Interface-vmhba0
         # path_data_object.adapter is key-vim.host.FibreChannelHba-vmhba2
@@ -294,12 +295,12 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
     def _get_properties(self):
         # We want to use the data the entire model uses, so we read from cache
         install_property_collectors_on_client(self._client)
-        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties()[self._host_moref]
+        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties().get(self._host_moref, dict())
         return properties
 
     def _get_multipath_logical_unit(self):
         # scsiLun.key == HostMultipathInfoLogicalUnit.lun
-        host_luns = self._get_properties()[MULTIPATH_TOPOLOGY_PROPERTY_PATH].lun
+        host_luns = self._get_properties().get(MULTIPATH_TOPOLOGY_PROPERTY_PATH, vim.HostMultipathInfo()).lun
         try:
             return [lun for lun in host_luns if lun.lun == self._scsi_lun_data_object.key][0]
         except IndexError:
@@ -357,11 +358,11 @@ class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
     def _get_properties(self):
         install_property_collectors_on_client(self._client)
-        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties()[self._moref]
+        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties().get(self._moref, dict())
         return properties
 
     def _get_luns(self):
-        return self._get_properties()[SCSI_LUNS_PROPERTY_PATH]
+        return self._get_properties().get(SCSI_LUNS_PROPERTY_PATH, [])
 
     @cached_method
     def _filter_operating_luns(self):
