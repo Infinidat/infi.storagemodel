@@ -73,18 +73,6 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
             except:
                 pass
 
-def Process(target, args=(), kwargs={}):
-    """mocking mutliprocess.Process; uses gipc where available"""
-    try:
-        from gipc.gipc import start_process as _start_process
-    except ImportError:
-        from multiprocessing import Process
-        def _start_process(target, args, kwargs):
-            process = Process(target=target, args=args, kwargs=kwargs)
-            process.start()
-            return process
-    return _start_process(target, args, kwargs)
-
 
 @contextmanager
 def queue():
@@ -93,28 +81,9 @@ def queue():
     yield instance, instance
 
 
-@contextmanager
-def get_pipe_context():
-    try:
-        from gipc.gipc import pipe
-        _pipe_context = pipe(duplex=True)
-    except ImportError:
-        _pipe_context = queue()
-    with _pipe_context as (reader, writer):
-        yield reader, writer
-
-def get_timeout():
-    """ Returns the timeout object and exception class"""
-    try:  # gipc-based implementation
-        from gevent import Timeout
-        return Timeout(TIMEOUT_IN_SEC), Timeout
-    except ImportError:
-        from Queue import Empty
-        timeout = TIMEOUT_IN_SEC
-        return timeout, Empty
-
 def read_from_queue(reader, subprocess):
-    timeout, timeout_class = get_timeout()
+    from infi.storagemodel.base.gevent_wrapper import get_timeout
+    timeout, timeout_exception = get_timeout()
     while True:
         try:
             return reader.get(timeout=timeout)
@@ -124,7 +93,7 @@ def read_from_queue(reader, subprocess):
             if error.errno != EINTR:
                 return ScsiCommandFailed()
             logger.debug("multiprocessing.Queue.get caught IOError: interrupted system call")
-        except timeout_class:
+        except timeout_exception:
             msg = "{} multiprocessing {} did not return within {} seconds timeout"
             logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
             return ScsiCommandFailed()
@@ -146,10 +115,11 @@ def ensure_subprocess_dead(subprocess):
 
 @func_logger
 def do_scsi_cdb(sg_device, cdb):
+    from infi.storagemodel.base.gevent_wrapper import start_process, get_pipe_context
     pipe_context = get_pipe_context()
     with pipe_context as (reader, writer):
         logger.debug("{} issuing cdb {!r} on {} with multiprocessing".format(getpid(), cdb, sg_device))
-        subprocess = Process(target=do_scsi_cdb_with_in_process, args=(writer, sg_device, cdb,))
+        subprocess = start_process(do_scsi_cdb_with_in_process, writer, sg_device, cdb)
         logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
         return_value = read_from_queue(reader, subprocess)
         logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))

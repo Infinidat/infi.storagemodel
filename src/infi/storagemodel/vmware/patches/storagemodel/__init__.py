@@ -92,29 +92,38 @@ class VMwareHostStorageModel(StorageModel):
         self._moref = moref
         self._client = client
         self._install_property_collector()
+        self._refresh_thread = None
 
-    def _refresh_host_storage(self, storage_system):
-        storage_system.RescanAllHba()
-        storage_system.RescanVmfs()
-        storage_system.RefreshStorageSystem()
+    def _refresh_host_storage(self, storage_system, reattach_luns=True):
+        try:
+            storage_system.RescanAllHba()
+            storage_system.RescanVmfs()
+            storage_system.RefreshStorageSystem()
+            if reattach_luns:
+                self._attach_detached_luns(storage_system)
+        except URLError:  # pragma: no cover
+            # the storage_system calls above wait for completion and therefore may receive timeout exception
+            # (in the form of URLError)
+            # however we don't care if the tasks take longer than expected because this is initiate_rescan only.
+            # if we want to wait, we use the rescan_and_wait_for function
+            logger.debug("_refresh_host_storage caught URLError (timeout)")
+        except:
+            logger.exception("_refresh_host_storage caught an exception")
 
     def initiate_rescan(self, wait_for_completion=False):
         from urllib2 import URLError
-        # we've seen several time in the tests that host.configManager is a list; how weird is that?
-        # so for debugging, we do this:
+        from infi.storagemodel.base.gevent_wrapper import spawn, is_thread_alive
         host = self._client.get_managed_object_by_reference(self._moref)
-        config_manager = host.configManager
+        # we've seen several time in the tests that host.configManager is a list; how weird is that?
         # according to the API documntation, this is not a list; not sure how how to deal with this case
+        # so for debugging, we do this:
         summary = host.summary
+        config_manager = host.configManager
         storage_system = config_manager.storageSystem
-        try:
-            self._refresh_host_storage(storage_system)
-        except URLError:  # pragma: no cover
-            # the calls above wait for completion and therefore may receive timeout exception (in the form of URLError)
-            # however we don't care if the tasks take longer than expected because this is initiate_rescan only
-            # if we want to wait, we use the rescan_and_wait_for function
-            pass
-        self._attach_detached_luns(storage_system)
+        if self._refresh_thread is not None and is_thread_alive(self._refresh_thread):
+            logger.debug("Skipping refresh - referesh thread is already active")
+        else:
+            self._refresh_thread = spawn(self._refresh_host_storage(storage_system))
 
     def _create_scsi_model(self):
         return VMwareHostSCSIModel()
@@ -136,7 +145,7 @@ class VMwareHostStorageModel(StorageModel):
             storage_system.AttachScsiLun(lun)
         if len(detached_luns) > 0:
             # rescan for VMFS volumes on the newly attached luns
-            self._refresh_host_storage(storage_system)
+            self._refresh_host_storage(storage_system, reattach_luns=False)
 
 
 class VMwareInquiryPagesDict(LazyImmutableDict):
@@ -422,12 +431,8 @@ class StorageModelFactory(object):
 
     @classmethod
     def get_id(cls):
-        try:
-            from gevent import getcurrent
-            return getcurrent()
-        except ImportError:
-            from thread import get_ident
-            return get_ident()
+        from infi.storagemodel.base.gevent_wrapper import get_id
+        return get_id()
 
     @classmethod
     def get(cls):

@@ -47,12 +47,8 @@ class LinuxStorageModel(StorageModel):
         return LinuxUtils()
 
     def terminate_rescan_process(self, silent=False):
-        try:
-            from gipc.gipc import _GProcess as Process
-            from gevent import sleep
-            sleep(0)  # give time for gipc time to join on the defunct rescan process
-        except ImportError:
-            from multiprocessing import Process
+        from ..base.gevent_wrapper import Process
+        sleep(0)  # give time for gipc time to join on the defunct rescan process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             if not silent:
                 logger.debug("terminating previous rescan process")
@@ -68,18 +64,8 @@ class LinuxStorageModel(StorageModel):
 
     def initiate_rescan(self, wait_for_completion=True):
         from .rescan_scsi_bus import main
-        try:
-            from gipc.gipc import _GProcess as Process
-            from gipc.gipc import start_process
-            from gevent import sleep
-            sleep(0)  # give time for gipc time to join on the defunct rescan process
-        except ImportError:
-            from multiprocessing import Process
-
-            def start_process(*args, **kwargs):
-                process = Process(*args, **kwargs)
-                process.start()
-                return process
+        from ..base.gevent_wrapper import Process, start_process
+        sleep(0)  # give time for gipc time to join on the defunct rescan process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             if (datetime.now() - self.rescan_process_start_time).total_seconds() > self.rescan_subprocess_timeout:
                 logger.debug("rescan process timed out, killing it")
@@ -95,7 +81,7 @@ class LinuxStorageModel(StorageModel):
             if isinstance(self.rescan_process, Process):
                 logger.debug("previous rescan process exit code: {}".format(self.rescan_process.exitcode))
             self.rescan_process_start_time = datetime.now()
-            self.rescan_process = start_process(target=main)
+            self.rescan_process = start_process(main)
             logger.debug("rescan process started")
             if wait_for_completion:
                 logger.debug("waiting for rescan process completion")

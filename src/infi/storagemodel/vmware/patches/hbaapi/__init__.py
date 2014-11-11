@@ -111,12 +111,8 @@ class HostSystemPortGeneratorFactory(object):
 
     @classmethod
     def get_id(cls):
-        try:
-            from gevent import getcurrent
-            return getcurrent()
-        except ImportError:
-            from thread import get_ident
-            return get_ident()
+        from infi.storagemodel.base.gevent_wrapper import get_id
+        return get_id()
 
     @classmethod
     def get(cls):

@@ -10,11 +10,8 @@ logger = getLogger(__name__)
 @traceback_decorator
 @func_logger
 def main():
-    try:
-        from gevent import reinit
-        reinit()
-    except ImportError:
-        pass
+    from infi.storagemodel.base.gevent_wrapper import reinit
+    reinit()
     try:
         rescan_scsi_hosts()
         return 0
