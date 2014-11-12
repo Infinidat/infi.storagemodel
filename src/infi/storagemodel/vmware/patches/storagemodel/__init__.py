@@ -123,7 +123,7 @@ class VMwareHostStorageModel(StorageModel):
         if self._refresh_thread is not None and is_thread_alive(self._refresh_thread):
             logger.debug("Skipping refresh - referesh thread is already active")
         else:
-            self._refresh_thread = spawn(self._refresh_host_storage(storage_system))
+            self._refresh_thread = spawn(self._refresh_host_storage, storage_system)
 
     def _create_scsi_model(self):
         return VMwareHostSCSIModel()
