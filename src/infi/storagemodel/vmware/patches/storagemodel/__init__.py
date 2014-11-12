@@ -127,6 +127,11 @@ class VMwareHostStorageModel(StorageModel):
             if wait_for_completion:
                 self._refresh_thread.join()
 
+    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=300, wait_on_rescan=False):
+        super(VMwareHostStorageModel, self).rescan_and_wait_for(predicate=predicate,
+                                                                timeout_in_seconds=timeout_in_seconds,
+                                                                wait_on_rescan=wait_on_rescan)
+
     def _create_scsi_model(self):
         return VMwareHostSCSIModel()
 
