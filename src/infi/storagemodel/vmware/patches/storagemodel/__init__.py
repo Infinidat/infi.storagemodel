@@ -95,6 +95,7 @@ class VMwareHostStorageModel(StorageModel):
         self._refresh_thread = None
 
     def _refresh_host_storage(self, storage_system, reattach_luns=True):
+        from urllib2 import URLError
         try:
             storage_system.RescanAllHba()
             storage_system.RescanVmfs()
@@ -111,7 +112,6 @@ class VMwareHostStorageModel(StorageModel):
             logger.exception("_refresh_host_storage caught an exception")
 
     def initiate_rescan(self, wait_for_completion=False):
-        from urllib2 import URLError
         from infi.storagemodel.base.gevent_wrapper import spawn, is_thread_alive
         host = self._client.get_managed_object_by_reference(self._moref)
         # we've seen several time in the tests that host.configManager is a list; how weird is that?
