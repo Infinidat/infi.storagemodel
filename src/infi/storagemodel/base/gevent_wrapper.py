@@ -22,6 +22,14 @@ def spawn(target, *args, **kwargs):
         return thread
 
 
+def get_process_class():
+    try:
+        from gipc.gipc import _GProcess as Process
+    except ImportError:
+        from multiprocessing import Process
+    return Process
+
+
 def start_process(target, *args, **kwargs):
     try:
         from gipc.gipc import _GProcess as Process

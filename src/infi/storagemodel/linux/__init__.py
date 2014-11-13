@@ -48,7 +48,8 @@ class LinuxStorageModel(StorageModel):
         return LinuxUtils()
 
     def terminate_rescan_process(self, silent=False):
-        from ..base.gevent_wrapper import Process
+        from ..base.gevent_wrapper import get_process_class
+        Process = get_process_class()
         sleep(0)  # give time for gipc time to join on the defunct rescan process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             if not silent:
@@ -65,7 +66,8 @@ class LinuxStorageModel(StorageModel):
 
     def initiate_rescan(self, wait_for_completion=True):
         from .rescan_scsi_bus import main
-        from ..base.gevent_wrapper import Process, start_process
+        from ..base.gevent_wrapper import get_process_class, start_process
+        Process = get_process_class()
         sleep(0)  # give time for gipc time to join on the defunct rescan process
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             if (datetime.now() - self.rescan_process_start_time).total_seconds() > self.rescan_subprocess_timeout:
