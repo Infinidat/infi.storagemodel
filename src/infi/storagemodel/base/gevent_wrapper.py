@@ -59,6 +59,11 @@ def reinit():
     except ImportError:
         pass
 
+@contextmanager
+def queue():
+    from multiprocessing import Queue
+    instance = Queue()
+
 
 @contextmanager
 def get_pipe_context():
@@ -66,7 +71,6 @@ def get_pipe_context():
         from gipc.gipc import pipe
         _pipe_context = pipe(duplex=True)
     except ImportError:
-        from multiprocessing import Queue
-        _pipe_context = Queue()
+        _pipe_context = queue()
     with _pipe_context as (reader, writer):
         yield reader, writer
