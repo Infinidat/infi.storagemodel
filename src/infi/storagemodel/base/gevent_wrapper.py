@@ -59,11 +59,12 @@ def reinit():
     except ImportError:
         pass
 
+
 @contextmanager
 def queue():
     from multiprocessing import Queue
     instance = Queue()
-
+    yield instance, instance
 
 @contextmanager
 def get_pipe_context():
