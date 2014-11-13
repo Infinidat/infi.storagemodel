@@ -14,7 +14,7 @@ except ImportError:
 def spawn(target, *args, **kwargs):
     try:
         from gevent import spawn as _spawn
-        return _spawn(*args, **kwargs)
+        return _spawn(target, *args, **kwargs)
     except ImportError:
         from threading import Thread
         thread = Thread(target=target, args=args, kwargs=kwargs)
