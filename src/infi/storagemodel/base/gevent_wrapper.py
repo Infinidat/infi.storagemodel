@@ -41,8 +41,8 @@ def get_timeout():
 
 def reinit():
     try:
-        from gevent import reinit
-        reinit()
+        from gevent import reinit as _reinit
+        _reinit()
     except ImportError:
         pass
 
@@ -53,6 +53,7 @@ def get_pipe_context():
         from gipc.gipc import pipe
         _pipe_context = pipe(duplex=True)
     except ImportError:
-        _pipe_context = queue()
+        from multiprocessing import Queue
+        _pipe_context = Queue()
     with _pipe_context as (reader, writer):
         yield reader, writer

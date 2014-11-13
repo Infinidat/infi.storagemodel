@@ -74,11 +74,6 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
                 pass
 
 
-@contextmanager
-def queue():
-    from multiprocessing import Queue
-    instance = Queue()
-    yield instance, instance
 
 
 def read_from_queue(reader, subprocess):
