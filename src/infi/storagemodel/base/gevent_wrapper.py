@@ -18,7 +18,9 @@ except ImportError:
 
 try:
     from gipc.gipc import _GProcess as Process
-    from gipc.gipc import start_process
+    from gipc.gipc import start_process as _start_process
+    def start_process(target, *args, **kwargs):
+        return _start_process(target, args=args, kwargs=kwargs)
 except ImportError:
     from multiprocessing import Process
     def start_process(target, *args, **kwargs):
