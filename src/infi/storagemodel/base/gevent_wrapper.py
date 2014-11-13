@@ -4,26 +4,31 @@ from infi.pyutils.contexts import contextmanager
 try:
     from gevent import sleep
     from gevent import getcurrent as get_id
-    from gevent import spawn
-    is_thread_alive = lambda gevent: not gevent.dead
+    is_thread_alive = lambda greenlet: not greenlet.dead
 except ImportError:
     from time import sleep
     from thread import get_ident as get_id
-    def spawn(target, *args, **kwargs):
+    is_thread_alive = lambda thread: thread.is_alive()
+
+
+def spawn(target, *args, **kwargs):
+    try:
+        from gevent import spawn as _spawn
+        return _spawn(*args, **kwargs)
+    except ImportError:
         from threading import Thread
         thread = Thread(target=target, args=args, kwargs=kwargs)
         thread.start()
         return thread
-    is_thread_alive = lambda thread: thread.is_alive()
 
-try:
-    from gipc.gipc import _GProcess as Process
-    from gipc.gipc import start_process as _start_process
-    def start_process(target, *args, **kwargs):
+
+def start_process(target, *args, **kwargs):
+    try:
+        from gipc.gipc import _GProcess as Process
+        from gipc.gipc import start_process as _start_process
         return _start_process(target, args=args, kwargs=kwargs)
-except ImportError:
-    from multiprocessing import Process
-    def start_process(target, *args, **kwargs):
+    except ImportError:
+        from multiprocessing import Process
         process = Process(target=target, args=args, kwargs=kwargs)
         process.start()
         return process
