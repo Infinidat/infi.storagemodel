@@ -44,6 +44,7 @@ def start_process(target, *args, **kwargs):
 
 def get_timeout():
     """ Returns the timeout object and exception class"""
+    from infi.storagemodel.utils import TIMEOUT_IN_SEC
     try:  # gipc-based implementation
         from gevent import Timeout
         return Timeout(TIMEOUT_IN_SEC), Timeout
