@@ -1,8 +1,5 @@
 
-try:
-    from gevent import sleep
-except ImportError:
-    from time import sleep
+from .gevent_wrapper import sleep
 from infi.pyutils.lazy import cached_method, clear_cache
 from logging import getLogger
 

@@ -64,3 +64,22 @@ class FiberChannelMappingNotExistsUsingLinuxSG(FiberChannelMappingExistsUsingLin
 
     def __repr__(self):
         return "<FiberChannelMappingNotExistsUsingLinuxSG: {!r}>".format(self.connectivity)
+
+
+def get_predicate_for_checking_non_zero_host_id(system_serial):
+    def all_storage_devices_on_logical_unit_0_of_specific_box_show_non_zero_host_id():
+        from infi.storagemodel.vendor.infinidat.shortcuts import get_infinidat_block_devices_and_controllers__mapped_to_lun0
+        from infi.storagemodel.errors import DeviceDisappeared, RescanIsNeeded, StorageModelFindError
+        devices = []
+
+        try:
+            devices.extend(get_infinidat_block_devices_and_controllers__mapped_to_lun0())
+        except RescanIsNeeded:
+            pass
+
+        for device in devices:
+            if device.get_vendor().get_system_serial() == system_serial and device.get_vendor().get_host_id() == 0:
+                return False
+        return True
+
+    return all_storage_devices_on_logical_unit_0_of_specific_box_show_non_zero_host_id
