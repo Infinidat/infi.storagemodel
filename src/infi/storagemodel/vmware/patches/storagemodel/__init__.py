@@ -93,21 +93,15 @@ class VMwareHostStorageModel(StorageModel):
         self._client = client
         self._install_property_collector()
         self._refresh_thread = None
-        self._refresh_wait_time = 5
 
     def _refresh_host_storage(self, storage_system, reattach_luns=True):
         from urllib2 import URLError
-        from gevent import sleep
         try:
             storage_system.RescanAllHba()
             storage_system.RescanVmfs()
             storage_system.RefreshStorageSystem()
             if reattach_luns:
                 self._attach_detached_luns(storage_system)
-            # there is time window once we finish rescanning and before the propery collectors see the new data
-            # since rescan are heave we'd like to avoid unnecessary ones
-            # so we sleep a bit to have the property collectors refresh
-            sleep(self._refresh_wait_time)
         except URLError:  # pragma: no cover
             # the storage_system calls above wait for completion and therefore may receive timeout exception
             # (in the form of URLError)
