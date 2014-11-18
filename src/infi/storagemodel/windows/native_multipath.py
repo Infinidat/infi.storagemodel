@@ -4,6 +4,9 @@ from ..base import multipath
 from ..errors import RescanIsNeeded, DeviceDisappeared
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
 from .device_helpers import is_disk_drive_managed_by_windows_mpio
+from logging import getLogger
+logger = getLogger(__name__)
+
 # pylint: disable=W0212,E1002
 
 class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
