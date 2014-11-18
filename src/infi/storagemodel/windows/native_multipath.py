@@ -32,29 +32,28 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         device_manager = DeviceManager()
         wmi_client = WmiClient()
 
-        def _iter():
-            for disk_drive in device_manager.disk_drives:
-                if not is_disk_drive_managed_by_windows_mpio(disk_drive):
-                    continue
-                yield disk_drive
-
-        devices = list(_iter())
         multipath_dict = get_multipath_devices(wmi_client)
         policies_dict = LazyLoadBalancingInfomrationDict(wmi_client)
 
         def _get_multipath_object(device_object):
             key = u"%s_0" % device_object._instance_id
-            if key not in multipath_dict:
-                raise RescanIsNeeded()
-            return multipath_dict[key]
-
-        def _get_multipath_device(device_object):
-            return WindowsNativeMultipathBlockDevice(device_object, _get_multipath_object(device_object), policies_dict)
+            return multipath_dict.get(key, None)
 
         def _is_physical_drive(device_object):
             return device_object.get_physical_drive_number() != -1
 
-        return filter(_is_physical_drive, map(_get_multipath_device, devices))
+        def _iter_disk_drives():
+            for disk_drive in device_manager.disk_drives:
+                if not is_disk_drive_managed_by_windows_mpio(disk_drive):
+                    logger.debug("disk drive {} is not managed by mpio".format(disk_drive))
+                    continue
+                multipath_object = _get_multipath_object(disk_drive)
+                if multipath_object is None:
+                    logger.error("no matching MPIO WMI instance found for disk drive {}".format(disk_drive))
+                    continue
+                yield WindowsNativeMultipathBlockDevice(disk_drive, multipath_object, policies_dict)
+
+        return filter(_is_physical_drive, _iter_disk_drives())
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         return filter(lambda device: not is_disk_drive_managed_by_windows_mpio(device._device_object), scsi_block_devices)

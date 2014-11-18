@@ -119,9 +119,11 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
             logger.debug("all multipath devices = {}".format(all_devices))
             active_devices = [device for device in all_devices if self._is_device_active(device)]
         except TimeoutExpired:
-            raise chain(MultipathDaemonTimeoutError())
+            logger.error("communication with multipathd timed out")
+            return []
         except ConnectionError:
-            raise chain(StorageModelFindError())
+            logger.error("communication error with multipathd")
+            return []
         return active_devices
 
     @cached_method
@@ -130,13 +132,10 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         from infi.multipathtools.connection import UnixDomainSocket
         client = MultipathClient(UnixDomainSocket(timeout=120))
         if not client.is_running():
-            logger.debug("MultipathD is not running")
+            logger.warning("multipathd is not running")
             return []
 
-        try:
-            devices = self._get_list_of_active_devices(client)
-        except IOError:
-            raise DeviceDisappeared()
+        devices = self._get_list_of_active_devices(client)
         result = []
         logger.debug("Got {} devices from multipath client".format(len(devices)))
         for mpath_device in devices:
