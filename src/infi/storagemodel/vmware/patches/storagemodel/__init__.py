@@ -25,7 +25,6 @@ def install_property_collectors_on_client(client):
     client.property_collectors[PROPERTY_COLLECTOR_KEY] = collector
 
 
-
 def byte_array_to_string(byte_array):
     from infi.instruct import FixedSizeArray, Struct
     from infi import instruct
@@ -94,20 +93,31 @@ class VMwareHostStorageModel(StorageModel):
         self._install_property_collector()
         self._refresh_thread = None
 
+    def __repr__(self):
+        try:
+            return "<VMwareHostStorageModel(moref={!r})>".format(self._moref)
+        except:
+            return super(VMwareHostStorageModel, self).__repr__()
+
+    def _debug(self, message):
+        logger.debug("{!r}: {}".format(self, message))
+
     def _refresh_host_storage(self, storage_system, reattach_luns=True):
         from urllib2 import URLError
+        self._debug("_refresh_host_storage started")
         try:
             storage_system.RescanAllHba()
             storage_system.RescanVmfs()
             storage_system.RefreshStorageSystem()
             if reattach_luns:
                 self._attach_detached_luns(storage_system)
+            self._debug("_refresh_host_storage ended")
         except URLError:  # pragma: no cover
             # the storage_system calls above wait for completion and therefore may receive timeout exception
             # (in the form of URLError)
             # however we don't care if the tasks take longer than expected because this is initiate_rescan only.
             # if we want to wait, we use the rescan_and_wait_for function
-            logger.debug("_refresh_host_storage caught URLError (timeout)")
+            self._debug("_refresh_host_storage caught URLError (timeout)")
         except:
             logger.exception("_refresh_host_storage caught an exception")
 
@@ -121,13 +131,17 @@ class VMwareHostStorageModel(StorageModel):
         config_manager = host.configManager
         storage_system = config_manager.storageSystem
         if self._refresh_thread is not None and is_thread_alive(self._refresh_thread):
-            logger.debug("Skipping refresh - referesh thread is already active")
+            self._debug("Skipping refresh - referesh thread is already active")
+            if wait_for_completion:
+                self._debug("Waiting for refresh thread to complete")
+                self._refresh_thread.join()
         else:
             self._refresh_thread = spawn(self._refresh_host_storage, storage_system)
             if wait_for_completion:
+                self._debug("Waiting for refresh thread to complete")
                 self._refresh_thread.join()
 
-    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=300, wait_on_rescan=False):
+    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=300, wait_on_rescan=True):
         super(VMwareHostStorageModel, self).rescan_and_wait_for(predicate=predicate,
                                                                 timeout_in_seconds=timeout_in_seconds,
                                                                 wait_on_rescan=wait_on_rescan)

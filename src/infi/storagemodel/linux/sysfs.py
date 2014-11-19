@@ -171,7 +171,11 @@ class Sysfs(object):
                 continue
 
             dev_path = os.path.join(SYSFS_CLASS_ALL_DEVICE_PATH,d)
-            hctl = get_hctl_for_sd_device(dev_path)
+            try:
+                hctl = get_hctl_for_sd_device(dev_path)
+            except (IOError, OSError):
+                log.debug("no hctl for sd device {}".format(dev_path))
+                continue
             self._sd_structures.setdefault(hctl, []).append(d)
 
 
@@ -218,7 +222,10 @@ class Sysfs(object):
                 #     ../../devices/pci0000:00/0000:00:15.0/0000:03:00.0/host2/target2:0:0/2:0:0:0/block/sda
                 def readlink(src):
                     if os.path.islink(src):
-                        return os.path.abspath(os.path.join(base, os.readlink(os.path.join(base, src))))
+                        try:
+                            return os.path.abspath(os.path.join(base, os.readlink(os.path.join(base, src))))
+                        except (OSError, IOError):
+                            return os.path.join(base, src)
                     return os.path.join(base, src)
                 return {link: readlink(link) for link in os.listdir(base)}
 
