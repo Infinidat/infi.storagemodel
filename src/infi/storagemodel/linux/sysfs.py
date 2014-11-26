@@ -186,6 +186,8 @@ class Sysfs(object):
                 self._append_device_by_type(hctl_str, dev_path, scsi_type)
             except (IOError, OSError):
                 log.debug("no device type for hctl {}".format(hctl_str))
+            except (DeviceDisappeared):
+                log.debug("device for hctl {} is dangling, skipping it".format(hctl_str))
 
         for name, path in self._get_sysfs_block_devices_pathnames().items():
             dev = SysfsBlockDevice(name, path)

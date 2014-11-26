@@ -52,7 +52,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
                     continue
                 multipath_object = _get_multipath_object(disk_drive)
                 if multipath_object is None:
-                    logger.error("no matching MPIO WMI instance found for disk drive {}".format(disk_drive))
+                    logger.error("no matching MPIO WMI instance found for disk drive {} (instance_id={!r})".format(disk_drive, disk_drive._instance_id))
                     continue
                 yield WindowsNativeMultipathBlockDevice(disk_drive, multipath_object, policies_dict)
 
