@@ -61,6 +61,31 @@ class WindowsDeviceMixin(object):
     def get_parent(self):
         return self._device_object.parent
 
+    @cached_method
+    def _get_hwid(self):
+        hwid = defer(getattr)(self._device_object, 'hardware_ids')[0]
+        hwid = hwid.replace('SCSI\\Disk', '').replace('SCSI\\Array', '').replace('MPIO\\Disk', '')
+        return hwid
+
+    @cached_method
+    def get_scsi_vendor_id(self):
+        """Returns the stripped T10 vendor identifier string, as give in SCSI Standard Inquiry"""
+        hwid = self._get_hwid()
+        return hwid[:8].rstrip('_').replace('_', ' ')
+
+    @cached_method
+    def get_scsi_revision(self):
+        """Returns the stripped T10 revision string, as give in SCSI Standard Inquiry"""
+        hwid = self._get_hwid()
+        return hwid[24:].rstrip('_').replace('_', ' ')
+
+    @cached_method
+    def get_scsi_product_id(self):
+        """Returns the stripped T10 product identifier string, as give in SCSI Standard Inquiry"""
+        hwid = self._get_hwid()
+        return hwid[8:24].rstrip('_').replace('_', ' ')
+
+
 class WindowsDiskDeviceMixin(object):
     @cached_method
     @replace_invalid_handle_with_device_disappeared

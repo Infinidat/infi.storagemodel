@@ -11,6 +11,18 @@ except ImportError:
     is_thread_alive = lambda thread: thread.is_alive()
 
 
+try:
+    from infi.gevent_utils.deferred import create_threadpool_executed_func as defer
+    from infi.gevent_utils.safe_greenlets import safe_spawn, joinall
+    def defer_together(callables):
+        joinall([safe_spawn(item) for item in callables])
+except ImportError:
+    defer = lambda func: func
+    def defer_together(callables):
+        for item in callables:
+            item()
+
+
 def spawn(target, *args, **kwargs):
     try:
         from gevent import spawn as _spawn
@@ -59,12 +71,12 @@ def reinit():
     except ImportError:
         pass
 
-
 @contextmanager
 def queue():
     from multiprocessing import Queue
     instance = Queue()
     yield instance, instance
+
 
 @contextmanager
 def get_pipe_context():

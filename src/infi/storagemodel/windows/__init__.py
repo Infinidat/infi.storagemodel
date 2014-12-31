@@ -1,4 +1,4 @@
-from ..base import StorageModel
+from infi.storagemodel.base import StorageModel
 
 # pylint: disable=W0212,E1002
 
@@ -29,8 +29,6 @@ class WindowsStorageModel(StorageModel):
 
     def initiate_rescan(self, wait_for_completion=False):
         from infi.devicemanager import DeviceManager
+        from infi.storagemodel.base.gevent_wrapper import defer_together
         dm = DeviceManager()
-        for controller in dm.storage_controllers:
-            if not controller.is_real_device():
-                continue
-            controller.rescan()
+        defer_together(controller.rescan for controller in dm.storage_controllers if controller.is_real_device())
