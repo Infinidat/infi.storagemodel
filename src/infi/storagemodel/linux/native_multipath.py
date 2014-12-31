@@ -57,6 +57,28 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
     def get_policy(self):
         return LinuxRoundRobin()
 
+    @cached_method
+    def get_scsi_vendor_id(self):
+        try:
+            return self.get_paths()[0].sysfs_device.get_vendor().strip()
+        except:
+            return super(LinuxNativeMultipathBlockDevice, self).get_scsi_vendor_id()
+
+    @cached_method
+    def get_scsi_revision(self):
+        try:
+            return self.get_paths()[0].sysfs_device.get_revision().strip()
+        except:
+            return super(LinuxNativeMultipathBlockDevice, self).get_scsi_revision()
+
+    @cached_method
+    def get_scsi_product_id(self):
+        try:
+            return self.get_paths()[0].sysfs_device.get_model().strip()
+        except:
+            return super(LinuxNativeMultipathBlockDevice, self).get_scsi_product_id()
+
+
 class LinuxRoundRobin(multipath.RoundRobin):
     pass
 
