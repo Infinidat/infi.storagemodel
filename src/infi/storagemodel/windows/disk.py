@@ -58,6 +58,15 @@ class WindowsDiskDrive(disk.DiskDrive):
     def set_read_only_attribute(self):
         self._disk_object.read_only()
 
+    @cached_method
+    def get_block_access_paths_for_partitions(self):
+        from infi.wioctl.errors import WindowsException
+        try:
+            return super(WindowsDiskDrive, self).get_block_access_paths_for_partitions()
+        except WindowsException:
+            return []
+
+
 class WindowsDiskModel(disk.DiskModel):
     def find_disk_drive_by_block_access_path(self, path):
         from infi.storagemodel import get_storage_model
