@@ -1,6 +1,6 @@
 
 from infi.pyutils.lazy import cached_method
-from ..base import partition
+from ..base import partition, gevent_wrapper
 from ..errors import RescanIsNeeded
 from .filesystem import WindowsFileSystem
 from logging import getLogger
@@ -16,7 +16,7 @@ class WindowsPartitionTable(object):
         return self._disk_device._disk_object.create_partition_table(style, alignment_in_bytes)
 
     def _get_partitions(self):
-        return self._disk_device._disk_object.get_partitions()
+        return gevent_wrapper.defer(self._disk_device._disk_object.get_partitions)()
 
     def get_disk_drive(self):
         return self._disk_device
@@ -53,13 +53,13 @@ class WindowsPartition(object):
         self._partition_object = partition_object
 
     def get_size_in_bytes(self):
-        return self._partition_object.get_size_in_bytes()
+        return gevent_wrapper.defer(self._partition_object.get_size_in_bytes)()
 
     @cached_method
     def _get_volume(self):
         from infi.wioctl.api import WindowsException
         try:
-            return self._partition_object.get_volume()
+            return gevent_wrapper.defer(self._partition_object.get_volume)()
         except WindowsException:
             logger.exception("get_volume caught WindowsException")
             raise RescanIsNeeded()
@@ -71,7 +71,7 @@ class WindowsPartition(object):
         if volume is None:
             return None
         try:
-            return volume.get_volume_guid()
+            return gevent_wrapper.defer(volume.get_volume_guid)()
         except WindowsException:
             logger.exception("get_volume caught WindowsException")
             raise RescanIsNeeded()

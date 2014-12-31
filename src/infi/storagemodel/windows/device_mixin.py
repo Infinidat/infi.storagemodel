@@ -8,7 +8,7 @@ from infi.wioctl.errors import InvalidHandle
 from infi.pyutils.decorators import wraps
 from infi.exceptools import chain
 from infi.storagemodel.errors import DeviceDisappeared
-
+from infi.storagemodel.base.gevent_wrapper import defer
 from logging import getLogger
 logger = getLogger(__name__)
 
@@ -21,11 +21,12 @@ def replace_invalid_handle_with_device_disappeared(func):
             raise chain(DeviceDisappeared())
     return catcher
 
+
 class WindowsDeviceMixin(object):
     @cached_method
     def get_pdo(self):
         try:
-            return self._device_object.psuedo_device_object
+            return defer(getattr)(self._device_object, 'psuedo_device_object')
         except KeyError:
             logger.exception("Getting device pdo raised KeyError")
             raise DeviceDisappeared()
@@ -36,6 +37,7 @@ class WindowsDeviceMixin(object):
         from infi.asi import create_platform_command_executer
         handle = OSFile(self.get_pdo())
         executer = create_platform_command_executer(handle)
+        executer.call = defer(executer.call)
         try:
             yield executer
         finally:
@@ -55,7 +57,7 @@ class WindowsDeviceMixin(object):
     @replace_invalid_handle_with_device_disappeared
     def get_hctl(self):
         from infi.dtypes.hctl import HCTL
-        return HCTL(*self.get_ioctl_interface().scsi_get_address())
+        return HCTL(*defer(self.get_ioctl_interface().scsi_get_address)())
 
     @cached_method
     def get_parent(self):
@@ -90,7 +92,7 @@ class WindowsDiskDeviceMixin(object):
     @cached_method
     @replace_invalid_handle_with_device_disappeared
     def get_size_in_bytes(self):
-        return self.get_ioctl_interface().disk_get_drive_geometry_ex()
+        return defer(self.get_ioctl_interface().disk_get_drive_geometry_ex)()
 
     @cached_method
     def get_physical_drive_number(self):
@@ -98,7 +100,7 @@ class WindowsDiskDeviceMixin(object):
         if the disk is hidden (i.e. part of MPIODisk), it returns -1
         """
         try:
-            number = self.get_ioctl_interface().storage_get_device_number()
+            number = defer(self.get_ioctl_interface().storage_get_device_number)()
             return -1 if number == 0xffffffff else number
         except WindowsException:
             return -1

@@ -30,10 +30,13 @@ class LazyLoadBalancingInfomrationDict(LazyImmutableDict):
 class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
     def get_all_multipath_block_devices(self):
+        from infi.storagemodel.base.gevent_wrapper import run_together
         from infi.devicemanager import DeviceManager
         from infi.wmpio import WmiClient, get_multipath_devices
+        from functools import partial
         device_manager = DeviceManager()
         wmi_client = WmiClient()
+        physical_drives = set()
 
         multipath_dict = get_multipath_devices(wmi_client)
         policies_dict = LazyLoadBalancingInfomrationDict(wmi_client)
@@ -43,7 +46,8 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
             return multipath_dict.get(key, None)
 
         def _is_physical_drive(device_object):
-            return device_object.get_physical_drive_number() != -1
+            if device_object.get_physical_drive_number() != -1:
+                physical_drives.add(device_object)
 
         def _iter_disk_drives():
             for disk_drive in device_manager.disk_drives:
@@ -56,7 +60,9 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
                     continue
                 yield WindowsNativeMultipathBlockDevice(disk_drive, multipath_object, policies_dict)
 
-        return filter(_is_physical_drive, _iter_disk_drives())
+
+        run_together(partial(_is_physical_drive, drive) for drive in _iter_disk_drives())
+        return list(physical_drives)
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         return filter(lambda device: not is_disk_drive_managed_by_windows_mpio(device._device_object), scsi_block_devices)

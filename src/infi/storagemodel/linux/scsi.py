@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from ..base import scsi
+from ..base import scsi, gevent_wrapper
 from ..errors import StorageModelFindError, DeviceDisappeared
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
@@ -21,6 +21,7 @@ class LinuxSCSIDeviceMixin(object):
 
         handle = OSFile(os.open(self.get_scsi_access_path(), os.O_RDWR))
         executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
+        executer.call = gevent_wrapper.defer(executer.call)
         try:
             yield executer
         finally:

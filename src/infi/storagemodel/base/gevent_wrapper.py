@@ -13,12 +13,15 @@ except ImportError:
 
 try:
     from infi.gevent_utils.deferred import create_threadpool_executed_func as defer
-    from infi.gevent_utils.safe_greenlets import safe_spawn, joinall
-    def defer_together(callables):
-        joinall([safe_spawn(item) for item in callables])
+    from infi.gevent_utils.safe_greenlets import safe_spawn, safe_joinall
+    from infi.pyutils.decorators import wraps
+
+    def run_together(callables):
+        safe_joinall([safe_spawn(item) for item in callables])
+
 except ImportError:
     defer = lambda func: func
-    def defer_together(callables):
+    def run_together(callables):
         for item in callables:
             item()
 
