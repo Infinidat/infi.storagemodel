@@ -55,6 +55,14 @@ class DiskDrive(object):
         """
         raise NotImplementedError()
 
+    @cached_method
+    def get_block_access_paths_for_partitions(self):
+        try:
+            return [item.get_block_access_path() for item in self.get_partition_table().get_partitions()]
+        except (NoPartitionTable, NoSuchDisk, IndexError):
+            return []
+
+
 class DiskModel(object):
     #############################
     # Platform Specific Methods #

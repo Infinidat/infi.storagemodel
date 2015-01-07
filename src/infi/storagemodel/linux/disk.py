@@ -50,6 +50,12 @@ class LinuxDiskDrive(disk.DiskDrive):
     def _format_partition(self, number, filesystem_name):
         self._get_parted_disk_drive().format_partition(number, filesystem_name)
 
+    @cached_method
+    def get_block_access_paths_for_partitions(self):
+        from glob import glob
+        return [item for item in glob('%s*' % self._scsi_disk_path) if item != self._scsi_disk_path]
+
+
 class LinuxDiskModel(disk.DiskModel):
     def find_disk_drive_by_block_access_path(self, path):
         from infi.storagemodel import get_storage_model

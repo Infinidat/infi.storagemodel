@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from ..base import multipath
+from ..base import multipath, gevent_wrapper
 from ..errors import StorageModelFindError, MultipathDaemonTimeoutError, DeviceDisappeared
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
@@ -23,6 +23,7 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
 
         handle = OSFile(os.open(self.get_block_access_path(), os.O_RDWR))
         executer = LinuxIoctlCommandExecuter(handle)
+        executer.call = gevent_wrapper.defer(executer.call)
         try:
             yield executer
         finally:
@@ -57,6 +58,28 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
     def get_policy(self):
         return LinuxRoundRobin()
 
+    @cached_method
+    def get_scsi_vendor_id(self):
+        try:
+            return self.get_paths()[0].sysfs_device.get_vendor().strip()
+        except:
+            return super(LinuxNativeMultipathBlockDevice, self).get_scsi_vendor_id()
+
+    @cached_method
+    def get_scsi_revision(self):
+        try:
+            return self.get_paths()[0].sysfs_device.get_revision().strip()
+        except:
+            return super(LinuxNativeMultipathBlockDevice, self).get_scsi_revision()
+
+    @cached_method
+    def get_scsi_product_id(self):
+        try:
+            return self.get_paths()[0].sysfs_device.get_model().strip()
+        except:
+            return super(LinuxNativeMultipathBlockDevice, self).get_scsi_product_id()
+
+
 class LinuxRoundRobin(multipath.RoundRobin):
     pass
 
@@ -75,6 +98,7 @@ class LinuxPath(multipath.Path):
         from .scsi import SG_TIMEOUT_IN_MS
         handle = OSFile(os.open(os.path.join("/dev", self.sysfs_device.get_scsi_generic_device_name()), os.O_RDWR))
         executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
+        executer.call = gevent_wrapper.defer(executer.call)
         try:
             yield executer
         finally:

@@ -1,5 +1,5 @@
 from infi.pyutils.lazy import cached_method
-from ..base import disk
+from ..base import disk, gevent_wrapper
 
 # pylint: disable=W0212,E1002
 
@@ -21,16 +21,16 @@ class WindowsDiskDrive(disk.DiskDrive):
         return self._disk_object._path
 
     def is_empty(self):
-        return len(self._disk_object.get_partitions()) == 0
+        return len(gevent_wrapper.defer(self._disk_object.get_partitions)()) == 0
 
     def get_partition_table(self):
         from .partition import WindowsMBRPartitionTable, WindowsGUIDPartitionTable
-        if self._disk_object.is_gpt():
+        if gevent_wrapper.defer(self._disk_object.is_gpt)():
             return WindowsGUIDPartitionTable(self)
         return WindowsMBRPartitionTable(self)
 
     def delete_partition_table(self):
-        self._disk_object.destroy_partition_table()
+        gevent_wrapper.defer(self._disk_object.destroy_partition_table)()
 
     def create_mbr_partition_table(self, alignment_in_bytes=None):
         from .partition import WindowsMBRPartitionTable
@@ -41,22 +41,31 @@ class WindowsDiskDrive(disk.DiskDrive):
         return WindowsGUIDPartitionTable.create_partition_table(self, alignment_in_bytes)
 
     def is_online(self):
-        return self._disk_object.is_online()
+        return gevent_wrapper.defer(self._disk_object.is_online)()
 
     def online(self):
-        return self._disk_object.online()
+        return gevent_wrapper.defer(self._disk_object.online)()
 
     def offline(self):
-        return self._disk_object.offline()
+        return gevent_wrapper.defer(self._disk_object.offline)()
 
     def has_read_only_attribute(self):
-        return self._disk_object.is_read_only()
+        return gevent_wrapper.defer(self._disk_object.is_read_only)()
 
     def unset_read_only_attribute(self):
-        self._disk_object.read_write()
+        gevent_wrapper.defer(self._disk_object.read_write)()
 
     def set_read_only_attribute(self):
-        self._disk_object.read_only()
+        gevent_wrapper.defer(self._disk_object.read_only)()
+
+    @cached_method
+    def get_block_access_paths_for_partitions(self):
+        from infi.wioctl.errors import WindowsException
+        try:
+            return super(WindowsDiskDrive, self).get_block_access_paths_for_partitions()
+        except WindowsException:
+            return []
+
 
 class WindowsDiskModel(disk.DiskModel):
     def find_disk_drive_by_block_access_path(self, path):

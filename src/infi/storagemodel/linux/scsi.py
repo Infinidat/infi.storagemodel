@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from ..base import scsi
+from ..base import scsi, gevent_wrapper
 from ..errors import StorageModelFindError, DeviceDisappeared
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
@@ -21,6 +21,7 @@ class LinuxSCSIDeviceMixin(object):
 
         handle = OSFile(os.open(self.get_scsi_access_path(), os.O_RDWR))
         executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
+        executer.call = gevent_wrapper.defer(executer.call)
         try:
             yield executer
         finally:
@@ -41,6 +42,19 @@ class LinuxSCSIDeviceMixin(object):
     @cached_method
     def get_linux_scsi_generic_devno(self):
         return self.sysfs_device.get_scsi_generic_devno()
+
+    @cached_method
+    def get_scsi_vendor_id(self):
+        return self.sysfs_device.get_vendor().strip()
+
+    @cached_method
+    def get_scsi_revision(self):
+        return self.sysfs_device.get_revision().strip()
+
+
+    @cached_method
+    def get_scsi_product_id(self):
+        return self.sysfs_device.get_model().strip()
 
 
 class LinuxSCSIBlockDeviceMixin(LinuxSCSIDeviceMixin, LinuxBlockDeviceMixin):
