@@ -1,5 +1,7 @@
 from infi.pyutils.contexts import contextmanager
+from logging import getLogger
 
+logger = getLogger(__name__)
 
 try:
     from gevent import sleep
@@ -16,14 +18,19 @@ try:
     from infi.gevent_utils.safe_greenlets import safe_spawn, safe_joinall
     from infi.pyutils.decorators import wraps
 
-    def run_together(callables):
-        safe_joinall([safe_spawn(item) for item in callables])
+    def run_together(callables, raise_error=False):
+        safe_joinall([safe_spawn(item) for item in callables], raise_error=raise_error)
 
 except ImportError:
     defer = lambda func: func
-    def run_together(callables):
-        for item in callables:
-            item()
+    def run_together(callables, raise_error=False):
+        try:
+            for item in callables:
+                item()
+        except:
+            logger.exception("uncaught exception in run_together")
+            if raise_error:
+                raise
 
 
 def spawn(target, *args, **kwargs):

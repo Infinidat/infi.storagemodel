@@ -121,7 +121,7 @@ class VMwareHostStorageModel(StorageModel):
         except:
             logger.exception("_refresh_host_storage caught an exception")
 
-    def initiate_rescan(self, wait_for_completion=False):
+    def initiate_rescan(self, wait_for_completion=False, raise_error=False):
         from infi.storagemodel.base.gevent_wrapper import spawn, is_thread_alive
         host = self._client.get_managed_object_by_reference(self._moref)
         # we've seen several time in the tests that host.configManager is a list; how weird is that?
@@ -134,17 +134,24 @@ class VMwareHostStorageModel(StorageModel):
             self._debug("Skipping refresh - referesh thread is already active")
             if wait_for_completion:
                 self._debug("Waiting for refresh thread to complete")
-                self._refresh_thread.join()
+                if raise_error:
+                    self._refresh_thread.get()       # this joins + raises exceptions if there were any
+                else:
+                    self._refresh_thread.join()
         else:
             self._refresh_thread = spawn(self._refresh_host_storage, storage_system)
             if wait_for_completion:
                 self._debug("Waiting for refresh thread to complete")
-                self._refresh_thread.join()
+                if raise_error:
+                    self._refresh_thread.get()       # this joins + raises exceptions if there were any
+                else:
+                    self._refresh_thread.join()
 
-    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=300, wait_on_rescan=True):
+    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=300, wait_on_rescan=True, raise_error=False):
         super(VMwareHostStorageModel, self).rescan_and_wait_for(predicate=predicate,
                                                                 timeout_in_seconds=timeout_in_seconds,
-                                                                wait_on_rescan=wait_on_rescan)
+                                                                wait_on_rescan=wait_on_rescan,
+                                                                raise_error=raise_error)
 
     def _create_scsi_model(self):
         return VMwareHostSCSIModel()

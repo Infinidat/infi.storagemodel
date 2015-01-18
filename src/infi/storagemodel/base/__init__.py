@@ -75,7 +75,7 @@ class StorageModel(object):
             logger.exception("An un-expected exception was raised by predicate {!r}".format(predicate))
             raise
 
-    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60, wait_on_rescan=False):
+    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=60, wait_on_rescan=False, raise_error=False):
         """Rescan devices and poll the predicate until either it returns True or a timeout is reached.
 
         The model is refreshed automatically, there is no need to `refresh` after calling this method or in the
@@ -86,6 +86,8 @@ class StorageModel(object):
         **timeout_in_seconds**: time in seconds to poll the predicate.
 
         **wait_on_rescan**: whether to wait until the rescan process is completed before checking the predicate.
+
+        **raise_erros**: by default internal errors are silenced. if raise_erros is True, internal errors will be raised
 
         Raises `infi.storagemodel.errors.TimeoutError` exception if the timeout is reached.
         """
@@ -100,7 +102,7 @@ class StorageModel(object):
         self.refresh()
         start_time = time()
         logger.debug("Initiating rescan")
-        self.initiate_rescan(wait_on_rescan)
+        self.initiate_rescan(wait_on_rescan, raise_error)
         while True:
             logger.debug("Trying predicate: {!r}".format(predicate))
             result = self._try_predicate(predicate)
@@ -112,7 +114,7 @@ class StorageModel(object):
                 raise TimeoutError()  # pylint: disable=W0710
             elif result in [False, None]:
                 logger.debug("Predicate returned False, will rescan again")
-                self.initiate_rescan(wait_on_rescan)
+                self.initiate_rescan(wait_on_rescan, raise_error)
             sleep(1)
             self.refresh()
 
@@ -120,7 +122,7 @@ class StorageModel(object):
     # Platform Specific Methods #
     #############################
 
-    def initiate_rescan(self, wait_for_completion=False):  # pragma: no cover
+    def initiate_rescan(self, wait_for_completion=False, raise_error=False):  # pragma: no cover
         """A primitive rescan method that can be used in case you do not need the more elaborate rescan_and_wait_for method. """
         # platform implementation
         raise NotImplementedError()
