@@ -13,26 +13,6 @@ except ImportError:
     is_thread_alive = lambda thread: thread.is_alive()
 
 
-try:
-    from infi.gevent_utils.deferred import create_threadpool_executed_func as defer
-    from infi.gevent_utils.safe_greenlets import safe_spawn, safe_joinall
-    from infi.pyutils.decorators import wraps
-
-    def run_together(callables, raise_error=False):
-        safe_joinall([safe_spawn(item) for item in callables], raise_error=raise_error)
-
-except ImportError:
-    defer = lambda func: func
-    def run_together(callables, raise_error=False):
-        try:
-            for item in callables:
-                item()
-        except:
-            logger.exception("uncaught exception in run_together")
-            if raise_error:
-                raise
-
-
 def spawn(target, *args, **kwargs):
     try:
         from gevent import spawn as _spawn
@@ -42,6 +22,21 @@ def spawn(target, *args, **kwargs):
         thread = Thread(target=target, args=args, kwargs=kwargs)
         thread.start()
         return thread
+
+
+try:
+    from infi.gevent_utils.deferred import create_threadpool_executed_func as defer
+    from infi.gevent_utils.safe_greenlets import safe_spawn, safe_joinall
+except ImportError:
+    defer = lambda func: func
+    safe_spawn = spawn
+    def safe_joinall(threads, timeout=None, raise_error=False):
+        # TODO treat timeout and raise_error
+        [thread.join() for thread in threads]
+
+
+def run_together(callables):
+    safe_joinall([safe_spawn(item) for item in callables])
 
 
 def get_process_class():
