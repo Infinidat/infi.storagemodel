@@ -13,7 +13,8 @@ class SolarisStorageModel(StorageModel):
         raise NotImplementedError()
 
     def _create_mount_manager(self):
-        raise NotImplementedError()
+        from .mount import SolarisMountManager
+        return SolarisMountManager()
 
     def _create_mount_repository(self):
         raise NotImplementedError()

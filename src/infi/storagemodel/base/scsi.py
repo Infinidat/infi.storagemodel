@@ -1,4 +1,3 @@
-
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
 
