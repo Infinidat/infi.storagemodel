@@ -120,6 +120,7 @@ class VMwareHostStorageModel(StorageModel):
             self._debug("_refresh_host_storage caught URLError (timeout)")
         except:
             logger.exception("_refresh_host_storage caught an exception")
+            raise   # hiding or no hiding the erros is handled in initiate_rescan, according to 'raise_error'
 
     def initiate_rescan(self, wait_for_completion=False, raise_error=False):
         from infi.storagemodel.base.gevent_wrapper import spawn, is_thread_alive
