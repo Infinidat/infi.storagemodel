@@ -31,6 +31,10 @@ class LinuxStorageModel(StorageModel):
         from .native_multipath import LinuxNativeMultipathModel
         return LinuxNativeMultipathModel(self._get_sysfs())
 
+    def _create_veritas_multipath_model(self):
+        from .veritas_multipath import LinuxVeritasMultipathModel
+        return LinuxVeritasMultipathModel(self._get_sysfs(), self.get_scsi())
+
     def _create_disk_model(self):
         from .disk import LinuxDiskModel
         return LinuxDiskModel()
