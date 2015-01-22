@@ -38,6 +38,12 @@ class StorageModel(object):
         return self._create_native_multipath_model()
 
     @cached_method
+    def get_veritas_multipath(self):
+        """Returns a `infi.storagemodel.base.multipath.MultipathFrameworkModel` object, as seen by the operating system's built-in MPIO driver"""
+        # TODO what to do in case native multipath is not installed?
+        return self._create_veritas_multipath_model()
+
+    @cached_method
     def get_disk(self):
         """Returns a `infi.storagemodel.base.disk.DiskModel` object which represents the disks layer"""
         return self._create_disk_model()
@@ -132,6 +138,10 @@ class StorageModel(object):
         raise NotImplementedError()
 
     def _create_native_multipath_model(self):  # pragma: no cover
+        # platform implementation
+        raise NotImplementedError()
+
+    def _create_veritas_multipath_model(self):  # pragma: no cover
         # platform implementation
         raise NotImplementedError()
 

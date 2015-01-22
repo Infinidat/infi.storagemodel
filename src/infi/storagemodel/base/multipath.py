@@ -64,6 +64,11 @@ class NativeMultipathModel(MultipathFrameworkModel):
     # This methods below are overriden by platform-specific implementations
     pass
 
+class VeritasMultipathModel(MultipathFrameworkModel):
+    # pylint: disable=W0223
+    # This methods below are overriden by platform-specific implementations
+    pass
+
 class MultipathDevice(object):
     pass
 
