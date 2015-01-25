@@ -1,6 +1,6 @@
 from contextlib import contextmanager
-from ..base import multipath, gevent_wrapper
-from ..errors import StorageModelFindError, MultipathDaemonTimeoutError, DeviceDisappeared
+from infi.storagemodel.base import multipath, gevent_wrapper
+from infi.storagemodel.errors import StorageModelFindError, MultipathDaemonTimeoutError, DeviceDisappeared
 from infi.storagemodel.base.disk import NoSuchDisk
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
@@ -35,11 +35,11 @@ class VeritasMultipathClient(object):
         return multipaths
 
     def read_paths_list(self):
-        from infi.vendata.powertools.utils import execute_command
+        from .utils import execute_command
         try:
             return execute_command(["vxdmpadm", "list", "dmpnode"]).get_stdout()
         except OSError as e:
-            if e.errno == 2:
+            if e.errno == 2: # file not found
                 return ""
             raise
 
@@ -121,13 +121,13 @@ class LinuxVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
         for path in self.multipath_object.paths:
             try:
                 paths.append(VeritasPath(self._sysfs, self._scsi, path))
-            except ValueError:
+            except (ValueError, KeyError):
                 logger.debug("VeritasPath sysfs device disappeared for {}".format(path))
         return paths
 
     @cached_method
     def get_policy(self):
-        raise NotImplementedError # TODO
+        raise NotImplementedError() # TODO
 
     @cached_method
     def get_scsi_vendor_id(self):
