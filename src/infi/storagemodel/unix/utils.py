@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 WAIT_TIME = 120
 
 
-class LinuxUtils(Utils):
+class UnixUtils(Utils):
     def get_free_space(self, path):
         from os import statvfs
         stat_res = statvfs(path)

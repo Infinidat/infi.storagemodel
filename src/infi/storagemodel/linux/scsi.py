@@ -51,7 +51,6 @@ class LinuxSCSIDeviceMixin(object):
     def get_scsi_revision(self):
         return self.sysfs_device.get_revision().strip()
 
-
     @cached_method
     def get_scsi_product_id(self):
         return self.sysfs_device.get_model().strip()

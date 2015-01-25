@@ -1,8 +1,8 @@
-from ..unix import UnixStorageModel
+from infi.storagemodel.base import StorageModel
 
 # pylint: disable=W0212,E1002
 
-class SolarisStorageModel(UnixStorageModel):
+class UnixStorageModel(StorageModel):
     def _create_scsi_model(self):
         raise NotImplementedError()
 
@@ -12,13 +12,12 @@ class SolarisStorageModel(UnixStorageModel):
     def _create_disk_model(self):
         raise NotImplementedError()
 
-    def _create_mount_manager(self):
-        from .mount import SolarisMountManager
-        return SolarisMountManager()
-
     def _create_mount_repository(self):
-        from .mount import SolarisMountRepository
-        return SolarisMountRepository()
+        raise NotImplementedError()
+
+    def _create_utils(self):
+        from ..unix.utils import UnixUtils
+        return UnixUtils()
 
     def initiate_rescan(self, wait_for_completion=False):
         raise NotImplementedError()

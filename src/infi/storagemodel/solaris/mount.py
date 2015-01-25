@@ -4,13 +4,13 @@ from infi.pyutils.lazy import cached_method
 # pylint: disable=W0223,W0212
 
 class SolarisMountManager(mount.UnixMountManager):
-    def _get_file_system_class(self):
+    def _get_file_system_object(self, fsname):
         from .filesystem import SolarisFileSystem
-        return SolarisFileSystem
+        return SolarisFileSystem(fsname)
 
     @cached_method
     def get_recommended_file_system(self):
-        return self._get_file_system_class()("zfs")
+        return self._get_file_system_object("zfs")
 
 class SolarisMount(mount.UnixMount):
     def __init__(self, mount_entry):
@@ -25,5 +25,5 @@ class SolarisPersistentMount(SolarisMount, mount.UnixPersistentMount):
     pass
 
 class SolarisMountRepository(mount.UnixMountRepository):
-    def _get_persistent_mount_class(self):
-        return SolarisPersistentMount
+    def _get_persistent_mount_object(self, entry):
+        return SolarisPersistentMount(entry)

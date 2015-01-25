@@ -9,7 +9,7 @@ class UnixMountManager(mount.MountManager):
     def _get_mount_class(self):
         raise NotImplementedError()
  
-    def _get_file_system_class(self):
+    def _get_file_system_object(self, fsname):
         raise NotImplementedError()
 
     @cached_method
@@ -24,11 +24,11 @@ class UnixMountManager(mount.MountManager):
 
     @cached_method
     def get_available_file_systems(self):
-        return [self._get_file_system_class(name) for name in self._get_mount_manager().get_supported_file_systems()]
+        return [self._get_file_system_object(name) for name in self._get_mount_manager().get_supported_file_systems()]
 
     @cached_method
     def get_creatable_file_systems(self):
-        return [self._get_file_system_class(name) for name in self._get_mount_manager().get_creatable_file_systems()]
+        return [self._get_file_system_object(name) for name in self._get_mount_manager().get_creatable_file_systems()]
 
     @cached_method
     def get_recommended_file_system(self):
@@ -60,11 +60,11 @@ class UnixMountRepository(mount.MountRepository):
         from infi.mount_utils import get_mount_manager
         return get_mount_manager()
 
-    def _get_persistent_mount_class(self):
+    def _get_persistent_mount_object(self, entry):
         raise NotImplementedError()
 
     def get_all_persistent_mounts(self):
-        return [self._get_persistent_mount_class()(entry) for entry in self._get_mount_manager().get_mounts_from_fstab()]
+        return [self._get_persistent_mount_object(entry) for entry in self._get_mount_manager().get_mounts_from_fstab()]
 
     def remove_persistent_mountpoint(self, persistent_mount):
         entry = persistent_mount._entry

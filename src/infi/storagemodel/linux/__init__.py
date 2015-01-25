@@ -1,6 +1,6 @@
 import atexit
 
-from ..base import StorageModel
+from ..unix import UnixStorageModel
 from ..base.gevent_wrapper import sleep
 from infi.pyutils.lazy import cached_method
 from datetime import datetime
@@ -9,7 +9,7 @@ from logging import getLogger, NullHandler
 logger = getLogger(__name__)
 
 
-class LinuxStorageModel(StorageModel):
+class LinuxStorageModel(UnixStorageModel):
     rescan_subprocess_timeout = 30
 
     def __init__(self):
@@ -46,10 +46,6 @@ class LinuxStorageModel(StorageModel):
     def _create_mount_repository(self):
         from .mount import LinuxMountRepository
         return LinuxMountRepository()
-
-    def _create_utils(self):
-        from .utils import LinuxUtils
-        return LinuxUtils()
 
     def terminate_rescan_process(self, silent=False):
         from ..base.gevent_wrapper import get_process_class
