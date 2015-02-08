@@ -29,4 +29,4 @@ def console_script():
         print "This script is for Linux only"
     basicConfig(stream=stderr, level=DEBUG)
     from infi.storagemodel import get_storage_model
-    get_storage_model().rescan_and_wait_for(wait_on_rescan=True)
+    get_storage_model().rescan_and_wait_for(wait_for_completion=True)
