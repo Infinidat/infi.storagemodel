@@ -4,6 +4,8 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
 from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page_data
 from infi.dtypes.hctl import HCTL
+from time import time
+from time import time
 from logging import getLogger
 import infi.storagemodel
 
@@ -92,6 +94,7 @@ class VMwareHostStorageModel(StorageModel):
         self._client = client
         self._install_property_collector()
         self._refresh_thread = None
+        self._last_rescan_timestamp = 0
 
     def __repr__(self):
         try:
@@ -123,10 +126,15 @@ class VMwareHostStorageModel(StorageModel):
         except:
             logger.exception("_refresh_host_storage caught an exception")
             raise   # hiding or no hiding the erros is handled in initiate_rescan, according to 'raise_error'
+        finally:
+            self._last_rescan_timestamp = time()
 
     def retry_rescan(self, **rescan_kwargs):
-        self._debug("no point in retrying rescan in VMware as it takes too long, and it can take some time for the property collector to update")
-        pass
+        now = time()
+        if (now - self._last_rescan_timestamp) > 30:
+            self.initiate_rescan(**rescan_kwargs)
+        else:
+            self._debug("no point in retrying rescan in VMware as it takes too long, and it can take some time for the property collector to update")
 
     def initiate_rescan(self, wait_for_completion=True, raise_error=False, do_rescan=True, do_refresh=False):
         from infi.storagemodel.base.gevent_wrapper import spawn, is_thread_alive
