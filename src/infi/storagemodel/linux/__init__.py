@@ -64,7 +64,7 @@ class LinuxStorageModel(StorageModel):
                     logger.exception("Failed to terminate rescan process")
             self.rescan_process = None
 
-    def initiate_rescan(self, wait_for_completion=True):
+    def initiate_rescan(self, wait_for_completion=True, raise_error=False):
         from .rescan_scsi_bus import main
         from ..base.gevent_wrapper import get_process_class, start_process
         Process = get_process_class()
@@ -79,7 +79,10 @@ class LinuxStorageModel(StorageModel):
                 logger.debug("previous rescan process is still running")
                 if wait_for_completion:
                     logger.debug("waiting for rescan process completion")
-                    self.rescan_process.join()
+                    if raise_error:
+                        self.rescan_process.get()       # this joins + raises exceptions if there were any
+                    else:
+                        self.rescan_process.join()
         else:
             if isinstance(self.rescan_process, Process):
                 logger.debug("previous rescan process exit code: {}".format(self.rescan_process.exitcode))
@@ -88,4 +91,7 @@ class LinuxStorageModel(StorageModel):
             logger.debug("rescan process started")
             if wait_for_completion:
                 logger.debug("waiting for rescan process completion")
-                self.rescan_process.join()
+                if raise_error:
+                    self.rescan_process.get()       # this joins + raises exceptions if there were any
+                else:
+                    self.rescan_process.join()

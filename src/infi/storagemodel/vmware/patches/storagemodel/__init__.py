@@ -4,6 +4,8 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
 from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page_data
 from infi.dtypes.hctl import HCTL
+from time import time
+from time import time
 from logging import getLogger
 import infi.storagemodel
 
@@ -92,6 +94,7 @@ class VMwareHostStorageModel(StorageModel):
         self._client = client
         self._install_property_collector()
         self._refresh_thread = None
+        self._last_rescan_timestamp = 0
 
     def __repr__(self):
         try:
@@ -102,13 +105,15 @@ class VMwareHostStorageModel(StorageModel):
     def _debug(self, message):
         logger.debug("{!r}: {}".format(self, message))
 
-    def _refresh_host_storage(self, storage_system, reattach_luns=True):
+    def _refresh_host_storage(self, storage_system, reattach_luns=True, do_rescan=True, do_refresh=False):
         from urllib2 import URLError
-        self._debug("_refresh_host_storage started")
+        self._debug("_refresh_host_storage started, do_rescan={}, do_refresh={}".format(do_rescan, do_refresh))
         try:
-            storage_system.RescanAllHba()
-            storage_system.RescanVmfs()
-            storage_system.RefreshStorageSystem()
+            if do_rescan:
+                storage_system.RescanAllHba()
+                storage_system.RescanVmfs()
+            if do_refresh:
+                storage_system.RefreshStorageSystem()
             if reattach_luns:
                 self._attach_detached_luns(storage_system)
             self._debug("_refresh_host_storage ended")
@@ -120,8 +125,18 @@ class VMwareHostStorageModel(StorageModel):
             self._debug("_refresh_host_storage caught URLError (timeout)")
         except:
             logger.exception("_refresh_host_storage caught an exception")
+            raise   # hiding or no hiding the erros is handled in initiate_rescan, according to 'raise_error'
+        finally:
+            self._last_rescan_timestamp = time()
 
-    def initiate_rescan(self, wait_for_completion=False):
+    def retry_rescan(self, **rescan_kwargs):
+        now = time()
+        if (now - self._last_rescan_timestamp) > 30:
+            self.initiate_rescan(**rescan_kwargs)
+        else:
+            self._debug("no point in retrying rescan in VMware as it takes too long, and it can take some time for the property collector to update")
+
+    def initiate_rescan(self, wait_for_completion=True, raise_error=False, do_rescan=True, do_refresh=False):
         from infi.storagemodel.base.gevent_wrapper import spawn, is_thread_alive
         host = self._client.get_managed_object_by_reference(self._moref)
         # we've seen several time in the tests that host.configManager is a list; how weird is that?
@@ -134,17 +149,23 @@ class VMwareHostStorageModel(StorageModel):
             self._debug("Skipping refresh - referesh thread is already active")
             if wait_for_completion:
                 self._debug("Waiting for refresh thread to complete")
-                self._refresh_thread.join()
+                if raise_error:
+                    self._refresh_thread.get()       # this joins + raises exceptions if there were any
+                else:
+                    self._refresh_thread.join()
         else:
-            self._refresh_thread = spawn(self._refresh_host_storage, storage_system)
+            self._refresh_thread = spawn(self._refresh_host_storage, storage_system, do_rescan=do_rescan, do_refresh=do_refresh)
             if wait_for_completion:
                 self._debug("Waiting for refresh thread to complete")
-                self._refresh_thread.join()
+                if raise_error:
+                    self._refresh_thread.get()       # this joins + raises exceptions if there were any
+                else:
+                    self._refresh_thread.join()
 
-    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=300, wait_on_rescan=True):
+    def rescan_and_wait_for(self, predicate=None, timeout_in_seconds=300, **rescan_kwargs):
         super(VMwareHostStorageModel, self).rescan_and_wait_for(predicate=predicate,
                                                                 timeout_in_seconds=timeout_in_seconds,
-                                                                wait_on_rescan=wait_on_rescan)
+                                                                **rescan_kwargs)
 
     def _create_scsi_model(self):
         return VMwareHostSCSIModel()
