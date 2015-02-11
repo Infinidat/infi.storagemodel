@@ -101,7 +101,7 @@ The most common use case is that a volume has been mapped, and you want to wait 
 Waiting for a new disk is straightforward using the `infi.storagemodel.predicates.DiskExists` predicate:
 
     #!python
-    from infi.storagemodel import get_storage_model()
+    from infi.storagemodel import get_storage_model
     from infi.storagemodel.predicates import DiskExists
     get_storage_model().rescan_and_wait_for(DiskExists("123456"))
 
