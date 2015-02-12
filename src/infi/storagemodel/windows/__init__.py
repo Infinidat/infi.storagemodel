@@ -11,6 +11,9 @@ class WindowsStorageModel(StorageModel):
         from .native_multipath import WindowsNativeMultipathModel
         return WindowsNativeMultipathModel()
 
+    def _create_veritas_multipath_model(self):
+        return self._create_native_multipath_model()
+
     def _create_disk_model(self):
         from .disk import WindowsDiskModel
         return WindowsDiskModel()
