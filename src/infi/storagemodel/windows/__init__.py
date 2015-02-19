@@ -1,4 +1,6 @@
 from infi.storagemodel.base import StorageModel
+from infi.pyutils.lazy import cached_method
+
 
 # pylint: disable=W0212,E1002
 
@@ -18,6 +20,7 @@ class WindowsStorageModel(StorageModel):
         from .disk import WindowsDiskModel
         return WindowsDiskModel()
 
+    @cached_method
     def _create_mount_manager(self):
         from .mount import WindowsMountManager
         return WindowsMountManager()
