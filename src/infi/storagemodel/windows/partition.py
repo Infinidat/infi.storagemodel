@@ -58,8 +58,12 @@ class WindowsPartition(object):
     @cached_method
     def _get_volume(self):
         from infi.wioctl.api import WindowsException
+        from infi.storagemodel import get_storage_model
+        from infi.diskmanagement.disk import Volume
+        func = gevent_wrapper.defer(Volume.get_from_disk_and_partition)
         try:
-            return gevent_wrapper.defer(self._partition_object.get_volume)()
+            return func(self._partition_object._disk, self._partition_object,
+                        get_storage_model()._create_mount_manager().mount_manager)
         except WindowsException:
             logger.exception("get_volume caught WindowsException")
             raise RescanIsNeeded()

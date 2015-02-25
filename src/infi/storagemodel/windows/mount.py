@@ -23,6 +23,10 @@ class WindowsMount(mount.Mount):
         return self._mount_point
 
 class WindowsMountManager(mount.MountManager):
+    def __init__(self):
+        super(WindowsMountManager, self).__init__()
+        self.mount_manager = MountManager()
+
     def get_mounts(self):
         # TODO we only support NTFS
         mounts = []

@@ -173,6 +173,9 @@ class VMwareHostStorageModel(StorageModel):
     def _create_native_multipath_model(self):
         return VMwareNativeMultipathModel(self._client, self._moref)
 
+    def _create_veritas_multipath_model(self):
+        return VMwareVeritasMultipathFrameworkModel(self._client, self._moref)
+
     def _create_mount_repository(self):
         StorageModel._create_mount_repository(self)
 
@@ -452,6 +455,20 @@ class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
         """ Returns an empty list since there no non-multipath devices on VMware """
         return list()
 
+
+class VMwareVeritasMultipathFrameworkModel(multipath.NativeMultipathModel):
+    def __init__(self, client, moref):
+        super(VMwareVeritasMultipathFrameworkModel, self).__init__()
+        self._client = client
+        self._moref = moref
+
+    @cached_method
+    def get_all_multipath_block_devices(self):
+        return []
+
+    @cached_method
+    def get_all_multipath_storage_controller_devices(self):
+        return []
 
 class StorageModelFactory(object):
     models_by_host_value = {}

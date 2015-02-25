@@ -1,4 +1,6 @@
 from infi.storagemodel.base import StorageModel
+from infi.pyutils.lazy import cached_method
+
 
 # pylint: disable=W0212,E1002
 
@@ -11,10 +13,14 @@ class WindowsStorageModel(StorageModel):
         from .native_multipath import WindowsNativeMultipathModel
         return WindowsNativeMultipathModel()
 
+    def _create_veritas_multipath_model(self):
+        return self._create_native_multipath_model()
+
     def _create_disk_model(self):
         from .disk import WindowsDiskModel
         return WindowsDiskModel()
 
+    @cached_method
     def _create_mount_manager(self):
         from .mount import WindowsMountManager
         return WindowsMountManager()
