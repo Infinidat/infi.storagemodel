@@ -37,6 +37,11 @@ def main():
 
     all_devices = non_mp_disks + mpaths
 
+    try:
+        all_devices.extend(model.get_veritas_multipath().get_all_multipath_block_devices())
+    except:
+        pass
+
     for device in all_devices:
         try:
             print_device_details(device)
