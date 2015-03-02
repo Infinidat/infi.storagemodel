@@ -39,9 +39,9 @@ class VeritasMultipathClient(object):
         try:
             return execute_command(["vxdmpadm", "list", "dmpnode"]).get_stdout()
         except OSError as e:
-            if e.errno == 2: # file not found
-                return ""
-            raise
+            if e.errno not in (2, 20): # file not found, not a directory
+                logger.exception("vxdmpadm failed with unknown reason")
+            return ""
 
     def parse_paths_list(self, paths_list_output):
         from re import compile, MULTILINE, DOTALL
