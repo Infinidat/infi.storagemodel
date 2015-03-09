@@ -34,7 +34,7 @@ def func_logger(func):
         result = func(*args, **kwargs)
         try:
             logger.debug("{} <-- return {!r} | {}".format(getpid(), result, func.__name__))
-        except Exception, err:
+        except Exception as err:
             logger.exception("{} <-- {} raise {} | {}".format(getpid(), err, func.___name__))
             raise
         return result
@@ -74,14 +74,14 @@ def check_for_scsi_errors(func):
                 logger.debug(msg.format(getpid(), func.__name__, sg_device, counter))
                 response = func(*args, **kwargs)
                 return response
-            except AsiCheckConditionError, e:
+            except AsiCheckConditionError as e:
                 (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
                 msg = "{} sg device {} got {} {}".format(getpid(), sg_device, key, code)
                 logger.warn(msg)
                 counter -= 1
                 if (key, code) in CHECK_CONDITIONS_NOT_WORTH_RETRY or counter == 0:
                     raise ScsiCheckConditionError(key, code)
-            except (IOError, OSError, AsiOSError, AsiSCSIError), error:
+            except (IOError, OSError, AsiOSError, AsiSCSIError) as error:
                 msg = "{} sg device {} got unrecoverable error {} during {}"
                 logger.error(msg.format(getpid(), sg_device, error, cdb))
                 counter = 0

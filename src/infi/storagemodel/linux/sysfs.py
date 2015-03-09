@@ -20,7 +20,7 @@ log = getLogger(__name__)
 
 
 def _sysfs_read_field(device_path, field):
-    with open(os.path.join(device_path, field), "rb") as f:
+    with open(os.path.join(device_path, field), "r") as f:
         return f.read()
 
 

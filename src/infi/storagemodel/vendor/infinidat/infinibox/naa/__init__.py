@@ -1,3 +1,4 @@
+import struct
 from .....errors import StorageModelError
 from infi.asi.cdb.inquiry.vpd_pages import designators
 
@@ -5,7 +6,7 @@ from infi.asi.cdb.inquiry.vpd_pages import designators
 class InfinidatNAA(object):
     def __init__(self, data):
         super(InfinidatNAA, self).__init__()
-        if isinstance(data, str):
+        if isinstance(data, (str, bytes)):
             data = self._string_to_designator(data)
         if not isinstance(data, designators.NAA_IEEE_Registered_Extended_Designator):
             raise StorageModelError("Invalid argument type {!r}".format(data))
@@ -27,7 +28,7 @@ class InfinidatNAA(object):
         # return format as defined by http://tools.ietf.org/html/rfc3980#ref-FC-FS
         # e.g. naa.6742b0f000004e2b000000000000018c
         import binascii
-        binary_without_header = binascii.hexlify(self._data.pack())[8:]
+        binary_without_header = binascii.hexlify(self._data.pack())[8:].decode('ASCII')
         return "naa." + binary_without_header
 
     def __repr__(self):
@@ -38,7 +39,7 @@ class InfinidatNAA(object):
         # e.g. 6742b0f000004e2b000000000000018c (in hex)
         # we'll convert to NAA_IEEE_Registered_Extended_Designator and parse using create_from_string,
         # but we need to add DescriptorHeaderFields - we'll just add zeros
-        raw_data = "\x00\x00\x00" + chr(len(descriptor)) + descriptor
+        raw_data = b"\x00\x00\x00" + struct.pack('b', len(descriptor)) + descriptor
         designator = designators.NAA_IEEE_Registered_Extended_Designator()
         designator.unpack(raw_data)
         return designator

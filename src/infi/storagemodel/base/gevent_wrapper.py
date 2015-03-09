@@ -7,7 +7,10 @@ try:
     is_thread_alive = lambda greenlet: not greenlet.dead
 except ImportError:
     from time import sleep
-    from thread import get_ident as get_id
+    try:
+        from thread import get_ident as get_id
+    except ImportError:
+        from threading import get_ident as get_id
     is_thread_alive = lambda thread: thread.is_alive()
 
 

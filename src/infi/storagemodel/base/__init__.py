@@ -68,7 +68,7 @@ class StorageModel(object):
         from infi.storagemodel.errors import RescanIsNeeded, TimeoutError, StorageModelError
         try:
             return predicate()
-        except (RescanIsNeeded, TimeoutError, StorageModelError), error:
+        except (RescanIsNeeded, TimeoutError, StorageModelError) as error:
             logger.debug("Predicate {!r} raised {!r} during rescan".format(predicate, error), exc_info=True)
             return None
         except:
@@ -90,10 +90,10 @@ class StorageModel(object):
         Raises `infi.storagemodel.errors.TimeoutError` exception if the timeout is reached.
         """
         from time import time
-        from sys import maxint
+        from sys import maxsize
         from ..errors import TimeoutError
         if timeout_in_seconds is None:
-            timeout_in_seconds = maxint
+            timeout_in_seconds = maxsize
         if predicate is None:
             from ..predicates import WaitForNothing
             predicate = WaitForNothing()

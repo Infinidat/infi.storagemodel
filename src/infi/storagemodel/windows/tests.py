@@ -1,7 +1,11 @@
 
 import unittest
 import mock
-from contextlib import nested
+
+try:
+    from contextlib import ExitStack
+except ImportError:
+    from contextlib2 import ExitStack
 
 from logging import getLogger
 log = getLogger(__name__)
@@ -95,10 +99,15 @@ class MockModelTestCase(ModelTestCase):
         pass
 
     def test_get_block_devices(self):
-        with nested(mock.patch("infi.devicemanager.DeviceManager"),
+        with ExitStack() as stack:
+            DeviceManager, Device, WindowsSCSIBlockDevice = [
+                stack.enter_context(c) for c in [
+                    mock.patch("infi.devicemanager.DeviceManager"),
                     mock.patch("infi.devicemanager.Device"),
-                    mock.patch("infi.storagemodel.windows.scsi.WindowsSCSIBlockDevice"),
-                    ) as (DeviceManager, Device, WindowsSCSIBlockDevice):
+                    mock.patch("infi.storagemodel.windows.scsi.WindowsSCSIBlockDevice")
+                ]
+            ]
+
             Device.return_value.psuedo_device_object = r'\Device\00000000'
             Device.return_value.get_ioctl_interface = mock.Mock()
             Device.return_value.is_hidden.return_value = False
@@ -111,11 +120,16 @@ class MockModelTestCase(ModelTestCase):
         class MultipathDeviceMock(object):
             pass
 
-        with nested(mock.patch("infi.wmpio.WmiClient"),
+        with ExitStack() as stack:
+            _, DeviceManager, Device, get_multipath_devices = [
+                stack.enter_context(c) for c in [
+                    mock.patch("infi.wmpio.WmiClient"),
                     mock.patch("infi.devicemanager.DeviceManager"),
                     mock.patch("infi.devicemanager.Device"),
-                    mock.patch("infi.wmpio.get_multipath_devices"),
-                    ) as (WmiClient, DeviceManager, Device, get_multipath_devices):
+                    mock.patch("infi.wmpio.get_multipath_devices")
+                ]
+            ]
+
             DeviceManager.return_value.disk_drives = [Device()]
             get_multipath_devices.return_value = dict(someId=MultipathDeviceMock())
             multipath_devices = ModelTestCase.test_get_multipath_devices(self)
@@ -158,4 +172,3 @@ class MockModelTestCase(ModelTestCase):
         model = MockWindowsSCSIModel()
         devices = list(model._iter())
         self.assertEqual(len(devices), 0)
-
