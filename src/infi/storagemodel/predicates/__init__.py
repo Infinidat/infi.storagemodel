@@ -48,7 +48,7 @@ class DiskExists(object):
         model = get_storage_model()
         block_devices = model.get_scsi().get_all_scsi_block_devices()
         mp_devices = model.get_native_multipath().get_all_multipath_block_devices()
-        non_mp_devices = model.get_native_multipath().filter_non_multipath_scsi_block_devices(block_devices)
+        non_mp_devices = list(model.get_native_multipath().filter_non_multipath_scsi_block_devices(block_devices))
         devices = mp_devices + non_mp_devices
         for device in devices:
             device.get_scsi_test_unit_ready()

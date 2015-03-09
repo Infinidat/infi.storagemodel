@@ -46,7 +46,7 @@ class InfiniBoxVolumeMixin(object):
         try:
             self._send_null_write(device)
             return False
-        except AsiCheckConditionError, error:
+        except AsiCheckConditionError as error:
             if error.sense_obj.sense_key == "DATA_PROTECT":
                 return True
             raise

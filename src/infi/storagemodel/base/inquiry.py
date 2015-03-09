@@ -80,7 +80,7 @@ class InquiryInformationMixin(object):
                 page_dict[INQUIRY_PAGE_SUPPORTED_VPD_PAGES] = data
                 for page_code in data.vpd_parameters:
                     page_dict[page_code] = None
-        except AsiCheckConditionError, e:
+        except AsiCheckConditionError as e:
             (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
             if (key, code) == ('ILLEGAL_REQUEST', 'INVALID FIELD IN CDB'):
                 # There are devices such as virtual USB disk controllers (bladecenter stuff) that don't support this
@@ -131,7 +131,7 @@ class InquiryInformationMixin(object):
                 with self.asi_context() as asi:
                     command = StandardInquiryCommand(allocation_length=allocation_length)
                     return sync_wait(command.execute(asi))
-            except AsiCheckConditionError, e:
+            except AsiCheckConditionError as e:
                 (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
                 if (key, code) == ('ILLEGAL_REQUEST', 'INVALID FIELD IN CDB'):
                     return
@@ -167,7 +167,7 @@ class InquiryInformationMixin(object):
             try:
                 command = TestUnitReadyCommand()
                 return sync_wait(command.execute(asi))
-            except AsiCheckConditionError, e:
+            except AsiCheckConditionError as e:
                 (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
                 if key in ('NOT_READY', 'ILLEGAL_REQUEST'):
                     return False

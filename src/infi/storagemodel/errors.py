@@ -105,7 +105,7 @@ def check_for_scsi_errors(func):
             response = func(*args, **kwargs)
             logger.debug("Got response {!r}".format(response))
             return response
-        except AsiCheckConditionError, e:
+        except AsiCheckConditionError as e:
             if not e.sense_obj:
                 msg = "got no sense from device {!r} during {!r}".format(_safe_repr(device), func)
                 logger.error(msg, exc_info=exc_info())
@@ -116,7 +116,7 @@ def check_for_scsi_errors(func):
                 logger.debug(msg)
                 raise chain(RescanIsNeeded(msg))
             raise
-        except AsiRequestQueueFullError, e:
+        except AsiRequestQueueFullError as e:
             msg = "got queue full from device {!r} during {!r}".format(_safe_repr(device), func)
             logger.debug(msg)
             raise chain(RescanIsNeeded(msg))
@@ -124,7 +124,7 @@ def check_for_scsi_errors(func):
             msg = "device {!r} disappeared during {!r}: {}".format(_safe_repr(device), func, error)
             logger.error(msg)
             raise chain(DeviceDisappeared(msg))
-        except (IOError, OSError, AsiOSError), error:
+        except (IOError, OSError, AsiOSError) as error:
             msg = "device {!r} disappeared during {!r}".format(_safe_repr(device), func)
             logger.error(msg, exc_info=exc_info())
             raise chain(DeviceDisappeared(msg))

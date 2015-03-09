@@ -11,7 +11,7 @@ def write_to_proc_scsi_scsi(line):
     try:
         with open("/proc/scsi/scsi", "w") as fd:
             fd.write("{}\n".format(line))
-    except IOError, err:
+    except IOError as err:
         logger.exception("{} IOError {} when writing {!r} to /proc/scsi/scsi".format(getpid(), err, line))
         return False
     return True
@@ -31,7 +31,7 @@ def scsi_host_scan(host):
         try:
             with open(scan_file, "w") as fd:
                 fd.write("- - -\n")
-        except IOError, err:
+        except IOError as err:
             logger.exception("{} IOError {} when writing '- - -' to {}".format(getpid(), err, scan_file))
             return False
         return True
@@ -48,7 +48,7 @@ def remove_device_via_sysfs(host, channel, target, lun):
     try:
         with open(delete_file, "w") as fd:
             fd.write("1\n")
-    except IOError, err:
+    except IOError as err:
         logger.exception("{} IOError {} when writing 1 to {}".format(getpid(), err, delete_file))
         return False
     return True
@@ -64,7 +64,7 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
 
     try:
         func(sg_device, cdb)
-    except ScsiCommandFailed, error:  # HIP-672 can't use logger in the child process
+    except ScsiCommandFailed as error:  # HIP-672 can't use logger in the child process
         try:  # HIP-673 in case we failed to contact the parent process
             queue.put(error)
         except:  # there's no point in raising exception or silencing it because it won't get logged
@@ -82,7 +82,7 @@ def read_from_queue(reader, subprocess):
     while True:
         try:
             return reader.get(timeout=timeout)
-        except IOError, error:
+        except IOError as error:
             from errno import EINTR
             # stackoverflow.com/questions/14136195/what-is-the-proper-way-to-handle-in-python-ioerror-errno-4-interrupted-syst
             if error.errno != EINTR:
@@ -137,7 +137,7 @@ def do_test_unit_ready(sg_device):
     try:
         cdb = TestUnitReadyCommand()
         return do_scsi_cdb(sg_device, cdb)
-    except ScsiCheckConditionError, error:
+    except ScsiCheckConditionError as error:
         (key, code) = (error.sense_key, error.code_name)
         if key in ('NOT_READY', "ILLEGAL_REQUEST"):
             return False

@@ -1,15 +1,18 @@
+import sys
 from unittest import TestCase, SkipTest
 from mock import Mock, patch
 from os import name
 from infi.dtypes.hctl import HCTL
 from infi.storagemodel.linux.sysfs import Sysfs
 
+PY2 = sys.version_info[0] == 2
+
 class SysfsTestCase(TestCase):
     @patch('infi.storagemodel.linux.sysfs.get_hctl_for_sd_device')
     @patch('os.path.islink')
     @patch('os.path.exists')
     @patch('os.listdir')
-    @patch('__builtin__.open')
+    @patch('__builtin__.open' if PY2 else 'builtins.open')
     def test_sysfs(self, open_mock, listdir_mock, exists_mock, islink_mock, get_hctl_for_sd_device_mock):
         if name == "nt":
             raise SkipTest

@@ -60,7 +60,7 @@ def try_readlink(src):
     from os import readlink
     try:
         return readlink(src)
-    except OSError, err:
+    except OSError as err:
         logger.error("{} OSError {} when readlink {}".format(getpid(), err, src))
         return '/dev/null'
 
