@@ -1,4 +1,5 @@
 from ..base import mount
+from infi.pyutils.lazy import cached_method
 
 class UnixMountManager(mount.MountManager):
     """A wrapper for mount-utils mount interface"""
@@ -37,7 +38,7 @@ class UnixMountManager(mount.MountManager):
 class UnixMount(mount.Mount):
     """A wrapper for mount-utils mount entry"""
     def __init__(self, mount_entry):
-        super(MountUtilsMount, self).__init__()
+        super(UnixMount, self).__init__()
         self._entry = mount_entry
 
     def get_block_access_path(self):

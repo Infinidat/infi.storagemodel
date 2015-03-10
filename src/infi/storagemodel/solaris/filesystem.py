@@ -15,7 +15,7 @@ class SolarisFileSystem(filesystem.UnixFileSystem):
         entry = SolarisMountEntry(block_access_path, mount_point, self.get_name(), mount_options_dict, 0, '-')
 
     def format(self, block_device, *args, **kwargs):
-        # TODO: Need to implement 2 flows - format for ZFS and for UFS.
+        # We don't implement it right now.
         raise NotImplementedError()
 
     def get_label(self, block_access_path):  # pragma: no cover

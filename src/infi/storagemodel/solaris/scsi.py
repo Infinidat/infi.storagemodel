@@ -24,7 +24,7 @@ class SolarisSCSIDeviceMixin(object):
 
     @cached_method
     def get_scsi_access_path(self):
-        return "/dev/rdsk/%s" % self.device.get_device_name()
+        return "/dev/rdsk/{}".format(self.device.get_device_name())
 
     @cached_method
     def get_scsi_vendor_id(self):
@@ -62,4 +62,4 @@ class SolarisSCSIStorageController(SolarisSCSIDeviceMixin, scsi.SCSIStorageContr
 
 
 class SolarisSCSIModel(scsi.SCSIModel):
-    pass # TODO: Implement
+    def __init__(se
