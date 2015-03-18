@@ -1,4 +1,5 @@
 from ..unix import UnixStorageModel
+from native_multipath import SolarisNativeMultipathModel
 
 # pylint: disable=W0212,E1002
 
@@ -7,7 +8,7 @@ class SolarisStorageModel(UnixStorageModel):
         raise NotImplementedError()
 
     def _create_native_multipath_model(self):
-        raise NotImplementedError()
+        return SolarisNativeMultipathModel()
 
     def _create_disk_model(self):
         raise NotImplementedError()

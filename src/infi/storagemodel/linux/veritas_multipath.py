@@ -1,9 +1,10 @@
-from contextlib import contextmanager
-from infi.storagemodel.base import multipath, gevent_wrapper
 from infi.storagemodel.errors import StorageModelFindError, MultipathDaemonTimeoutError, DeviceDisappeared
+from infi.storagemodel.unix.utils import execute_command_safe
+from infi.storagemodel.base import multipath, gevent_wrapper
 from infi.storagemodel.base.disk import NoSuchDisk
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
+from contextlib import contextmanager
 from munch import Munch
 import itertools
 
@@ -28,20 +29,11 @@ class VeritasSinglePathEntry(Munch):
 class VeritasMultipathClient(object):
     def get_list_of_multipath_devices(self):
         multipaths = []
-        multipath_dicts = self.parse_paths_list(self.read_paths_list())
+        multipath_dicts = self.parse_paths_list(execute_command_safe("vxdmpadm list dmpnode"))
         for multi in multipath_dicts:
             paths = [VeritasSinglePathEntry(p['name'], p['ctlr'], p['state'], p['aportWWN']) for p in multi['paths']]
             multipaths.append(VeritasMultipathEntry(multi['dmpdev'], paths))
         return multipaths
-
-    def read_paths_list(self):
-        from .utils import execute_command
-        try:
-            return execute_command(["vxdmpadm", "list", "dmpnode"]).get_stdout()
-        except OSError as e:
-            if e.errno not in (2, 20): # file not found, not a directory
-                logger.exception("vxdmpadm failed with unknown reason")
-            return ""
 
     def parse_paths_list(self, paths_list_output):
         from re import compile, MULTILINE, DOTALL

@@ -25,3 +25,12 @@ def execute_command(cmd, check_returncode=True, timeout=WAIT_TIME):  # pragma: n
         formatted_cmd = cmd if isinstance(cmd, basestring) else repr(' '.join(cmd))
         raise RuntimeError("execution of {} failed".format(formatted_cmd))
     return process
+
+def execute_command_safe(cmd, *args, **kwargs):
+    try:
+        cmd = cmd.split()
+        return execute_command(cmd, *args, **kwargs).get_stdout()
+    except OSError as e:
+        if e.errno not in (2, 20): # file not found, not a directory
+            logger.exception("{} failed with unknown reason", cmd)
+        return ""
