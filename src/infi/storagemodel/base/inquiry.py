@@ -171,4 +171,10 @@ class InquiryInformationMixin(object):
                 (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
                 if key in ('NOT_READY', 'ILLEGAL_REQUEST'):
                     return False
+                if key in ('UNIT_ATTENTION', 'POWER ON OCCURRED'):
+                    return False
+                if key in ('UNIT_ATTENTION', 'POWER ON, RESET, OR BUS DEVICE RESET OCCURRED'):
+                    return False
+                if key in ('UNIT_ATTENTION', 'BUS DEVICE RESET FUNCTION OCCURRED'):
+                    return False
                 raise
