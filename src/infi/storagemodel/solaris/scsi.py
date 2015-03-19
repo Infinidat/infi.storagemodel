@@ -1,11 +1,7 @@
 from contextlib import contextmanager
 from ..base import scsi, gevent_wrapper
 from infi.pyutils.lazy import cached_method
-from infi.storagemodel.base.scsi import SCSIBlockDevice
-
-MS = 1000
-SG_TIMEOUT_IN_SEC = 3
-SG_TIMEOUT_IN_MS = SG_TIMEOUT_IN_SEC * MS
+from infi.storagemodel.base.scsi import SCSIDevice, SCSIBlockDevice, SCSIStorageController, SCSIModel
 
 class SolarisSCSIDeviceMixin(object):
     @contextmanager
@@ -39,11 +35,24 @@ class SolarisSCSIDeviceMixin(object):
         return self.device.get_model().strip()
 
 
+class SolarisBlockDeviceMixin(object):
+    @cached_method
+    def get_block_access_path(self):
+        return self.device.get_device_path()
+
+    @cached_method
+    def get_unix_block_devno(self):
+        return self.device.get_block_devno()
+
+    @cached_method
+    def get_size_in_bytes(self):
+        return self.device.get_size_in_bytes()
+
 class SolarisSCSIBlockDeviceMixin(SolarisSCSIDeviceMixin):
     pass
 
 
-class SolarisSCSIDevice(SolarisSCSIDeviceMixin, scsi.SCSIDevice):
+class SolarisSCSIDevice(SolarisSCSIDeviceMixin, SCSIDevice):
     def __init__(self, device):
         super(SolarisSCSIDevice, self).__init__()
         self.device = device
@@ -53,13 +62,13 @@ class SolarisSCSIDevice(SolarisSCSIDeviceMixin, scsi.SCSIDevice):
         return self.device.get_scsi_device_name()
 
 
-class SolarisSCSIBlockDevice(SolarisSCSIBlockDeviceMixin, scsi.SCSIBlockDevice):
+class SolarisSCSIBlockDevice(SolarisSCSIBlockDeviceMixin, SCSIBlockDevice):
     pass # TODO: Implement
 
 
-class SolarisSCSIStorageController(SolarisSCSIDeviceMixin, scsi.SCSIStorageController):
+class SolarisSCSIStorageController(SolarisSCSIDeviceMixin, SCSIStorageController):
     pass
 
 
-class SolarisSCSIModel(scsi.SCSIModel):
+class SolarisSCSIModel(SCSIModel):
     def __init__(se

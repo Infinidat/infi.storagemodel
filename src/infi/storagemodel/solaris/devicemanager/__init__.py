@@ -49,6 +49,22 @@ class SolarisBlockDevice(object):
 	def __str__(self):
 		return self.get_device_name()
 
+	def get_device_path(self):
+		from os.path import join
+		return join([DISK_DEVICE_PATH, self.get_device_name()])
+
+    def get_vendor(self):
+    	# need to use the kstat library to get this info offline
+        raise NotImplemented()
+
+    def get_model(self):
+        raise NotImplemented()
+
+    def get_revision(self):
+        raise NotImplemented()
+
+    def get_size_in_bytes(self):
+    	raise NotImplemented()
 
 class DeviceManager(object):
 	def __init__(self):
