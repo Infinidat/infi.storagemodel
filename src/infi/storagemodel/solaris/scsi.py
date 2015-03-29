@@ -3,6 +3,8 @@ from ..base import scsi, gevent_wrapper
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.base.scsi import SCSIDevice, SCSIBlockDevice, SCSIStorageController, SCSIModel
 
+QUERY_TIMEOUT = 3 # 3 seconds
+
 class SolarisSCSIDeviceMixin(object):
     @contextmanager
     def asi_context(self):
@@ -11,7 +13,7 @@ class SolarisSCSIDeviceMixin(object):
         from infi.asi import create_platform_command_executer
 
         handle = OSFile(os.open(self.get_scsi_access_path(), os.O_RDWR))
-        executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
+        executer = create_platform_command_executer(handle, timeout=QUERY_TIMEOUT)
         executer.call = gevent_wrapper.defer(executer.call)
         try:
             yield executer
@@ -20,7 +22,7 @@ class SolarisSCSIDeviceMixin(object):
 
     @cached_method
     def get_scsi_access_path(self):
-        return "/dev/rdsk/{}".format(self.device.get_device_name())
+        return self.device.get_raw_device_path()
 
     @cached_method
     def get_scsi_vendor_id(self):
@@ -41,14 +43,11 @@ class SolarisBlockDeviceMixin(object):
         return self.device.get_device_path()
 
     @cached_method
-    def get_unix_block_devno(self):
-        return self.device.get_block_devno()
-
-    @cached_method
     def get_size_in_bytes(self):
         return self.device.get_size_in_bytes()
 
-class SolarisSCSIBlockDeviceMixin(SolarisSCSIDeviceMixin):
+
+class SolarisSCSIBlockDeviceMixin(SolarisSCSIDeviceMixin, SolarisBlockDeviceMixin):
     pass
 
 
@@ -59,16 +58,23 @@ class SolarisSCSIDevice(SolarisSCSIDeviceMixin, SCSIDevice):
 
     @cached_method
     def get_display_name(self):
-        return self.device.get_scsi_device_name()
+        return self.device.get_device_name()
 
 
 class SolarisSCSIBlockDevice(SolarisSCSIBlockDeviceMixin, SCSIBlockDevice):
-    pass # TODO: Implement
+    def __init__(self, device):
+        super(SolarisSCSIBlockDevice, self).__init__()
+        self.device = device
 
-
-class SolarisSCSIStorageController(SolarisSCSIDeviceMixin, SCSIStorageController):
-    pass
+    @cached_method
+    def get_display_name(self):
+        return self.device.get_device_name()
 
 
 class SolarisSCSIModel(SCSIModel):
-    def __init__(se
+    def __init__(self, device_manager):
+        self._device_manager = device_manager
+
+    @cached_method
+    def get_all_scsi_block_devices(self):
+        return [SolarisSCSIBlockDevice(device) for device in self._device_manager.get_all_devices()]

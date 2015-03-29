@@ -1,11 +1,18 @@
+from infi.pyutils.lazy import cached_method
 from ..unix import UnixStorageModel
+from devicemanager import DeviceManager
 from native_multipath import SolarisNativeMultipathModel
 
 # pylint: disable=W0212,E1002
 
 class SolarisStorageModel(UnixStorageModel):
+    @cached_method
+    def _get_device_manager(self):
+        return DeviceManager()
+
     def _create_scsi_model(self):
-        raise NotImplementedError()
+        from .scsi import SolarisSCSIModel
+        return SolarisSCSIModel(self._get_device_manager())
 
     def _create_native_multipath_model(self):
         return SolarisNativeMultipathModel()

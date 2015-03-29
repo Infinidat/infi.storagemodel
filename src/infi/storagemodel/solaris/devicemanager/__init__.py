@@ -6,6 +6,7 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 DISK_DEVICE_PATH = "/dev/dsk"
+DISK_RAW_DEVICE_PATH = "/dev/rdsk"
 MULTIPATH_DEVICE_PATH = "/dev/scsi/array_ctrl"
 DEVICE_MAP_PATH = "/etc/path_to_inst"
 
@@ -49,9 +50,13 @@ class SolarisBlockDevice(object):
     def __str__(self):
         return self.get_device_name()
 
+    def get_raw_device_path(self):
+        from os.path import join
+        return join(DISK_RAW_DEVICE_PATH, self.get_device_name())
+
     def get_device_path(self):
         from os.path import join
-        return join([DISK_DEVICE_PATH, self.get_device_name()])
+        return join(DISK_DEVICE_PATH, self.get_device_name())
 
     def get_vendor(self):
         # need to use the kstat library to get this info offline

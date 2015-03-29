@@ -78,7 +78,8 @@ class SCSIBlockDevice(SCSIDevice):
         """Returns a string path for the device
 
                     - In Windows, it's something under globalroot
-                    - In linux, it's /dev/sdX"""
+                    - In Linux, it's /dev/sdX
+                    - In Solaris, it's /dev/dsk/cXtXdXsX"""
 
         # platform implementation
         raise NotImplementedError()
