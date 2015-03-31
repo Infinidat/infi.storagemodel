@@ -16,3 +16,9 @@ Python 3
 ========
 
 Python 3 support is experimental at this stage.
+
+
+License
+=======
+
+The package is licensed under the PSFL (see LICENSE.txt)
