@@ -1,5 +1,7 @@
 from infi.pyutils.lazy import cached_method
-from infi.storagemodel.base import multipath
+from infi.storagemodel.base.disk import NoSuchDisk
+from infi.storagemodel.base import multipath, gevent_wrapper
+from contextlib import contextmanager
 from munch import Munch
 
 from logging import getLogger
@@ -79,6 +81,8 @@ class SolarisMultipathClient(object):
         return info
 
 
+QUERY_TIMEOUT = 3 # 3 seconds
+
 class SolarisNativeMultipathBlockDevice(multipath.MultipathBlockDevice):
     def __init__(self, multipath_object):
         super(SolarisNativeMultipathBlockDevice, self).__init__()
@@ -92,9 +96,37 @@ class SolarisNativeMultipathBlockDevice(multipath.MultipathBlockDevice):
     def get_paths(self):
         return [SolarisPath(p, self._multipath_object.device_path) for p in self._multipath_object.paths]
 
+    @contextmanager
+    def asi_context(self):
+        import os
+        from infi.asi.unix import OSFile
+        from infi.asi import create_platform_command_executer
+
+        handle = OSFile(os.open(self.get_block_access_path(), os.O_RDWR))
+        executer = create_platform_command_executer(handle, timeout=QUERY_TIMEOUT)
+        executer.call = gevent_wrapper.defer(executer.call)
+        try:
+            yield executer
+        finally:
+            handle.close()
+
+    @cached_method
+    def get_disk_drive(self):  # pragma: no cover
+        raise NoSuchDisk
+
+    @cached_method
+    def get_display_name(self):
+        # TODO something more human readable
+        return self.get_block_access_path()
+
+    @cached_method
+    def get_connectivity(self):
+        return None
+
     @cached_method
     def get_policy(self):
         pass #TODO
+
 
 class SolarisPath(multipath.Path):
     def __init__(self, multipath_object_path, device_path):
@@ -129,7 +161,9 @@ class SolarisPath(multipath.Path):
         return HCTL(h, c, t, l)
 
     def get_io_statistics(self):
-        #TODO
+        from infi.storagemodel.solaris.devicemanager.kstat import KStat
+        all_stats = KStat().get_io_stats()
+        # TODO translate from kstat device name to hctl
         return multipath.PathStatistics(0, 0, 0, 0)
 
 

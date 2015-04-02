@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from ..base import scsi, gevent_wrapper
 from infi.pyutils.lazy import cached_method
-from infi.storagemodel.base.scsi import SCSIDevice, SCSIBlockDevice, SCSIStorageController, SCSIModel
+from infi.storagemodel.base.scsi import SCSIBlockDevice, SCSIStorageController, SCSIModel
 
 QUERY_TIMEOUT = 3 # 3 seconds
 
@@ -21,54 +21,50 @@ class SolarisSCSIDeviceMixin(object):
             handle.close()
 
     @cached_method
+    def get_hctl(self):
+        return self._device_manager_obj.get_hctl()
+
+    @cached_method
     def get_scsi_access_path(self):
-        return self.device.get_raw_device_path()
+        return self._device_manager_obj.get_scsi_access_path()
 
     @cached_method
-    def get_scsi_vendor_id(self):
-        return self.device.get_vendor().strip()
-
-    @cached_method
-    def get_scsi_revision(self):
-        return self.device.get_revision().strip()
-
-    @cached_method
-    def get_scsi_product_id(self):
-        return self.device.get_model().strip()
+    def get_display_name(self):
+        return self._device_manager_obj.get_device_name()
 
 
-class SolarisBlockDeviceMixin(object):
+# class SolarisBlockDeviceMixin(object):
+#     @cached_method
+#     def get_block_access_path(self):
+#         return self.device.get_device_path()
+
+#     @cached_method
+#     def get_size_in_bytes(self):
+#         return self.device.get_size_in_bytes()
+
+# class SolarisSCSIDevice(SolarisSCSIDeviceMixin, SCSIDevice):
+#     def __init__(self, device):
+#         super(SolarisSCSIDevice, self).__init__()
+#         self.device = device
+
+#     @cached_method
+#     def get_display_name(self):
+#         return self.device.get_device_name()
+
+
+class SolarisSCSIBlockDevice(SolarisSCSIDeviceMixin, SCSIBlockDevice):
+    def __init__(self, device_manager_obj):
+        super(SolarisSCSIBlockDevice, self).__init__()
+        self._device_manager_obj = device_manager_obj
+
     @cached_method
     def get_block_access_path(self):
-        return self.device.get_device_path()
-
-    @cached_method
-    def get_size_in_bytes(self):
-        return self.device.get_size_in_bytes()
+        return self.get_scsi_access_path()
 
 
-class SolarisSCSIBlockDeviceMixin(SolarisSCSIDeviceMixin, SolarisBlockDeviceMixin):
-    pass
-
-
-class SolarisSCSIDevice(SolarisSCSIDeviceMixin, SCSIDevice):
-    def __init__(self, device):
-        super(SolarisSCSIDevice, self).__init__()
-        self.device = device
-
-    @cached_method
-    def get_display_name(self):
-        return self.device.get_device_name()
-
-
-class SolarisSCSIBlockDevice(SolarisSCSIBlockDeviceMixin, SCSIBlockDevice):
-    def __init__(self, device):
-        super(SolarisSCSIBlockDevice, self).__init__()
-        self.device = device
-
-    @cached_method
-    def get_display_name(self):
-        return self.device.get_device_name()
+class SolarisSCSIStorageControllerDevice(SolarisSCSIDeviceMixin, SCSIStorageController):
+    def __init__(self, device_manager_obj):
+        self._device_manager_obj = device_manager_obj
 
 
 class SolarisSCSIModel(SCSIModel):
@@ -77,4 +73,8 @@ class SolarisSCSIModel(SCSIModel):
 
     @cached_method
     def get_all_scsi_block_devices(self):
-        return [SolarisSCSIBlockDevice(device) for device in self._device_manager.get_all_devices()]
+        return [SolarisSCSIBlockDevice(device) for device in self._device_manager.get_all_block_devices()]
+
+    @cached_method
+    def get_all_storage_controller_devices(self):
+        return [SolarisSCSIStorageControllerDevice(device) for device in self._device_manager.get_all_scsi_storage_controllers()]

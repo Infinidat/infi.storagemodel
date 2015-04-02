@@ -134,3 +134,34 @@ class KStat(object):
                     break
                 elem = elem.ks_next.contents
         return res
+
+
+c_caddr = ctypes.c_char_p
+MAXNAMELEN = 256
+MAXPATHLEN = 1024
+
+class sv_iocdata_t(ctypes.Structure):
+    _fields_ = [
+        ('client', c_caddr),
+        ('phci', c_caddr),
+        ('addr', c_caddr),
+        ('buf_elem', ctypes.c_uint),
+        ('ret_buf', ctypes.c_void_p),
+        ('ret_elem', ctypes.c_uint),
+    ]
+sv_iocdata_t_p = ctypes.POINTER(sv_iocdata_t)
+
+
+def drvpid2port(pid):
+    from fcntl import ioctl
+
+    libc = ctypes.CDLL("libc.so")
+    SCSI_VHCI_CTL_SUB_CMD  = ord('x') << 8
+    SCSI_VHCI_GET_TARGET_LONGNAME = SCSI_VHCI_CTL_SUB_CMD + 0x0F
+
+    iocdata = sv_iocdata_t()
+    iocdata.buf_elem = pid
+    iocdata.addr = ctypes.cast(ctypes.create_string_buffer(MAXNAMELEN), ctypes.c_char_p)
+    with open("/devices/scsi_vhci:devctl", 'rb') as block_device:
+        ioctl(block_device, SCSI_VHCI_GET_TARGET_LONGNAME, iocdata)
+    return iocdata.addr

@@ -93,9 +93,18 @@ class SCSIBlockDevice(SCSIDevice):
     #############################
 
     @cached_method
-    def get_size_in_bytes(self):  # pragma: no cover
-        # platform implementation
-        raise NotImplementedError()
+    def get_size_in_bytes(self):
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.cdb.read_capacity import ReadCapacity10Command, ReadCapacity16Command
+
+        with self.asi_context() as asi:
+            for command in [ReadCapacity16Command, ReadCapacity10Command]:
+                try:
+                    result = sync_wait(command().execute(asi))
+                    return result.last_logical_block_address * result.block_length_in_bytes
+                except:
+                    pass
+            return 0
 
 
 class SCSIStorageController(SCSIDevice):
