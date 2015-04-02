@@ -5,7 +5,7 @@ import re
 def get_scsi_device_info(dev_path):
     REGEXP = r"^\s*OS Device Name:\s*{}\s*".format(dev_path) + \
              r"(HBA Port WWN: \w+\s*(Remote Port WWN: \w+\s*LUN:\s*([0-9]+)\s*)+\s*)+" + \
-             r"Vendor:\s*\w+\s*Product:\s*\w+\s*Device Type:\s*Disk Device"
+             r"Vendor:\s*\w+\s*Product:\s*\w+\s*Device Type:\s*"
     pattern = re.compile(REGEXP, re.MULTILINE | re.DOTALL)
     output = execute_command_safe("fcinfo lu -v")
     return pattern.findall(output)[0][0]

@@ -1,5 +1,7 @@
+from os import path
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.base.disk import NoSuchDisk
+from infi.storagemodel.solaris.devicemanager import DeviceManager
 from infi.storagemodel.base import multipath, gevent_wrapper
 from contextlib import contextmanager
 from munch import Munch
@@ -33,6 +35,7 @@ class SolarisMultipathClient(object):
             info = self.parse_single_paths_list(mpath_dev_path, self.read_single_paths_list(mpath_dev_path))
             vendor_id, product_id, load_balance = info['vendor_id'], info['product_id'], info['load_balance']
             paths = [SolarisSinglePathEntry(p['initiator_port_name'], p['target_port_name'], p['state'], p['disabled']) for p in info['paths']]
+            mpath_dev_path = path.join('/devices', mpath_dev_path.lstrip('/')) if 'array-controller' in mpath_dev_path else mpath_dev_path
             multipaths.append(SolarisMultipathEntry(mpath_dev_path, vendor_id, product_id, load_balance, paths))
         return multipaths
 
@@ -53,7 +56,7 @@ class SolarisMultipathClient(object):
 
     def parse_paths_list(self, paths_list_output):
         from re import compile, MULTILINE, DOTALL
-        MULTIPATH_PATTERN = r"^\s*(?P<device_path>/dev/rdsk/\w+)\s+Total Path Count:\s*[0-9]+\s*Operational Path Count:\s*[0-9]+\s*$"
+        MULTIPATH_PATTERN = r"^\s*(?P<device_path>(?:/dev/rdsk/|/scsi_vhci/)[\w\@\-]+)\s+Total Path Count:\s*[0-9]+\s*Operational Path Count:\s*[0-9]+\s*$"
         pattern = compile(MULTIPATH_PATTERN, MULTILINE | DOTALL)
         return pattern.findall(paths_list_output)
 
@@ -83,11 +86,7 @@ class SolarisMultipathClient(object):
 
 QUERY_TIMEOUT = 3 # 3 seconds
 
-class SolarisNativeMultipathBlockDevice(multipath.MultipathBlockDevice):
-    def __init__(self, multipath_object):
-        super(SolarisNativeMultipathBlockDevice, self).__init__()
-        self._multipath_object = multipath_object
-
+class SolarisNativeMultipathDeviceMixin(object):
     @cached_method
     def get_block_access_path(self):
         return self._multipath_object.device_path
@@ -116,16 +115,30 @@ class SolarisNativeMultipathBlockDevice(multipath.MultipathBlockDevice):
 
     @cached_method
     def get_display_name(self):
-        # TODO something more human readable
-        return self.get_block_access_path()
-
-    @cached_method
-    def get_connectivity(self):
-        return None
+        return self.get_block_access_path().split('/')[-1]
 
     @cached_method
     def get_policy(self):
         pass #TODO
+
+class SolarisNativeMultipathBlockDevice(SolarisNativeMultipathDeviceMixin, multipath.MultipathBlockDevice):
+    def __init__(self, multipath_object):
+        super(SolarisNativeMultipathBlockDevice, self).__init__()
+        self._multipath_object = multipath_object
+
+
+class SolarisNativeMultipathStorageController(SolarisNativeMultipathDeviceMixin, multipath.MultipathStorageController):
+    def __init__(self, multipath_object):
+        super(SolarisNativeMultipathStorageController, self).__init__()
+        self._multipath_object = multipath_object
+
+    @cached_method
+    def get_multipath_access_path(self):
+        return self.get_block_access_path()
+
+    @cached_method
+    def get_block_access_path(self):
+        return self._multipath_object.device_path + ':array_ctrl'
 
 
 class SolarisPath(multipath.Path):
@@ -168,6 +181,10 @@ class SolarisPath(multipath.Path):
 
 
 class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
+    def __init__(self, *args, **kwargs):
+        super(SolarisNativeMultipathModel, self).__init__(*args, **kwargs)
+        self._device_manager = DeviceManager()
+
     def _is_device_active(self, multipath_device):
         return any('OK' in path.state and 'no' in path.disabled for path in multipath_device.paths)
 
@@ -181,9 +198,18 @@ class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
     def get_all_multipath_block_devices(self):
         client = SolarisMultipathClient()
         devices = self._get_list_of_active_devices(client)
-        logger.debug("Got {} devices from multipath client".format(len(devices)))
-        return [SolarisNativeMultipathBlockDevice(d) for d in devices]
+        logger.debug("Got {} block devices from multipath client".format(len(devices)))
+        return [SolarisNativeMultipathBlockDevice(d) for d in devices if 'array-controller' not in d.device_path]
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
-        return [] #TODO
+        # TODO get actual device path from device manager
+        client = SolarisMultipathClient()
+        devices = self._get_list_of_active_devices(client)
+        logger.debug("Got {} storage controller devices from multipath client".format(len(devices)))
+        return [SolarisNativeMultipathStorageController(d) for d in devices if 'array-controller' in d.device_path]
+
+    def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
+        """Returns items from the list that are not part of multipath devices claimed by this framework"""
+        block_access_paths = [multipath.get_block_access_path() for multipath in self.get_all_multipath_block_devices()]
+        return [dev for dev in scsi_block_devices if dev.get_block_access_path() not in block_access_paths]

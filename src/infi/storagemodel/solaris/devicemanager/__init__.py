@@ -112,17 +112,28 @@ class DeviceManager(object):
     def get_all_block_devices(self):
         devlist = []
         for device in listdir(DISK_DEVICE_PATH):
+            if not path.exists(path.join(DISK_DEVICE_PATH, device)): # checks the validity of the symlink
+                continue
             if device.endswith("d0"):
                 devlist.append(device)
             elif device.endswith("s2") and device[:-2] not in devlist:
                 devlist.append(device)
         return [SolarisBlockDevice(*DeviceManager.get_ctds_tuple_from_device_name(device)) for device in devlist]
 
-    def get_all_scsi_storage_controllers(self):
-        def is_scsi_device(ctrl):
-            return "fp@" in readlink(path.join(CTRL_DEVICE_PATH, ctrl))
+    def _get_storage_controllers(self, get_multipathed):
+        def filter_by_link(ctrl):
+            if not path.exists(path.join(CTRL_DEVICE_PATH, ctrl)): # checks the validity of the symlink
+                return False
+            # filter multipathed / non multipathed devices based on the actual device filename
+            return get_multipathed ^ ("fp@" in readlink(path.join(CTRL_DEVICE_PATH, ctrl)))
         return [SolarisStorageController(*DeviceManager.get_ctds_tuple_from_device_name(ctrl)) \
-                for ctrl in listdir(CTRL_DEVICE_PATH) if is_scsi_device(ctrl)]
+                for ctrl in listdir(CTRL_DEVICE_PATH) if filter_by_link(ctrl)]
+
+    def get_all_scsi_storage_controllers(self):
+        return self._get_storage_controllers(get_multipathed=False)
+
+    def get_all_multipathed_storage_controllers(self):
+        return self._get_storage_controllers(get_multipathed=True)
 
     @classmethod
     def _get_path_to_inst_tuples(cls):
