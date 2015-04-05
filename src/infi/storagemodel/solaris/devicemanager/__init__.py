@@ -26,17 +26,21 @@ class SolarisSCSIDeviceMixin(object):
 
     @cached_method
     def get_hctl(self):
-        # TODO make sure they are all base 16!
-        return HCTL(int(self.controller, 16), int(self.controller, 16), int(self.target, 16), int(self.disk, 16))
+        # TODO make sure which is base 16 and which isn't!
+        return HCTL(int(self.controller), int(self.controller), int(self.target, 16), int(self.disk))
 
-    @cached_method
+    #@cached_method TODO - should cache???
     def get_instance_name(self):
         # return device name in a format like sd1,a
-        from os import readlink, path
-        device_path = path.abspath(self.get_base_dir(), readlink(path.join(DISK_DEVICE_PATH, self.get_device_name())))
+        device_path = self.get_full_path()
         device_instance_name = DeviceManager.get_path_to_inst_mapping().get(device_path.split(":")[0], "")
         device_slice = device_path.split(":")[1]
         return "{},{}".format(device_instance_name, device_slice)
+
+    #@cached_method TODO - should cache???
+    def get_full_path(self):
+        from os import readlink, path
+        return path.abspath(path.join(self.get_base_dir(), readlink(path.join(DISK_DEVICE_PATH, self.get_device_name()))))
 
     @property
     def controller(self):
@@ -114,11 +118,12 @@ class DeviceManager(object):
         for device in listdir(DISK_DEVICE_PATH):
             if not path.exists(path.join(DISK_DEVICE_PATH, device)): # checks the validity of the symlink
                 continue
-            if device.endswith("d0"):
+            if device.endswith("d0") or (device.endswith("s2") and device[:-2] not in devlist):
                 devlist.append(device)
-            elif device.endswith("s2") and device[:-2] not in devlist:
-                devlist.append(device)
-        return [SolarisBlockDevice(*DeviceManager.get_ctds_tuple_from_device_name(device)) for device in devlist]
+        devlist = [SolarisBlockDevice(*DeviceManager.get_ctds_tuple_from_device_name(device)) for device in devlist]
+        def filtr_out_ide(device):
+            return 'ide' not in device.get_full_path()
+        return [device for device in devlist if filtr_out_ide(device)]
 
     def _get_storage_controllers(self, get_multipathed):
         def filter_by_link(ctrl):

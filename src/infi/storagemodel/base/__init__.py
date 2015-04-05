@@ -143,8 +143,9 @@ class StorageModel(object):
         raise NotImplementedError()
 
     def _create_veritas_multipath_model(self):  # pragma: no cover
-        # platform implementation
-        raise NotImplementedError()
+        # Naive implementation is empty
+        from infi.storagemodel.base.multipath import VeritasMultipathModel
+        return VeritasMultipathModel()
 
     def _create_disk_model(self):  # pragma: no cover
         # platform implementation

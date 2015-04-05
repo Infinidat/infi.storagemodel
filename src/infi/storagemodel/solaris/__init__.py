@@ -2,6 +2,7 @@ from infi.pyutils.lazy import cached_method
 from ..unix import UnixStorageModel
 from devicemanager import DeviceManager
 from native_multipath import SolarisNativeMultipathModel
+from infi.execute import execute_assert_success
 
 # pylint: disable=W0212,E1002
 
@@ -28,5 +29,9 @@ class SolarisStorageModel(UnixStorageModel):
         from .mount import SolarisMountRepository
         return SolarisMountRepository()
 
-    def initiate_rescan(self, wait_for_completion=False):
-        raise NotImplementedError()
+    def rescan_method(self):
+        execute_assert_success("cfgadm -lao show_SCSI_LUN".split())
+        execute_assert_success("devfsadm -vC".split())
+        return 0
+
+

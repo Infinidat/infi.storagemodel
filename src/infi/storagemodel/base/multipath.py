@@ -65,9 +65,13 @@ class NativeMultipathModel(MultipathFrameworkModel):
     pass
 
 class VeritasMultipathModel(MultipathFrameworkModel):
-    # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
-    pass
+    @cached_method
+    def get_all_multipath_block_devices(self):  # pragma: no cover
+        return []
+
+    @cached_method
+    def get_all_multipath_storage_controller_devices(self):  # pragma: no cover
+        return []
 
 class MultipathDevice(object):
     pass

@@ -75,5 +75,5 @@ def get_infinidat_block_devices_and_controllers__mapped_to_lun0():
     devices = get_infinidat_block_devices_and_controllers()
     return [device for device in devices if
             (isinstance(device, SCSIDevice) and device.get_hctl().get_lun() == 0) or \
-            (isinstance(device, (MultipathBlockDevice, MultipathStorageController)) and
+            (isinstance(device, MultipathStorageController) and
              any(path.get_hctl().get_lun() == 0 for path in device.get_paths()))]

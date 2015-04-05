@@ -20,4 +20,4 @@ def get_path_lun(dev_path, hba_port_wwn, target_port_wwn):
     REGEXP = r"\s*Remote Port WWN: {}\s*LUN:\s*([0-9]+)$".format(target_port_wwn)
     pattern = re.compile(REGEXP, re.MULTILINE | re.DOTALL)
     hba_port_info = get_hba_port_info_from_device_info(dev_path, hba_port_wwn)
-    return pattern.findall(hba_port_info)[0]
+    return int(pattern.findall(hba_port_info)[0])
