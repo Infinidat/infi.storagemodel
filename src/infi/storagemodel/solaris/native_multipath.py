@@ -166,12 +166,14 @@ class SolarisPath(multipath.Path):
         from infi.dtypes.hctl import HCTL
         def get_hct(hba_port_wwn, remote_port_wwn):
             from infi.hbaapi import get_ports_generator
+            port_hct = None
             for hba_port in get_ports_generator().iter_ports():
                 if not (hba_port.port_wwn == hba_port_wwn):
                     continue
                 for remote_port in hba_port.discovered_ports:
                     if remote_port.port_wwn == remote_port_wwn:
-                        return remote_port.hct
+                        port_hct = remote_port.hct
+            return port_hct
         hba_port_wwn = self.multipath_object_path.initiator_port_name
         remote_port_wwn = self.multipath_object_path.target_port_name
         h,c,t = get_hct(hba_port_wwn, remote_port_wwn)
