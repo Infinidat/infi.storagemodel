@@ -84,6 +84,10 @@ class SolarisMultipathClient(object):
         return info
 
 
+class SolarisRoundRobin(multipath.RoundRobin):
+    pass
+
+
 QUERY_TIMEOUT = 3 # 3 seconds
 
 class SolarisNativeMultipathDeviceMixin(object):
@@ -119,7 +123,8 @@ class SolarisNativeMultipathDeviceMixin(object):
 
     @cached_method
     def get_policy(self):
-        pass #TODO
+        return SolarisRoundRobin()
+
 
 class SolarisNativeMultipathBlockDevice(SolarisNativeMultipathDeviceMixin, multipath.MultipathBlockDevice):
     def __init__(self, multipath_object):

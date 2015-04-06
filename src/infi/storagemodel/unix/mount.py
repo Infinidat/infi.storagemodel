@@ -7,15 +7,15 @@ class UnixMountManager(mount.MountManager):
         from infi.mount_utils import get_mount_manager
         return get_mount_manager()
 
-    def _get_mount_class(self):
+    def _get_mount_object(self, entry):
         raise NotImplementedError()
- 
+
     def _get_file_system_object(self, fsname):
         raise NotImplementedError()
 
     @cached_method
     def get_mounts(self):
-        return [self._get_mount_class(entry) for entry in self._get_mount_manager().get_mounts_from_mtab()]
+        return [self._get_mount_object(entry) for entry in self._get_mount_manager().get_mounts_from_mtab()]
 
     def is_mount_point_in_use(self, mount_point):
         return self._get_mount_manager().is_path_mounted(mount_point)

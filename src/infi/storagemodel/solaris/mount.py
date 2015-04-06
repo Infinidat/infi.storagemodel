@@ -12,6 +12,9 @@ class SolarisMountManager(mount.UnixMountManager):
     def get_recommended_file_system(self):
         return self._get_file_system_object("zfs")
 
+    def _get_mount_object(self, entry):
+        return SolarisMount(entry)
+
 class SolarisMount(mount.UnixMount):
     def __init__(self, mount_entry):
         super(SolarisMount, self).__init__(mount_entry)
