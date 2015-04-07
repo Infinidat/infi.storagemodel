@@ -1,4 +1,4 @@
-from os import path
+from os import path, readlink
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.base.disk import NoSuchDisk
 from infi.storagemodel.solaris.devicemanager import DeviceManager
@@ -183,8 +183,9 @@ class SolarisPath(multipath.Path):
     def get_io_statistics(self):
         from infi.storagemodel.solaris.devicemanager.kstat import KStat
         all_stats = KStat().get_io_stats()
-        # TODO translate from kstat device name to hctl
-        return multipath.PathStatistics(0, 0, 0, 0)
+        full_dev_path = '/scsi_vhci/' + readlink(self.device_path).split('/')[-1].split(':')[0]
+        stats = all_stats[full_dev_path]['c{}'.format(self.get_hctl().get_host())][self.multipath_object_path.target_port_name]
+        return multipath.PathStatistics(stats.bytes_read, stats.bytes_written, stats.read_io_count, stats.write_io_count)
 
 
 class SolarisNativeMultipathModel(multipath.NativeMultipathModel):

@@ -4,6 +4,7 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.base.multipath import PathStatistics
 from infi.cwrap import WrappedFunction, errcheck_nothing, IN, IN_OUT
+from infi.storagemodel.solaris.devicemanager import DeviceManager
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -122,6 +123,21 @@ class KStat(object):
         kstat_read(ks, kc, ctypes.byref(iostats)) # TODO Check return value
         return PathStatistics(iostats.nread, iostats.nwritten, iostats.reads, iostats.writes)
 
+    def ks_name_to_human_readable(self, ks_name):
+        from re import findall
+        res = findall("(.*)\.t(.*)\.(fp.*)", ks_name)
+        if len(res) != 1:
+            return
+        dev_name, target_pid, fp = res[0]
+        inst_to_path = DeviceManager.get_inst_to_path_mapping()
+        path_to_cfg = DeviceManager.get_path_to_cfg_mapping()
+        dev_path = inst_to_path[dev_name]
+        ctrl_path = inst_to_path[fp]
+        ctrl_inst = path_to_cfg[ctrl_path]
+        target = drvpid2port(int(target_pid))
+        return dev_path, target, ctrl_inst
+
+
     @cached_method
     def get_io_stats(self):
         res = {}
@@ -129,7 +145,10 @@ class KStat(object):
             elem = ks.contents.kc_chain.contents
             while True:
                 if elem and elem.ks_type == KSTAT_TYPE_IO:
-                    res[elem.ks_name] = self._get_path_statistics(ks, elem)
+                    human_readable = self.ks_name_to_human_readable(elem.ks_name)
+                    if human_readable:
+                        dev_path, target, ctrl =  human_readable
+                        res.setdefault(dev_path, {}).setdefault(ctrl, {}).setdefault(target, self._get_path_statistics(ks, elem))
                 if not elem.ks_next:
                     break
                 elem = elem.ks_next.contents
