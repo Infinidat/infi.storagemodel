@@ -9,9 +9,8 @@ logger = getLogger(__name__)
 
 DISK_DEVICE_PATH = "/dev/dsk"
 DISK_RAW_DEVICE_PATH = "/dev/rdsk"
-CFG_DEVICE_PATH = '/dev/cfg'
-CTRL_DEVICE_PATH = '/dev/scsi/array_ctrl'
-MULTIPATH_DEVICE_PATH = "/dev/scsi/array_ctrl"
+CFG_DEVICE_PATH = "/dev/cfg"
+CTRL_DEVICE_PATH = "/dev/scsi/array_ctrl"
 DEVICE_MAP_PATH = "/etc/path_to_inst"
 
 class SolarisSCSIDeviceMixin(object):
@@ -131,8 +130,11 @@ class DeviceManager(object):
                 return False
             # filter multipathed / non multipathed devices based on the actual device filename
             return get_multipathed ^ ("fp@" in readlink(path.join(CTRL_DEVICE_PATH, ctrl)))
-        return [SolarisStorageController(*DeviceManager.get_ctds_tuple_from_device_name(ctrl)) \
+        if path.exists(CTRL_DEVICE_PATH):
+            return [SolarisStorageController(*DeviceManager.get_ctds_tuple_from_device_name(ctrl)) \
                 for ctrl in listdir(CTRL_DEVICE_PATH) if filter_by_link(ctrl)]
+        else:
+            return []
 
     def get_all_scsi_storage_controllers(self):
         return self._get_storage_controllers(get_multipathed=False)
