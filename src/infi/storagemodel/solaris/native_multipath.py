@@ -125,6 +125,12 @@ class SolarisNativeMultipathDeviceMixin(object):
     def get_policy(self):
         return SolarisRoundRobin()
 
+    def get_scsi_vendor_id(self):
+        return self._multipath_object.vendor_id
+
+    def get_scsi_product_id(self):
+        return self._multipath_object.product_id
+
 
 class SolarisNativeMultipathBlockDevice(SolarisNativeMultipathDeviceMixin, multipath.MultipathBlockDevice):
     def __init__(self, multipath_object):
@@ -158,7 +164,7 @@ class SolarisPath(multipath.Path):
 
     @cached_method
     def get_state(self):
-        return "up" if "OK" in self.multipath_object_path.state else "down"
+        return "up" if ("OK" in self.multipath_object_path.state and "no" in self.multipath_object_path.disabled) else "down"
 
     @cached_method
     def get_hctl(self):
