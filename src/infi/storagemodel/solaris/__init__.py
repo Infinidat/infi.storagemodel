@@ -1,14 +1,13 @@
-from infi.pyutils.lazy import cached_method
 from ..unix import UnixStorageModel
-from devicemanager import DeviceManager
-from native_multipath import SolarisNativeMultipathModel
 from infi.execute import execute_assert_success
+from infi.pyutils.lazy import cached_method
 
 # pylint: disable=W0212,E1002
 
 class SolarisStorageModel(UnixStorageModel):
     @cached_method
     def _get_device_manager(self):
+        from .devicemanager import DeviceManager
         return DeviceManager()
 
     def _create_scsi_model(self):
@@ -16,6 +15,7 @@ class SolarisStorageModel(UnixStorageModel):
         return SolarisSCSIModel(self._get_device_manager())
 
     def _create_native_multipath_model(self):
+        from .native_multipath import SolarisNativeMultipathModel
         return SolarisNativeMultipathModel()
 
     def _create_disk_model(self):
@@ -33,5 +33,3 @@ class SolarisStorageModel(UnixStorageModel):
         execute_assert_success("cfgadm -lao show_SCSI_LUN".split())
         execute_assert_success("devfsadm -vC".split())
         return 0
-
-
