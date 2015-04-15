@@ -263,7 +263,7 @@ class SolarisSCSITestCase(TestCase):
         @patch('os.readlink')
         @patch('os.listdir')
         @patch('__builtin__.open')
-        def _inner_test_func(self, open_mock, listdir_mock, readlink_mock, exists_mock, get_vid_mock):
+        def _inner_test_func(open_mock, listdir_mock, readlink_mock, exists_mock, get_vid_mock):
             readlink_map = {'/dev/rdsk/c3t5742B0F000753611d10p0': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:q,raw',
                             '/dev/rdsk/c3t5742B0F000753611d10p1': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:r,raw',
                             '/dev/rdsk/c3t5742B0F000753611d10p2': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:s,raw',
@@ -1288,5 +1288,5 @@ class SolarisSCSITestCase(TestCase):
             infinidat_block_devices = scsi_model.filter_vendor_specific_devices(block_devices, vid_pid)
             self.assertEquals(len(infinidat_block_devices), 20)
 
-        self._inner_test_func()
+        _inner_test_func()
 
