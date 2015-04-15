@@ -173,9 +173,10 @@ class SolarisPath(multipath.Path):
     def get_hctl(self):
         from infi.storagemodel.solaris.fcinfo import get_path_lun
         from infi.dtypes.hctl import HCTL
+
         def get_hct(hba_port_wwn, remote_port_wwn):
             from infi.hbaapi import get_ports_generator
-            port_hct = None
+            port_hct = (-1, 0, -1)
             for hba_port in get_ports_generator().iter_ports():
                 if not (hba_port.port_wwn == hba_port_wwn):
                     continue
@@ -183,6 +184,7 @@ class SolarisPath(multipath.Path):
                     if remote_port.port_wwn == remote_port_wwn:
                         port_hct = remote_port.hct
             return port_hct
+
         hba_port_wwn = self.multipath_object_path.initiator_port_name
         remote_port_wwn = self.multipath_object_path.target_port_name
         h,c,t = get_hct(hba_port_wwn, remote_port_wwn)
@@ -229,5 +231,8 @@ class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """Returns items from the list that are not part of multipath devices claimed by this framework"""
-        block_access_paths = [multipath.get_block_access_path() for multipath in self.get_all_multipath_block_devices()]
-        return [dev for dev in scsi_block_devices if dev.get_block_access_path() not in block_access_paths]
+        return scsi_block_devices  # no co-existence
+
+    def filter_non_multipath_scsi_storage_controller_devices(self, scsi_controller_devices):
+        """Returns items from the list that are not part of multipath devices claimed by this framework"""
+        return scsi_controller_devices  # no co-existence
