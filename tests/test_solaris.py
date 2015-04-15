@@ -254,16 +254,17 @@ class SolarisMultipathingTestCase(TestCase):
 
 class SolarisSCSITestCase(TestCase):
 
-    def SetUp(self):
+    def test_solaris_scsi_model(self):
         if "solaris" not in get_platform_string():
             raise SkipTest
+        self._inner_test_func()
 
     @patch('infi.storagemodel.base.inquiry.InquiryInformationMixin.get_scsi_vendor_id_or_unknown_on_error', autospec=True)
     @patch('os.path.exists')
     @patch('os.readlink')
     @patch('os.listdir')
     @patch('__builtin__.open')
-    def test_solaris_scsi_model(self, open_mock, listdir_mock, readlink_mock, exists_mock, get_vid_mock):
+    def _inner_test_func(self, open_mock, listdir_mock, readlink_mock, exists_mock, get_vid_mock):
         readlink_map = {'/dev/rdsk/c3t5742B0F000753611d10p0': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:q,raw',
                         '/dev/rdsk/c3t5742B0F000753611d10p1': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:r,raw',
                         '/dev/rdsk/c3t5742B0F000753611d10p2': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:s,raw',

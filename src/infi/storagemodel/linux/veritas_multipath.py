@@ -29,11 +29,14 @@ class VeritasSinglePathEntry(Munch):
 class VeritasMultipathClient(object):
     def get_list_of_multipath_devices(self):
         multipaths = []
-        multipath_dicts = self.parse_paths_list(execute_command_safe("vxdmpadm list dmpnode"))
+        multipath_dicts = self.parse_paths_list(self.read_paths_list())
         for multi in multipath_dicts:
             paths = [VeritasSinglePathEntry(p['name'], p['ctlr'], p['state'], p['aportWWN']) for p in multi['paths']]
             multipaths.append(VeritasMultipathEntry(multi['dmpdev'], paths))
         return multipaths
+
+    def read_paths_list(self):
+        return execute_command_safe("vxdmpadm list dmpnode")
 
     def parse_paths_list(self, paths_list_output):
         from re import compile, MULTILINE, DOTALL
