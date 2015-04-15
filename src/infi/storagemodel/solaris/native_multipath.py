@@ -47,7 +47,7 @@ class SolarisMultipathClient(object):
             return execute_command(cmd.split()).get_stdout()
         except OSError as e:
             if e.errno not in (2, 20): # file not found, not a directory
-                logger.exception("{} failed with unknown reason", cmd[0])
+                logger.exception("{} failed with unknown reason".formart(cmd[0]))
             return ""
 
     def read_multipaths_list(self):
