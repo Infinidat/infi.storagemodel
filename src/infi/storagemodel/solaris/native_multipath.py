@@ -33,6 +33,8 @@ class SolarisMultipathClient(object):
         multipath_device_paths = self.parse_paths_list(self.read_multipaths_list())
         for mpath_dev_path in multipath_device_paths:
             info = self.parse_single_paths_list(mpath_dev_path, self.read_single_paths_list(mpath_dev_path))
+            if info is None:
+                continue
             vendor_id, product_id, load_balance = info['vendor_id'], info['product_id'], info['load_balance']
             paths = [SolarisSinglePathEntry(p['initiator_port_name'], p['target_port_name'], p['state'], p['disabled']) for p in info['paths']]
             mpath_dev_path = path.join('/devices', mpath_dev_path.lstrip('/')) if 'array-controller' in mpath_dev_path else mpath_dev_path
@@ -80,7 +82,8 @@ class SolarisMultipathClient(object):
             logger.debug("paths found: %s", matches)
             return matches
         info = get_extra_info()
-        info['paths'] = get_paths()
+        if info is not None:
+            info['paths'] = get_paths()
         return info
 
 
