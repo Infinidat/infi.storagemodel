@@ -71,6 +71,11 @@ class InvalidLabel(StorageModelError):
 class LabelNotSupported(StorageModelError):
     pass
 
+class LabelNotSupported(StorageModelError):
+    pass
+
+class DeviceIsNotLinuxPartition(StorageModelError):
+    pass
 
 CHECK_CONDITIONS_TO_CHECK = [
     # 2-tuple of (sense_key, additional_sense_code)

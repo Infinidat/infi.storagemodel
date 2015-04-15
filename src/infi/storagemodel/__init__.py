@@ -152,9 +152,8 @@ from infi.exceptools import chain
 logger = getLogger(__name__)
 
 def get_platform_name():
-    from platform import system
-    plat = system().lower().replace('-', '')
-    return plat
+    from infi.os_info import get_platform_string
+    return get_platform_string().split('-')[0]
 
 def _get_platform_specific_storagemodel_class():
     # do platform-specific magic here.

@@ -65,9 +65,13 @@ class NativeMultipathModel(MultipathFrameworkModel):
     pass
 
 class VeritasMultipathModel(MultipathFrameworkModel):
-    # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
-    pass
+    @cached_method
+    def get_all_multipath_block_devices(self):  # pragma: no cover
+        return []
+
+    @cached_method
+    def get_all_multipath_storage_controller_devices(self):  # pragma: no cover
+        return []
 
 class MultipathDevice(object):
     pass
@@ -156,11 +160,6 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
         # platform implementation
         raise NotImplementedError()
 
-    @cached_method
-    def get_size_in_bytes(self):  # pragma: no cover
-        """Returns size in bytes"""
-        # platform implementation
-        raise NotImplementedError()
 
     @cached_method
     def get_paths(self):  # pragma: no cover
@@ -176,6 +175,20 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
 
     def __repr__(self):
         return "<MultipathBlockDevice {} for {}>".format(self.get_block_access_path(), self.get_display_name())
+
+    @cached_method
+    def get_size_in_bytes(self):
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.cdb.read_capacity import ReadCapacity10Command, ReadCapacity16Command
+
+        with self.asi_context() as asi:
+            for command in [ReadCapacity16Command, ReadCapacity10Command]:
+                try:
+                    result = sync_wait(command().execute(asi))
+                    return result.last_logical_block_address * result.block_length_in_bytes
+                except:
+                    pass
+            return 0
 
 class LoadBalancePolicy(object):
     """ Base class of all available load balancing policies """

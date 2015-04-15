@@ -1,29 +1,18 @@
-from ..base import filesystem
-from infi.storagemodel.errors import UnmountFailedDeviceIsBusy, LabelNotSupported, InvalidLabel
-# pylint: disable=W0102,W0212
+from ..unix import filesystem
+from infi.storagemodel.errors import UnmountFailedDeviceIsBusy, LabelNotSupported, InvalidLabel, DeviceIsNotLinuxPartition
 
 
-class LinuxFileSystem(filesystem.FileSystem):
+class LinuxFileSystem(filesystem.UnixFileSystem):
     def __init__(self, name):
-        super(LinuxFileSystem, self).__init__()
-        self._name = name
+        super(LinuxFileSystem, self).__init__(name)
 
-    def get_name(self):
-        return self._name
+    def _get_mount_manager(self):
+        from infi.mount_utils.linux import LinuxMountManager
+        return LinuxMountManager
 
-    def mount(self, block_access_path, mount_point, mount_options_dict={}):
-        from infi.mountoolinux.mount.manager import MountManager, MountEntry
-        entry = MountEntry(block_access_path, mount_point, self.get_name(), mount_options_dict, 0, 0)
-        MountManager().mount_entry(entry)
-
-    def unmount(self, block_access_path, mount_point):
-        from infi.mountoolinux.mount.manager import MountManager, MountEntry
-        from infi.mountoolinux.mount.errors import MountException
-        entry = MountEntry(None, mount_point, None, {}, 0, 0)
-        try:
-            MountManager().umount_entry(entry)
-        except MountException:
-            raise UnmountFailedDeviceIsBusy(block_access_path, mount_point)
+    def _create_mount_entry(self, block_access_path, mount_point, mount_options_dict={}):
+        from infi.mount_utils.linux.mount import LinuxMountEntry
+        entry = LinuxMountEntry(block_access_path, mount_point, self.get_name(), mount_options_dict, 0, 0)
 
     def format(self, block_device, *args, **kwargs):
         """currently we ignore args and kwargs"""
@@ -34,10 +23,7 @@ class LinuxFileSystem(filesystem.FileSystem):
             number = partition.get_number()
             disk._format_partition(number, self.get_name())
         else:
-            from infi.execute import execute
-            mkfs = execute(["mkfs.{}", "-F", block_device.get_block_access_path()])
-            if mkfs.get_returncode() != 0:
-                raise RuntimeError(mkfs.get_stderr())
+            raise DeviceIsNotLinuxPartition(block_device.__str__())
 
     def _e2label(self, block_access_path, new_label=None):
         from infi.execute import execute
