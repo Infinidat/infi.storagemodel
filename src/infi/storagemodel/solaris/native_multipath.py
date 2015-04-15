@@ -1,10 +1,10 @@
-from os import path, readlink
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.base.disk import NoSuchDisk
 from infi.storagemodel.solaris.devicemanager import DeviceManager
 from infi.storagemodel.base import multipath, gevent_wrapper
 from contextlib import contextmanager
 from munch import Munch
+from os import path
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -188,6 +188,7 @@ class SolarisPath(multipath.Path):
 
     def get_io_statistics(self):
         from infi.storagemodel.solaris.devicemanager.kstat import KStat
+        from os import readlink
         all_stats = KStat().get_io_stats()
         full_dev_path = '/scsi_vhci/' + readlink(self.device_path).split('/')[-1].split(':')[0]
         stats = all_stats[full_dev_path]['c{}'.format(self.get_hctl().get_host())][self.multipath_object_path.target_port_name]

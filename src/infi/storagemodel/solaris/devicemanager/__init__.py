@@ -1,6 +1,6 @@
 from re import findall
 from infi.dtypes.hctl import HCTL
-from os import path, listdir, readlink
+from os import path, listdir
 from infi.pyutils.lazy import cached_method
 from infi.sgutils.sg_map import get_hctl_for_sd_device
 
@@ -16,7 +16,6 @@ DEVICE_MAP_PATH = "/etc/path_to_inst"
 class SolarisSCSIDeviceMixin(object):
     @cached_method
     def get_scsi_access_path(self):
-        from os import path
         return path.join(self.get_base_dir(), self.get_device_name())
 
     def get_device_name(self):
@@ -38,7 +37,7 @@ class SolarisSCSIDeviceMixin(object):
 
     #@cached_method TODO - should cache???
     def get_full_path(self):
-        from os import readlink, path
+        from os import readlink
         return path.abspath(path.join(self.get_base_dir(), readlink(path.join(DISK_DEVICE_PATH, self.get_device_name()))))
 
     @property
@@ -125,6 +124,7 @@ class DeviceManager(object):
         return [device for device in devlist if filtr_out_ide(device)]
 
     def _get_storage_controllers(self, get_multipathed):
+        from os import readlink
         def filter_by_link(ctrl):
             if not path.exists(path.join(CTRL_DEVICE_PATH, ctrl)): # checks the validity of the symlink
                 return False
@@ -158,5 +158,6 @@ class DeviceManager(object):
 
     @classmethod
     def get_path_to_cfg_mapping(cls):
+        from os import readlink
         return {readlink(path.join(CFG_DEVICE_PATH, ctrl)).replace("../../devices", "").split(':')[0] : ctrl \
                 for ctrl in listdir(CFG_DEVICE_PATH)}
