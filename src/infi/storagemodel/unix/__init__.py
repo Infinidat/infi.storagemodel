@@ -44,7 +44,7 @@ class UnixStorageModel(StorageModel):
                 logger.debug("rescan process timed out, killing it")
                 self.terminate_rescan_process()
                 self.rescan_process = None
-                self.initiate_rescan(wait_for_completion)
+                self.initiate_rescan(wait_for_completion, raise_error)
             else:
                 logger.debug("previous rescan process is still running")
                 if wait_for_completion:

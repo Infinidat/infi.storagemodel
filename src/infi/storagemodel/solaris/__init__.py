@@ -1,5 +1,6 @@
 from ..unix import UnixStorageModel
-from infi.execute import execute_assert_success
+from infi.execute import execute, execute_assert_success
+from infi.execute.exceptions import ExecutionError
 from infi.pyutils.lazy import cached_method
 
 # pylint: disable=W0212,E1002
@@ -30,6 +31,8 @@ class SolarisStorageModel(UnixStorageModel):
         return SolarisMountRepository()
 
     def rescan_method(self):
-        execute_assert_success("cfgadm -lao show_SCSI_LUN".split())
+        res = execute("cfgadm -lao show_SCSI_LUN".split())
+        if res.get_returncode() not in (0, 2):
+            raise ExecutionError(res)
         execute_assert_success("devfsadm -vC".split())
         return 0
