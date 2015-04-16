@@ -28,5 +28,5 @@ class LinuxPersistentMount(LinuxMount, mount.UnixPersistentMount):
     pass
 
 class LinuxMountRepository(mount.UnixMountRepository):
-    def _get_persistent_mount_class(self):
-        return LinuxPersistentMount
+    def _get_persistent_mount_object(self, entry):
+        return LinuxPersistentMount(entry)
