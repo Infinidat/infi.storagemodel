@@ -8,11 +8,12 @@ class LinuxFileSystem(filesystem.UnixFileSystem):
 
     def _get_mount_manager(self):
         from infi.mount_utils.linux import LinuxMountManager
-        return LinuxMountManager
+        return LinuxMountManager()
 
     def _create_mount_entry(self, block_access_path, mount_point, mount_options_dict={}):
         from infi.mount_utils.linux.mount import LinuxMountEntry
         entry = LinuxMountEntry(block_access_path, mount_point, self.get_name(), mount_options_dict, 0, 0)
+        return entry
 
     def format(self, block_device, *args, **kwargs):
         """currently we ignore args and kwargs"""

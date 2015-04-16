@@ -8,7 +8,7 @@ class SolarisFileSystem(filesystem.UnixFileSystem):
 
     def _get_mount_manager(self):
         from infi.mount_utils.solaris import SolarisMountManager
-        return SolarisMountManager
+        return SolarisMountManager()
 
     def _create_mount_entry(self, block_access_path, mount_point, mount_options_dict={}):
         from infi.mount_utils.solaris.mount import SolarisMountEntry
