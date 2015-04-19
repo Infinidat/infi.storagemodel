@@ -16,10 +16,9 @@ class LinuxSCSIDeviceMixin(object):
     @contextmanager
     def asi_context(self):
         import os
-        from infi.asi.unix import OSFile
-        from infi.asi import create_platform_command_executer
+        from infi.asi import create_platform_command_executer, create_os_file
 
-        handle = OSFile(os.open(self.get_scsi_access_path(), os.O_RDWR))
+        handle = create_os_file(self.get_scsi_access_path())
         executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
         executer.call = gevent_wrapper.defer(executer.call)
         try:

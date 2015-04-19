@@ -94,9 +94,10 @@ class LinuxPath(multipath.Path):
     def asi_context(self):
         import os
         from infi.asi.unix import OSFile
-        from infi.asi import create_platform_command_executer
+        from infi.asi import create_platform_command_executer, create_os_file
         from .scsi import SG_TIMEOUT_IN_MS
-        handle = OSFile(os.open(os.path.join("/dev", self.sysfs_device.get_scsi_generic_device_name()), os.O_RDWR))
+        path = os.path.join("/dev", self.sysfs_device.get_scsi_generic_device_name())
+        handle = create_os_file(path)
         executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
         executer.call = gevent_wrapper.defer(executer.call)
         try:

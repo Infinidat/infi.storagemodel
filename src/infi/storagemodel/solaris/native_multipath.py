@@ -106,9 +106,9 @@ class SolarisNativeMultipathDeviceMixin(object):
     def asi_context(self):
         import os
         from infi.asi.unix import OSFile
-        from infi.asi import create_platform_command_executer
+        from infi.asi import create_platform_command_executer, create_os_file
 
-        handle = OSFile(os.open(self.get_block_access_path(), os.O_RDWR))
+        handle = create_os_file(self.get_block_access_path())
         executer = create_platform_command_executer(handle, timeout=QUERY_TIMEOUT)
         executer.call = gevent_wrapper.defer(executer.call)
         try:

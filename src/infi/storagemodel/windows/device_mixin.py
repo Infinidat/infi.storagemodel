@@ -33,9 +33,8 @@ class WindowsDeviceMixin(object):
 
     @contextmanager
     def asi_context(self):
-        from infi.asi.win32 import OSFile
-        from infi.asi import create_platform_command_executer
-        handle = OSFile(self.get_pdo())
+        from infi.asi import create_platform_command_executer, create_os_file
+        handle = create_os_file(self.get_pdo())
         executer = create_platform_command_executer(handle)
         executer.call = defer(executer.call)
         try:

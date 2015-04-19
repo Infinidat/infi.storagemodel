@@ -3,17 +3,16 @@ from ..base import scsi, gevent_wrapper
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.base.scsi import SCSIBlockDevice, SCSIStorageController, SCSIModel
 
-QUERY_TIMEOUT = 3 # 3 seconds
+QUERY_TIMEOUT_IN_SECONDS = 3
 
 class SolarisSCSIDeviceMixin(object):
     @contextmanager
     def asi_context(self):
         import os
-        from infi.asi.unix import OSFile
-        from infi.asi import create_platform_command_executer
+        from infi.asi import create_platform_command_executer, create_os_file
 
-        handle = OSFile(os.open(self.get_scsi_access_path(), os.O_RDWR))
-        executer = create_platform_command_executer(handle, timeout=QUERY_TIMEOUT)
+        handle = create_os_file(self.get_scsi_access_path())
+        executer = create_platform_command_executer(handle, timeout=QUERY_TIMEOUT_IN_SECONDS)
         executer.call = gevent_wrapper.defer(executer.call)
         try:
             yield executer
@@ -31,25 +30,6 @@ class SolarisSCSIDeviceMixin(object):
     @cached_method
     def get_display_name(self):
         return self._device_manager_obj.get_device_name()
-
-
-# class SolarisBlockDeviceMixin(object):
-#     @cached_method
-#     def get_block_access_path(self):
-#         return self.device.get_device_path()
-
-#     @cached_method
-#     def get_size_in_bytes(self):
-#         return self.device.get_size_in_bytes()
-
-# class SolarisSCSIDevice(SolarisSCSIDeviceMixin, SCSIDevice):
-#     def __init__(self, device):
-#         super(SolarisSCSIDevice, self).__init__()
-#         self.device = device
-
-#     @cached_method
-#     def get_display_name(self):
-#         return self.device.get_device_name()
 
 
 class SolarisSCSIBlockDevice(SolarisSCSIDeviceMixin, SCSIBlockDevice):

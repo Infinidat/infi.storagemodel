@@ -52,11 +52,9 @@ def log_execute(args, timeout_in_seconds=None):
 
 @contextmanager
 def asi_context(sg_device):
-    import os
-    import infi.asi
-    import infi.asi.unix
-    handle = infi.asi.unix.OSFile(os.open("/dev/{}".format(sg_device), os.O_RDWR))
-    executer = infi.asi.create_platform_command_executer(handle, timeout=TIMEOUT)
+    from infi.asi import create_platform_command_executer, create_os_file
+    handle = create_os_file("/dev/{}".format(sg_device))
+    executer = create_platform_command_executer(handle, timeout=TIMEOUT)
     try:
         yield executer
     finally:
