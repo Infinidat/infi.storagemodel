@@ -9,6 +9,8 @@ logger = getLogger(__name__)
 # pylint: disable=W0212,E1002
 
 class UnixStorageModel(StorageModel):
+    rescan_subprocess_timeout = 30
+
     def __init__(self):
         super(UnixStorageModel, self).__init__()
         self.rescan_process = None

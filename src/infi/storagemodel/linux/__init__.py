@@ -3,8 +3,6 @@ from infi.pyutils.lazy import cached_method
 
 
 class LinuxStorageModel(UnixStorageModel):
-    rescan_subprocess_timeout = 30
-
     @cached_method
     def _get_sysfs(self):
         from .sysfs import Sysfs
