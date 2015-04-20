@@ -117,12 +117,18 @@ class DeviceManager(object):
         for device in listdir(DISK_DEVICE_PATH):
             if not path.exists(path.join(DISK_DEVICE_PATH, device)): # checks the validity of the symlink
                 continue
-            if device.endswith("d0") or (device.endswith("s2") and device[:-2] not in devlist):
-                devlist.append(device)
-        devlist = [SolarisBlockDevice(*DeviceManager.get_ctds_tuple_from_device_name(device)) for device in devlist]
-        def filtr_out_ide(device):
-            return 'ide' not in device.get_full_path()
-        return [device for device in devlist if filtr_out_ide(device)]
+            if not (device.endswith("d0") or device.endswith("s2")):
+                continue
+            truncated_ctds = DeviceManager.get_ctds_tuple_from_device_name(device[:-2])
+            ctds_tuple = DeviceManager.get_ctds_tuple_from_device_name(device)
+            if (not ctds_tuple) or len(ctds_tuple[1]) == 32: # so that we won't return multipath devices
+                continue
+            if truncated_ctds and SolarisBlockDevice(*truncated_ctds) not in devlist:
+                block_device_obj = SolarisBlockDevice(*ctds_tuple)
+                full_path = block_device_obj.get_full_path()
+                if 'scsi' in full_path or 'fp' in full_path:
+                    devlist.append(block_device_obj)
+        return devlist
 
     def _get_storage_controllers(self, get_multipathed):
         from os import readlink, path, listdir
