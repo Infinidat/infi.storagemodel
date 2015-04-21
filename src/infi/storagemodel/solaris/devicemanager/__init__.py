@@ -126,7 +126,8 @@ class DeviceManager(object):
             if truncated_ctds and SolarisBlockDevice(*truncated_ctds) not in devlist:
                 block_device_obj = SolarisBlockDevice(*ctds_tuple)
                 full_path = block_device_obj.get_full_path()
-                devlist.append(block_device_obj)
+                if 'scsi' in full_path or 'fp' in full_path:
+                    devlist.append(block_device_obj)
         return devlist
 
     def _get_storage_controllers(self, get_multipathed):
