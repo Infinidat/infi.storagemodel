@@ -119,15 +119,14 @@ class DeviceManager(object):
                 continue
             if not (device.endswith("d0") or device.endswith("s2")):
                 continue
-            truncated_ctds = DeviceManager.get_ctds_tuple_from_device_name(device[:-2])
+            truncated_ctds = DeviceManager.get_ctds_tuple_from_device_name(device.strip("s2"))
             ctds_tuple = DeviceManager.get_ctds_tuple_from_device_name(device)
             if (not ctds_tuple) or len(ctds_tuple[1]) == 32: # so that we won't return multipath devices
                 continue
             if truncated_ctds and SolarisBlockDevice(*truncated_ctds) not in devlist:
                 block_device_obj = SolarisBlockDevice(*ctds_tuple)
                 full_path = block_device_obj.get_full_path()
-                if 'scsi' in full_path or 'fp' in full_path:
-                    devlist.append(block_device_obj)
+                devlist.append(block_device_obj)
         return devlist
 
     def _get_storage_controllers(self, get_multipathed):

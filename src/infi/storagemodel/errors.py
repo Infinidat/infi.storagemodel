@@ -77,6 +77,9 @@ class LabelNotSupported(StorageModelError):
 class DeviceIsNotLinuxPartition(StorageModelError):
     pass
 
+class ScsiGenericNotLoaded(StorageModelError):
+    pass
+
 CHECK_CONDITIONS_TO_CHECK = [
     # 2-tuple of (sense_key, additional_sense_code)
     ('UNIT_ATTENTION', 'POWER ON OCCURRED'),
