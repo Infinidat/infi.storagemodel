@@ -164,3 +164,9 @@ def is_udevsettle_exist():
 @func_logger
 def execute_udevsettle():
     return log_execute(["/sbin/udevsettle"], TIMEOUT_IN_SEC*3)
+
+@func_logger
+def execute_modprobe_sg():
+    return log_execute(["/sbin/modprobe", "sg"])
+
+

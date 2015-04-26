@@ -6,6 +6,8 @@ from .block import LinuxBlockDeviceMixin
 from infi.storagemodel.base.scsi import SCSIBlockDevice
 from infi.exceptools import chain
 from infi.pyutils.decorators import wraps
+from .rescan_scsi_bus.getters import is_sg_module_loaded
+from .rescan_scsi_bus.scsi import execute_modprobe_sg
 
 MS = 1000
 SG_TIMEOUT_IN_SEC = 3
@@ -105,6 +107,9 @@ class LinuxSCSIEnclosure(LinuxSCSIDeviceMixin, scsi.SCSIEnclosure):
 class LinuxSCSIModel(scsi.SCSIModel):
     def __init__(self, sysfs):
         self.sysfs = sysfs
+        # our need the 'sg' module, which is no longer loaded during system boot on redhat-7.1
+        if not is_sg_module_loaded():
+            execute_modprobe_sg()
 
     @cached_method
     def get_all_scsi_block_devices(self):

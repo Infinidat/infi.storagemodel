@@ -88,3 +88,7 @@ def is_there_a_bug_in_sysfs_async_scanning():
     # http://lkml.indiana.edu/hypermail/linux/kernel/0704.2/1108.html
     distname, version, _ = linux_distribution()
     return distname.lower().split()[0] in ['red', 'redhat', 'centos'] and version.startswith('5')
+
+def is_sg_module_loaded():
+    with open('/proc/modules') as fd:
+        return 'sg ' in fd.read() # sg 40721 0 - Live 0xffffffffa034f000
