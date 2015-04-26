@@ -151,18 +151,13 @@ ONE_ENABLED = """Initiator Port Name:  10000000c9d0815c
 """
 
 
-class MockSCSIBlockDevice(LinuxSCSIBlockDevice):
-    def get_hctl(self):
-        return HCTL(1,2,3,4)
-
-
 @contextmanager
 def solaris_multipathing_context(listlu_output, showlu_output):
     if "solaris" not in get_platform_string():
         raise SkipTest
     with patch('infi.storagemodel.solaris.native_multipath.SolarisMultipathClient.read_multipaths_list') as read_multipaths_list:
         with patch('infi.storagemodel.solaris.native_multipath.SolarisMultipathClient.read_single_paths_list') as read_single_paths_list:
-            with patch('infi.storagemodel.solaris.native_multipath.SolarisPath.get_hctl') as get_hctl:
+            with patch('infi.storagemodel.solaris.native_multipath.SolarisSinglePathEntry.get_hctl') as get_hctl:
                 def side_effect(device):
                     return showlu_output[device]
                 get_hctl.return_value = HCTL(1,2,3,4)
@@ -227,6 +222,26 @@ class SolarisMultipathingTestCase(TestCase):
             self.assertEquals(len(block_devices), 1)
             self.assertEquals(len(block_devices[0].get_paths()), 3)
             self.assertEquals(len([p for p in block_devices[0].get_paths() if p.get_state() == "up"]), 1)
+
+    def test_mpathadm_output_bad_hctl(self):
+        vid, pid = ("NFINIDAT", "InfiniBox")
+        showlu_output = dict(MPATHADM_SHOWLU_OUTPUT_TEMPLATE)
+        showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths=THREE_PATHS, vid=vid, pid=pid)
+        with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
+            with patch('infi.storagemodel.solaris.native_multipath.SolarisSinglePathEntry.get_hctl') as get_hctl:
+                self.call_count = 0
+                def get_hctl_side_effect(*args, **kwargs):
+                    self.call_count += 1
+                    if self.call_count == 2:
+                        return None
+                    else:
+                        return HCTL(1,2,3,4)
+
+                get_hctl.side_effect = get_hctl_side_effect
+                block_devices = solaris_multipath.get_all_multipath_block_devices()
+                self.assertEquals(len(block_devices), 1)
+                self.assertEquals(len(block_devices[0].get_paths()), 2)
+                self.assertEquals(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 1)
 
     def test_mpathadm_output_bad_vid(self):
         vid, pid = ("NFINIDAS", "InfiniBox")

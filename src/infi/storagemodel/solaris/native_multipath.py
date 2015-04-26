@@ -21,11 +21,39 @@ class SolarisMultipathEntry(Munch):
 
 
 class SolarisSinglePathEntry(Munch):
-    def __init__(self, initiator_port_name, target_port_name, state, disabled):
+    def __init__(self, initiator_port_name, target_port_name, state, disabled, mpath_dev_path):
         self.initiator_port_name = initiator_port_name
         self.target_port_name = target_port_name
         self.state = state
         self.disabled = disabled
+        self.hctl = self._get_hctl(mpath_dev_path)
+
+    def _get_hctl(self, mpath_dev_path):
+        from infi.storagemodel.solaris.fcinfo import get_path_lun
+        from infi.dtypes.hctl import HCTL
+
+        def get_hct(hba_port_wwn, remote_port_wwn):
+            from infi.hbaapi import get_ports_generator
+            port_hct = (-1, 0, -1)
+            for hba_port in get_ports_generator().iter_ports():
+                if not (hba_port.port_wwn == hba_port_wwn):
+                    continue
+                for remote_port in hba_port.discovered_ports:
+                    if remote_port.port_wwn == remote_port_wwn:
+                        port_hct = remote_port.hct
+            return port_hct
+
+        h,c,t = get_hct(self.initiator_port_name, self.target_port_name)
+        if (h, c, t) == (-1, 0, -1):
+            return None
+        try:
+            l = get_path_lun(mpath_dev_path, self.initiator_port_name, self.target_port_name)
+        except:
+            return None
+        return HCTL(h, c, t, l)
+
+    def get_hctl(self):
+        return self.hctl
 
 
 class SolarisMultipathClient(object):
@@ -37,7 +65,7 @@ class SolarisMultipathClient(object):
             if info is None:
                 continue
             vendor_id, product_id, load_balance = info['vendor_id'], info['product_id'], info['load_balance']
-            paths = [SolarisSinglePathEntry(p['initiator_port_name'], p['target_port_name'], p['state'], p['disabled']) for p in info['paths']]
+            paths = [SolarisSinglePathEntry(p['initiator_port_name'], p['target_port_name'], p['state'], p['disabled'], mpath_dev_path) for p in info['paths']]
             mpath_dev_path = path.join('/devices', mpath_dev_path.lstrip('/')) if 'array-controller' in mpath_dev_path else mpath_dev_path
             multipaths.append(SolarisMultipathEntry(mpath_dev_path, vendor_id, product_id, load_balance, paths))
         return multipaths
@@ -101,7 +129,8 @@ class SolarisNativeMultipathDeviceMixin(object):
 
     @cached_method
     def get_paths(self):
-        return [SolarisPath(p, self._multipath_object.device_path) for p in self._multipath_object.paths]
+        return [SolarisPath(p, self._multipath_object.device_path) for p in self._multipath_object.paths \
+                if p.get_hctl() is not None]
 
     @contextmanager
     def asi_context(self):
@@ -174,28 +203,6 @@ class SolarisPath(multipath.Path):
     @cached_method
     def get_state(self):
         return "up" if ("OK" in self.multipath_object_path.state and "no" in self.multipath_object_path.disabled) else "down"
-
-    @cached_method
-    def get_hctl(self):
-        from infi.storagemodel.solaris.fcinfo import get_path_lun
-        from infi.dtypes.hctl import HCTL
-
-        def get_hct(hba_port_wwn, remote_port_wwn):
-            from infi.hbaapi import get_ports_generator
-            port_hct = (-1, 0, -1)
-            for hba_port in get_ports_generator().iter_ports():
-                if not (hba_port.port_wwn == hba_port_wwn):
-                    continue
-                for remote_port in hba_port.discovered_ports:
-                    if remote_port.port_wwn == remote_port_wwn:
-                        port_hct = remote_port.hct
-            return port_hct
-
-        hba_port_wwn = self.multipath_object_path.initiator_port_name
-        remote_port_wwn = self.multipath_object_path.target_port_name
-        h,c,t = get_hct(hba_port_wwn, remote_port_wwn)
-        l = get_path_lun(self.device_path, hba_port_wwn, remote_port_wwn)
-        return HCTL(h, c, t, l)
 
     def get_io_statistics(self):
         from infi.storagemodel.solaris.devicemanager.kstat import KStat
