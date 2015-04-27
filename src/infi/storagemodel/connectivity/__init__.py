@@ -38,7 +38,8 @@ class FCConnectivity(object):
         return not self.__eq__(obj)
 
     def __repr__(self):
-        return "<FCConnectivity: Initiator {} <--> Target {}>".format(self.get_initiator_wwn(), self.get_target_wwn())
+        return "<{}: Initiator {} <--> Target {}>".format(self.__class__.__name__,
+            self.get_initiator_wwn(), self.get_target_wwn())
 
 class LocalConnectivity(object):
     pass

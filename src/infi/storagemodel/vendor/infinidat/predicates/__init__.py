@@ -35,17 +35,13 @@ class InfinidatVolumeExists(object):
                    for device in devices_to_query)
 
     def __repr__(self):
-        return "<InfinidatVolumeExists(system_serial={!r}, volume_id={!r})>".format(self.system_serial,
-                                                                                    self.volume_id)
+        return "<{}(system_serial={!r}, volume_id={!r})>".format(self.__class__.__name__, self.system_serial, self.volume_id)
 
 class InfinidatVolumeDoesNotExist(InfinidatVolumeExists):
     """A predicate that checks if an Infinidat volume does not exist"""
     def __call__(self):
         return not super(InfinidatVolumeDoesNotExist, self).__call__()
 
-    def __repr__(self):
-        return "<InfinidatVolumeDoesNotExist(system_serial={!r}, volume_id={!r})>".format(self.system_serial,
-                                                                                          self.volume_id)
 
 from infi.storagemodel.predicates import FiberChannelMappingExists, FiberChannelMappingNotExists
 
@@ -56,14 +52,11 @@ class FiberChannelMappingExistsUsingLinuxSG(FiberChannelMappingExists):
                      model.get_scsi().get_all_storage_controller_devices())
 
     def __repr__(self):
-        return "<FiberChannelMappingExistsUsingLinuxSG: {!r}>".format(self.connectivity)
+        return "<{}: {!r}>".format(self.__class__.__name__, self.connectivity)
 
 class FiberChannelMappingNotExistsUsingLinuxSG(FiberChannelMappingExistsUsingLinuxSG):
     def __call__(self):
         return not super(FiberChannelMappingNotExistsUsingLinuxSG, self).__call__()
-
-    def __repr__(self):
-        return "<FiberChannelMappingNotExistsUsingLinuxSG: {!r}>".format(self.connectivity)
 
 
 def get_predicate_for_checking_non_zero_host_id(system_serial):

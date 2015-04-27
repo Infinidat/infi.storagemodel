@@ -45,8 +45,8 @@ class SysfsBlockDevice(SysfsBlockDeviceMixin):
         self.sysfs_block_device_path = block_device_path
 
     def __repr__(self):
-        _repr = "<SysfsBlockDevice(block_device_name={!r}, block_device_path={!r}>"
-        return _repr.format(self.block_device_name, self.sysfs_block_device_path)
+        _repr = "<{}(block_device_name={!r}, block_device_path={!r}>"
+        return _repr.format(self.__class__.__name__, self.block_device_name, self.sysfs_block_device_path)
 
 
 class SysfsSCSIDevice(object):
@@ -96,8 +96,8 @@ class SysfsSCSIDevice(object):
         return _sysfs_read_devno(self.sysfs_scsi_generic_device_path)
 
     def __repr__(self):
-        _repr = "<SysfsSCSIDevice(sysfs_dev_path={!r}, hctl={!r})>"
-        return _repr.format(self.sysfs_dev_path, self.hctl)
+        _repr = "<{}(sysfs_dev_path={!r}, hctl={!r})>"
+        return _repr.format(self.__class__.__name__, self.sysfs_dev_path, self.hctl)
 
     def get_sysfs_dev_path(self):
         return self.sysfs_dev_path
@@ -114,8 +114,8 @@ class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         log.debug("sysfs_block_device_path = {!r}".format(self.sysfs_block_device_path))
 
     def __repr__(self):
-        _repr = "<SysfsBlockDeviceMixin(sysfs_dev_path={!r}, hctl={!r})>"
-        return _repr.format(self.sysfs_dev_path, self.hctl)
+        _repr = "<{}(sysfs_dev_path={!r}, hctl={!r})>"
+        return _repr.format(self.__class__.__name__, self.sysfs_dev_path, self.hctl)
 
 
 class SysfsEnclosureDevice(SysfsSCSIDevice):
@@ -146,10 +146,6 @@ class SysfsEnclosureDevice(SysfsSCSIDevice):
             hctl = os.path.basename(os.readlink(dev_path))
             return HCTL.from_string(hctl)
         return None
-
-    def __repr__(self):
-        _repr = "<SysfsEnclosureDevice(sysfs_dev_path={!r}, hctl={!r})>"
-        return _repr.format(self.sysfs_dev_path, self.hctl)
 
 
 class Sysfs(object):
@@ -268,7 +264,7 @@ class Sysfs(object):
         return disk[0]
 
     def __repr__(self):
-        _repr = ("<Sysfs: sg_disks={!r}, sd_disks={!r}, controllers={!r}, block_devices={!r}, " +
+        _repr = ("<{}: sg_disks={!r}, sd_disks={!r}, controllers={!r}, block_devices={!r}, " +
                  "block_devno_to_device={!r}, enclosures={!r}>")
-        return _repr.format(self.sg_disks, self.sd_disks, self.controllers, self.block_devices,
-                            self.block_devno_to_device, self.enclosures)
+        return _repr.format(self.__class__.__name__, self.sg_disks, self.sd_disks, self.controllers,
+                            self.block_devices, self.block_devno_to_device, self.enclosures)

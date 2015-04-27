@@ -55,8 +55,8 @@ class SCSIDevice(InquiryInformationMixin, object):
         return getattr(self, "_serial", "<unknown-scsi-serial-number>")
 
     def __repr__(self):
-        return "<SCSIDevice {} for {} ({})>".format(self.get_scsi_access_path(), self.get_display_name(),
-                                                    self._get_scsi_serial_for_repr())
+        return "<{} {} for {} ({})>".format(self.__class__.__name__,
+            self.get_scsi_access_path(), self.get_display_name(), self._get_scsi_serial_for_repr())
 
 
 class SCSIBlockDevice(SCSIDevice):
@@ -85,12 +85,8 @@ class SCSIBlockDevice(SCSIDevice):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<SCSIBlockDevice: {} for {}>".format(self.get_block_access_path(),
-                                                     super(SCSIBlockDevice, self).__repr__())
-
-    #############################
-    # Platform Specific Methods #
-    #############################
+        return "<{}: {} for {}>".format(self.__class__.__name__,
+            self.get_block_access_path(), super(SCSIBlockDevice, self).__repr__())
 
     @cached_method
     def get_size_in_bytes(self):
@@ -115,7 +111,7 @@ class SCSIStorageController(SCSIDevice):
         return VendorFactory.create_scsi_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     def __repr__(self):
-        return "<SCSIStorageController {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
+        return "<{} {} for {}>".format(self.__class__.__name__, self.get_scsi_access_path(), self.get_display_name())
 
 
 class SCSIEnclosure(SesInformationMixin, SCSIDevice):
@@ -126,7 +122,7 @@ class SCSIEnclosure(SesInformationMixin, SCSIDevice):
         return VendorFactory.create_scsi_enclosure_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     def __repr__(self):
-        return "<SCSIEnclosure {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
+        return "<{} {} for {}>".format(self.__class__.__name__, self.get_scsi_access_path(), self.get_display_name())
 
 
 class SCSIModel(object):

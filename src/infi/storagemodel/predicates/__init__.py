@@ -56,7 +56,7 @@ class DiskExists(object):
                    for device in devices)
 
     def __repr__(self):
-        return "<DiskExists: {}>".format(self.scsi_serial_number)
+        return "<{}: {}>".format(self.__class__.__name__, self.scsi_serial_number)
 
 
 class DiskNotExists(DiskExists):
@@ -64,9 +64,6 @@ class DiskNotExists(DiskExists):
 
     def __call__(self):
         return not super(DiskNotExists, self).__call__()
-
-    def __repr__(self):
-        return "<DiskNotExists: {}>".format(self.scsi_serial_number)
 
 
 def build_connectivity_object_from_wwn(initiator_wwn, target_wwn):

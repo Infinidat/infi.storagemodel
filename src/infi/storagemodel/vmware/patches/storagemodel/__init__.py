@@ -98,7 +98,7 @@ class VMwareHostStorageModel(StorageModel):
 
     def __repr__(self):
         try:
-            return "<VMwareHostStorageModel(moref={!r})>".format(self._moref)
+            return "<{}(moref={!r})>".format(self.__class__.__name__, self._moref)
         except:
             return super(VMwareHostStorageModel, self).__repr__()
 

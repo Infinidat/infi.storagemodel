@@ -117,7 +117,8 @@ class MultipathStorageController(InquiryInformationMixin, MultipathDevice):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<MultipathStorageController {} for {}>".format(self.get_multipath_access_path(), self.get_display_name())
+        return "<{} {} for {}>".format(self.__class__.__name__,
+            self.get_multipath_access_path(), self.get_display_name())
 
 class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
     @cached_method
