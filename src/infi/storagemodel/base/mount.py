@@ -64,7 +64,7 @@ class PersistentMount(Mount):
     """Represents a persistent mount in the operating system"""
 
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class MountRepository(object):

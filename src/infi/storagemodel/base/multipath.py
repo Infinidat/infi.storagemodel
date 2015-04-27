@@ -61,7 +61,6 @@ class MultipathFrameworkModel(object):
 
 class NativeMultipathModel(MultipathFrameworkModel):
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
     pass
 
 class VeritasMultipathModel(MultipathFrameworkModel):
@@ -205,7 +204,7 @@ class LoadBalancePolicy(object):
 class FailoverOnly(LoadBalancePolicy):
     """ Load balancing policy where the alternative paths are used only in case the active path fails. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
 
     name = "Fail Over Only"
 
@@ -216,13 +215,13 @@ class FailoverOnly(LoadBalancePolicy):
 class RoundRobin(LoadBalancePolicy):
     """ Load balancing policy where all paths are used in a balanced way. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Round Robin"
 
 class RoundRobinWithSubset(LoadBalancePolicy):
     """ Load balancing policy where a subset of the paths are used in a balanced way. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Round Robin with subset"
 
     def __init__(self, active_path_ids):
@@ -233,20 +232,20 @@ class RoundRobinWithSubset(LoadBalancePolicy):
 class RoundRobinWithTPGSSubset(RoundRobinWithSubset):
     """ Load balancing policy where only paths that are active/optimized according to TPGS are used """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class RoundRobinWithExplicitSubset(RoundRobinWithSubset):
     """ Load balancing policy where an explicitly-given subset of the paths are used """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class WeightedPaths(LoadBalancePolicy):
     """ Load balancing policy that assigns a weight to each path. The weight indicates the relative priority of a
         given path. The larger the number, the lower ranked the priority. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Weighted Paths"
     def __init__(self, weights):
         """**weights**: a dictionary mapping from Path IDs to their integer weight"""
@@ -257,13 +256,13 @@ class WeightedPaths(LoadBalancePolicy):
 class LeastBlocks(LoadBalancePolicy):
     """ Load balancing policy that sends I/O down the path with the least number of data blocks currently being processed """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Least Blocks"
 
 class LeastQueueDepth(LoadBalancePolicy):
     """ Load balancing policy that sends I/O down the path with the fewest currently outstanding I/O requests. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Least Queue Depth"
 
 class PathStatistics(object):

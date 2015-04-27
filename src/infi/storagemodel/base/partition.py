@@ -34,31 +34,31 @@ class Partition(object):
 class MBRPartition(Partition):
     """ Base class for partitions in an MBR partition table """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class PrimaryPartition(MBRPartition):
     """ Represents a primary partition in an MBR partition table """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class ExtendedPartition(MBRPartition):
     """ Represents an extended partition in an MBR partition table """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class LogicalPartition(MBRPartition):
     """ Represents a logical partition in an MBR partition table """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class GUIDPartition(Partition):
     """ Represents a partition in a GUID partition table (GPT) """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class PartitionTable(object):
@@ -106,12 +106,12 @@ class PartitionTable(object):
 
 class MBRPartitionTable(PartitionTable):
     """ Represents a Master Boot Record partition table """
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     # pylint: disable=W0223
     pass
 
 class GUIDPartitionTable(PartitionTable):
     """ Represents a GUID partition table """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
