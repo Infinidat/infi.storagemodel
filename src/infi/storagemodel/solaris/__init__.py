@@ -19,6 +19,10 @@ class SolarisStorageModel(UnixStorageModel):
         from .native_multipath import SolarisNativeMultipathModel
         return SolarisNativeMultipathModel()
 
+    def _create_veritas_multipath_model(self):
+        from .veritas_multipath import SolarisVeritasMultipathModel
+        return SolarisVeritasMultipathModel(self.get_scsi())
+
     def _create_disk_model(self):
         raise NotImplementedError()
 

@@ -83,9 +83,9 @@ class MockSCSIBlockDevice(LinuxSCSIBlockDevice):
 
 @contextmanager
 def veritas_multipathing_context(output):
-    if "windows" in get_platform_string() or "solaris" in get_platform_string():
+    if "windows" in get_platform_string():
         raise SkipTest
-    with patch('infi.storagemodel.linux.veritas_multipath.VeritasMultipathClient.read_paths_list') as read_paths_list:
+    with patch('infi.storagemodel.unix.veritas_multipath.VeritasMultipathClient.read_paths_list') as read_paths_list:
         with patch('infi.storagemodel.linux.sysfs.Sysfs.find_scsi_disk_by_hctl') as find_scsi_disk_by_hctl:
             with patch('infi.storagemodel.base.scsi.SCSIModel.find_scsi_block_device_by_block_access_path') as find_func:
                 find_func.return_value = MockSCSIBlockDevice(None)

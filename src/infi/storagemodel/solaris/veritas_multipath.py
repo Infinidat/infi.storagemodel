@@ -8,11 +8,10 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-class LinuxVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
-    def __init__(self, sysfs, scsi, multipath_object):
-        super(LinuxVeritasMultipathBlockDevice, self).__init__()
+class SolarisVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
+    def __init__(self, scsi, multipath_object):
+        super(SolarisVeritasMultipathBlockDevice, self).__init__()
         self.multipath_object = multipath_object
-        self._sysfs = sysfs
         self._scsi = scsi
 
     def _is_there_atleast_one_path_up(self):
@@ -31,44 +30,23 @@ class LinuxVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
         paths = list()
         for path in self.multipath_object.paths:
             try:
-                paths.append(VeritasPath(self._sysfs, self._scsi, path))
+                paths.append(VeritasPath(self._scsi, path))
             except (ValueError, KeyError):
-                logger.debug("VeritasPath sysfs device disappeared for {}".format(path))
+                logger.debug("VeritasPath device disappeared for {}".format(path))
         return paths
 
     @cached_method
     def get_policy(self):
         raise NotImplementedError() # TODO
 
-    @cached_method
-    def get_scsi_vendor_id(self):
-        try:
-            return self.get_paths()[0].sysfs_device.get_vendor().strip()
-        except:
-            return super(LinuxVeritasMultipathBlockDevice, self).get_scsi_vendor_id()
-
-    @cached_method
-    def get_scsi_revision(self):
-        try:
-            return self.get_paths()[0].sysfs_device.get_revision().strip()
-        except:
-            return super(LinuxVeritasMultipathBlockDevice, self).get_scsi_revision()
-
-    @cached_method
-    def get_scsi_product_id(self):
-        try:
-            return self.get_paths()[0].sysfs_device.get_model().strip()
-        except:
-            return super(LinuxVeritasMultipathBlockDevice, self).get_scsi_product_id()
-
     @contextmanager
     def asi_context(self):
         import os
         from infi.asi.unix import OSFile
-        from infi.asi.linux import LinuxIoctlCommandExecuter
+        from infi.asi.Solaris import SolarisIoctlCommandExecuter
 
         handle = OSFile(os.open(self.get_block_access_path(), os.O_RDWR))
-        executer = LinuxIoctlCommandExecuter(handle)
+        executer = SolarisIoctlCommandExecuter(handle)
         executer.call = gevent_wrapper.defer(executer.call)
         try:
             yield executer
@@ -90,13 +68,11 @@ class LinuxVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
 
 
 class VeritasPath(multipath.Path):
-    def __init__(self, sysfs, scsi_model, multipath_object_path):
-        self._sysfs = sysfs
+    def __init__(self, scsi_model, multipath_object_path):
         self._scsi_model = scsi_model
         self.multipath_object_path = multipath_object_path
-        block_access_path = '/dev/{}'.format(self.multipath_object_path.sd_device_name)
+        block_access_path = '/dev/rdsk/{}'.format(self.multipath_object_path.sd_device_name)
         self.hctl = self._scsi_model.find_scsi_block_device_by_block_access_path(block_access_path).get_hctl()
-        self.sysfs_device = sysfs.find_scsi_disk_by_hctl(self.hctl)
 
     @cached_method
     def get_path_id(self):
@@ -122,10 +98,9 @@ class VeritasPath(multipath.Path):
             return multipath.PathStatistics(bytes_read, bytes_written, read_ios, write_ios)
 
 
-class LinuxVeritasMultipathModel(multipath.VeritasMultipathModel):
-    def __init__(self, sysfs, scsi):
-        super(LinuxVeritasMultipathModel, self).__init__()
-        self._sysfs = sysfs
+class SolarisVeritasMultipathModel(multipath.VeritasMultipathModel):
+    def __init__(self, scsi):
+        super(SolarisVeritasMultipathModel, self).__init__()
         self._scsi = scsi
 
     def _is_device_active(self, multipath_device):
@@ -142,7 +117,7 @@ class LinuxVeritasMultipathModel(multipath.VeritasMultipathModel):
         client = VeritasMultipathClient()
         devices = self._get_list_of_active_devices(client)
         logger.debug("Got {} devices from multipath client".format(len(devices)))
-        result = [LinuxVeritasMultipathBlockDevice(self._sysfs, self._scsi, d) for d in devices]
+        result = [SolarisVeritasMultipathBlockDevice(self._scsi, d) for d in devices]
         return [d for d in result if d._is_there_atleast_one_path_up()]
 
     @cached_method
