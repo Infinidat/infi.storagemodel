@@ -71,9 +71,6 @@ class InvalidLabel(StorageModelError):
 class LabelNotSupported(StorageModelError):
     pass
 
-class LabelNotSupported(StorageModelError):
-    pass
-
 class DeviceIsNotLinuxPartition(StorageModelError):
     pass
 
