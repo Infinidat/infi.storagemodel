@@ -90,7 +90,7 @@ class StorageModel(object):
 
         **timeout_in_seconds**: time in seconds to poll the predicate.
 
-        **rescan_kwargs**: additional keyword arguments to pass to `initiate_rescan`.
+        **rescan_kwargs**: additional keyword arguments to pass to `_initiate_rescan`.
 
         Raises `infi.storagemodel.errors.TimeoutError` exception if the timeout is reached.
         """
@@ -105,7 +105,7 @@ class StorageModel(object):
         self.refresh()
         start_time = time()
         logger.debug("Initiating rescan with keyword arguments {!r}".format(rescan_kwargs))
-        self.initiate_rescan(**rescan_kwargs)
+        self._initiate_rescan(**rescan_kwargs)
         while True:
             logger.debug("Trying predicate: {!r}".format(predicate))
             result = self._try_predicate(predicate)
@@ -122,14 +122,14 @@ class StorageModel(object):
             self.refresh()
 
     def retry_rescan(self, **rescan_kwargs):
-        self.initiate_rescan(**rescan_kwargs)
+        self._initiate_rescan(**rescan_kwargs)
 
 
     #############################
     # Platform Specific Methods #
     #############################
 
-    def initiate_rescan(self, wait_for_completion=False, raise_error=False):  # pragma: no cover
+    def _initiate_rescan(self, wait_for_completion=False, raise_error=False):  # pragma: no cover
         """A primitive rescan method that can be used in case you do not need the more elaborate rescan_and_wait_for method. """
         # platform implementation
         raise NotImplementedError()

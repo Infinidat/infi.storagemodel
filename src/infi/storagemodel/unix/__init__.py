@@ -37,7 +37,7 @@ class UnixStorageModel(StorageModel):
         # platform specific
         raise NotImplementedError
 
-    def initiate_rescan(self, wait_for_completion=True, raise_error=False):
+    def _initiate_rescan(self, wait_for_completion=True, raise_error=False):
         from ..base.gevent_wrapper import get_process_class, start_process
         Process = get_process_class()
         sleep(0)  # give time for gipc time to join on the defunct rescan process
@@ -46,7 +46,7 @@ class UnixStorageModel(StorageModel):
                 logger.debug("rescan process timed out, killing it")
                 self.terminate_rescan_process()
                 self.rescan_process = None
-                self.initiate_rescan(wait_for_completion, raise_error)
+                self._initiate_rescan(wait_for_completion, raise_error)
             else:
                 logger.debug("previous rescan process is still running")
                 if wait_for_completion:
