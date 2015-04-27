@@ -138,6 +138,20 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
         model = get_storage_model().get_disk()
         return model.find_disk_drive_by_block_access_path(self.get_block_access_path())
 
+    @cached_method
+    def get_size_in_bytes(self):
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.cdb.read_capacity import ReadCapacity10Command, ReadCapacity16Command
+
+        with self.asi_context() as asi:
+            for command in [ReadCapacity16Command, ReadCapacity10Command]:
+                try:
+                    result = sync_wait(command().execute(asi))
+                    return result.last_logical_block_address * result.block_length_in_bytes
+                except:
+                    pass
+            return 0
+
     #############################
     # Platform Specific Methods #
     #############################
@@ -160,7 +174,6 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
         # platform implementation
         raise NotImplementedError()
 
-
     @cached_method
     def get_paths(self):  # pragma: no cover
         """Returns a list of `infi.storagemodel.base.multipath.Path` instances"""
@@ -174,21 +187,8 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<MultipathBlockDevice {} for {}>".format(self.get_block_access_path(), self.get_display_name())
-
-    @cached_method
-    def get_size_in_bytes(self):
-        from infi.asi.coroutines.sync_adapter import sync_wait
-        from infi.asi.cdb.read_capacity import ReadCapacity10Command, ReadCapacity16Command
-
-        with self.asi_context() as asi:
-            for command in [ReadCapacity16Command, ReadCapacity10Command]:
-                try:
-                    result = sync_wait(command().execute(asi))
-                    return result.last_logical_block_address * result.block_length_in_bytes
-                except:
-                    pass
-            return 0
+        return "<{} {} for {}>".format(self.__class__.__name__,
+            self.get_block_access_path(), self.get_display_name())
 
 class LoadBalancePolicy(object):
     """ Base class of all available load balancing policies """

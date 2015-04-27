@@ -8,7 +8,6 @@ QUERY_TIMEOUT_IN_SECONDS = 3
 class SolarisSCSIDeviceMixin(object):
     @contextmanager
     def asi_context(self):
-        import os
         from infi.asi import create_platform_command_executer, create_os_file
 
         handle = create_os_file(self.get_scsi_access_path())

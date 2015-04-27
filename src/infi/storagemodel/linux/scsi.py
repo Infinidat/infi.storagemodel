@@ -17,7 +17,6 @@ SG_TIMEOUT_IN_MS = SG_TIMEOUT_IN_SEC * MS
 class LinuxSCSIDeviceMixin(object):
     @contextmanager
     def asi_context(self):
-        import os
         from infi.asi import create_platform_command_executer, create_os_file
 
         handle = create_os_file(self.get_scsi_access_path())
