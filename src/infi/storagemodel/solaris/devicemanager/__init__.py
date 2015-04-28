@@ -67,6 +67,9 @@ class SolarisBlockDevice(SolarisSCSIDeviceMixin):
     def __str__(self):
         return self.get_device_name()
 
+    def __eq__(self, other):
+        return self.get_device_name() == other.get_device_name()
+
     def get_vendor(self):
         # need to use the kstat library to get this info offline
         raise NotImplemented()
@@ -121,12 +124,12 @@ class DeviceManager(object):
                 continue
             truncated_ctds = DeviceManager.get_ctds_tuple_from_device_name(device.strip("s2"))
             ctds_tuple = DeviceManager.get_ctds_tuple_from_device_name(device)
-            if (not ctds_tuple) or len(ctds_tuple[1]) == 32: # so that we won't return multipath devices
+            if (not ctds_tuple) or len(ctds_tuple[1]) == 32: # filter multipath devices
                 continue
             if truncated_ctds and SolarisBlockDevice(*truncated_ctds) not in devlist:
                 block_device_obj = SolarisBlockDevice(*ctds_tuple)
                 full_path = block_device_obj.get_full_path()
-                if 'scsi' in full_path or 'fp' in full_path:
+                if 'ide' not in full_path: # filter cdroms
                     devlist.append(block_device_obj)
         return devlist
 
