@@ -1,7 +1,8 @@
 import sys
 import ctypes
-from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import cached_method
+from infi.os_info import get_platform_string
+from infi.pyutils.contexts import contextmanager
 from infi.storagemodel.base.multipath import PathStatistics
 from infi.cwrap import WrappedFunction, errcheck_nothing, IN, IN_OUT
 from infi.storagemodel.solaris.devicemanager import DeviceManager
@@ -75,7 +76,17 @@ kstat_io_t_p = ctypes.POINTER(kstat_io_t)
 class KStatFunction(WrappedFunction):
     @classmethod
     def get_library_name(cls):
-        return '/lib/amd64/libkstat.so' if sys.maxsize > 2 ** 32 else '/lib/libkstat.so'
+        if sys.maxsize < 2 ** 32:
+            libdir = 'lib'
+        else:
+            platform_string = get_platform_string()
+            if 'x64' in platform_string:
+                libdir = 'lib/amd64'
+            elif 'sparc' in platform_string:
+                libdir = 'lib/sparcv9'
+            else:
+                return ''
+        return '/{}/libkstat.so'.format(libdir)
 
     @classmethod
     def get_errcheck(cls):

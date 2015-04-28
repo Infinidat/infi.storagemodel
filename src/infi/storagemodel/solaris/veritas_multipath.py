@@ -71,8 +71,8 @@ class VeritasPath(multipath.Path):
     def __init__(self, scsi_model, multipath_object_path):
         self._scsi_model = scsi_model
         self.multipath_object_path = multipath_object_path
-        block_access_path = '/dev/rdsk/{}'.format(self.multipath_object_path.sd_device_name)
-        self.hctl = self._scsi_model.find_scsi_block_device_by_block_access_path(block_access_path).get_hctl()
+        self.block_access_path = '/dev/rdsk/{}'.format(self.multipath_object_path.sd_device_name)
+        self.hctl = self._scsi_model.find_scsi_block_device_by_block_access_path(self.block_access_path).get_hctl()
 
     @cached_method
     def get_path_id(self):
@@ -86,16 +86,8 @@ class VeritasPath(multipath.Path):
         return "up" if "enabled" in self.multipath_object_path.state else "down"
 
     def get_io_statistics(self):
-        # http://www.kernel.org/doc/Documentation/block/stat.txt
-        stat_file_path = "/sys/block/{}/stat".format(self.get_path_id())
-        with open(stat_file_path, "rb") as fd:
-            stat_data = fd.read()
-            stat_values = [int(val) for val in stat_data.split()]
-            read_ios, _, read_sectors, _, write_ios, _, write_sectors, _, _, _, _ = stat_values
-            # sector = always 512 bytes, not disk-dependent
-            bytes_read = read_sectors * 512
-            bytes_written = write_sectors * 512
-            return multipath.PathStatistics(bytes_read, bytes_written, read_ios, write_ios)
+        # TODO figure out how kstat device names (ssd*) are related to veritas paths
+        return multipath.PathStatistics(-1, -1, -1, -1)
 
 
 class SolarisVeritasMultipathModel(multipath.VeritasMultipathModel):
