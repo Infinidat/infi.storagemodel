@@ -9,6 +9,26 @@ from mock import Mock, patch
 from os import name
 from infi.os_info import get_platform_string
 
+class SolarisDeviceManagerTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if "solaris" not in get_platform_string():
+            raise SkipTest("Can only run on solaris")
+
+    def setUp(self):
+        from infi.storagemodel.solaris.devicemanager import DeviceManager
+        self.dm = DeviceManager()
+
+    def test_get_block_devices(self):
+        self.assertNotEqual(len(self.dm.get_all_block_devices()), 0) # expect to find at least the local disk
+
+    def test_get_storage_controllers(self):
+        self.dm.get_all_scsi_storage_controllers()
+
+    def test_get_multipath_storage_controllers(self):
+        self.dm.get_all_multipathed_storage_controllers()
+
+
 MPATHADM_LISTLU_OUTPUT_TEMPLATE = """  /scsi_vhci/array-controller@g6742b0f0000075360000000000000000
                 Total Path Count: 1
                 Operational Path Count: 1

@@ -19,8 +19,9 @@ class SolarisSCSIDeviceMixin(object):
         return path.join(self.get_base_dir(), self.get_device_name())
 
     def get_device_name(self):
+        target_string = "t{}".format(self.target) if self.target else ''
         slice_string = "s{}".format(self._slice) if self._slice else ''
-        return "c{}t{}d{}{}".format(self._controller, self._target, self._disk, slice_string)
+        return "c{}{}d{}{}".format(self._controller, target_string, self._disk, slice_string)
 
     @cached_method
     def get_hctl(self):
@@ -103,13 +104,10 @@ class SolarisStorageController(SolarisSCSIDeviceMixin):
 
 
 class DeviceManager(object):
-    def __init__(self):
-        device_list = []
-
     @classmethod
     def get_ctds_tuple_from_device_name(cls, dev_string):
         try:
-            return findall("c(.*)t(.*)d(\d*)(?:s(\d*))?", dev_string)[0]
+            return findall("c([0-9A-F]*)(?:t([0-9A-F]*))?d(\d*)(?:s(\d*))?", dev_string)[0]
         except:
             logger.exception("Can't parse device name: {}".format(dev_string))
             return None
