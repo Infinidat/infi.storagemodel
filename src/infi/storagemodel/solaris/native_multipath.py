@@ -200,6 +200,9 @@ class SolarisPath(multipath.Path):
         hctl = self.get_hctl()
         return "c{host_id}::{target_wwn},{lun}".format(host_id=hctl.get_host(), target_wwn=self.multipath_object_path.target_port_name, lun=hctl.get_lun())
 
+    def get_hctl(self):
+        return self.multipath_object_path.get_hctl()
+
     @cached_method
     def get_state(self):
         return "up" if ("OK" in self.multipath_object_path.state and "no" in self.multipath_object_path.disabled) else "down"
