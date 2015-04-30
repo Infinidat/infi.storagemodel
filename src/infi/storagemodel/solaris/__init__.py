@@ -39,4 +39,5 @@ class SolarisStorageModel(UnixStorageModel):
         if res.get_returncode() not in (0, 2):
             raise ExecutionError(res)
         execute_assert_success("devfsadm -vC".split())
+        execute_assert_success("devfsadm -r / -p /etc/path_to_inst".split())
         return 0
