@@ -27,12 +27,10 @@ class SolarisStorageModel(UnixStorageModel):
         raise NotImplementedError()
 
     def _create_mount_manager(self):
-        from .mount import SolarisMountManager
-        return SolarisMountManager()
+        raise NotImplementedError()
 
     def _create_mount_repository(self):
-        from .mount import SolarisMountRepository
-        return SolarisMountRepository()
+        raise NotImplementedError()
 
     def rescan_method(self):
         res = execute("cfgadm -lao show_SCSI_LUN".split())
