@@ -2,7 +2,7 @@ import os
 import glob
 from infi.dtypes.hctl import HCTL
 from infi.pyutils.lazy import cached_method
-from ..errors import DeviceDisappeared
+from ..errors import DeviceError
 from infi.sgutils.sg_map import get_hctl_for_sd_device
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
@@ -63,7 +63,7 @@ class SysfsSCSIDevice(object):
             sg_dev_names = glob.glob(os.path.join(self.sysfs_dev_path, "scsi_generic*"))
         if len(sg_dev_names) != 1:
             msg = "{} doesn't have a single device/scsi_generic/sg* path ({!r})"
-            raise DeviceDisappeared(msg.format(self.sysfs_dev_path, sg_dev_names))
+            raise DeviceError(msg.format(self.sysfs_dev_path, sg_dev_names))
         self.scsi_generic_device_name = sg_dev_names[0].split(':')[-1]
         self.sysfs_scsi_generic_device_path = os.path.join(self.sysfs_dev_path, "scsi_generic",
                                                            self.scsi_generic_device_name)
@@ -182,7 +182,7 @@ class Sysfs(object):
                 self._append_device_by_type(hctl_str, dev_path, scsi_type)
             except (IOError, OSError):
                 log.debug("no device type for hctl {}".format(hctl_str))
-            except (DeviceDisappeared):
+            except (DeviceError):
                 log.debug("device for hctl {} is dangling, skipping it".format(hctl_str))
 
         for name, path in self._get_sysfs_block_devices_pathnames().items():

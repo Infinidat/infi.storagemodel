@@ -1,7 +1,7 @@
 
 from infi.pyutils.lazy import cached_method, cached_property, LazyImmutableDict
 from ..base import multipath
-from ..errors import RescanIsNeeded, DeviceDisappeared
+from ..errors import RescanIsNeeded
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
 from .device_helpers import is_disk_drive_managed_by_windows_mpio
 from logging import getLogger

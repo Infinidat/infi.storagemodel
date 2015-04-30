@@ -2,7 +2,7 @@ from infi.pyutils.lazy import cached_method
 from infi.execute import execute_assert_success
 from infi.dtypes.hctl import HCTL
 from infi.storagemodel.base import gevent_wrapper
-from infi.storagemodel.errors import StorageModelFindError, MultipathDaemonTimeoutError, DeviceDisappeared
+from infi.storagemodel.errors import StorageModelFindError, MultipathDaemonTimeoutError, DeviceError
 from infi.storagemodel.base.scsi import SCSIModel, SCSIDevice, SCSIBlockDevice, SCSIStorageController
 from contextlib import contextmanager
 from logging import getLogger
@@ -96,7 +96,7 @@ class AixModelMixin(object):
         try:
             dev_type = dev.get_scsi_standard_inquiry().peripheral_device.type
             return dev_type == STORAGE_ARRAY_CONTROLLER_DEVICE
-        except DeviceDisappeared:
+        except DeviceError:
             return None
 
 

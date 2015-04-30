@@ -7,18 +7,18 @@ from infi.wioctl.api import WindowsException
 from infi.wioctl.errors import InvalidHandle
 from infi.pyutils.decorators import wraps
 from infi.exceptools import chain
-from infi.storagemodel.errors import DeviceDisappeared
+from infi.storagemodel.errors import DeviceError
 from infi.storagemodel.base.gevent_wrapper import defer
 from logging import getLogger
 logger = getLogger(__name__)
 
-def replace_invalid_handle_with_device_disappeared(func):
+def replace_invalid_handle_with_device_error(func):
     @wraps(func)
     def catcher(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except InvalidHandle:
-            raise chain(DeviceDisappeared())
+            raise chain(DeviceError())
     return catcher
 
 
@@ -29,7 +29,7 @@ class WindowsDeviceMixin(object):
             return defer(getattr)(self._device_object, 'psuedo_device_object')
         except KeyError:
             logger.exception("Getting device pdo raised KeyError")
-            raise DeviceDisappeared()
+            raise DeviceError()
 
     @contextmanager
     def asi_context(self):
@@ -43,7 +43,7 @@ class WindowsDeviceMixin(object):
             handle.close()
 
     @cached_method
-    @replace_invalid_handle_with_device_disappeared
+    @replace_invalid_handle_with_device_error
     def get_ioctl_interface(self):
         from infi.devicemanager.ioctl import DeviceIoControl
         return DeviceIoControl(self.get_pdo())
@@ -53,7 +53,7 @@ class WindowsDeviceMixin(object):
         return self._device_object._instance_id
 
     @cached_method
-    @replace_invalid_handle_with_device_disappeared
+    @replace_invalid_handle_with_device_error
     def get_hctl(self):
         from infi.dtypes.hctl import HCTL
         return HCTL(*defer(self.get_ioctl_interface().scsi_get_address)())
@@ -89,7 +89,7 @@ class WindowsDeviceMixin(object):
 
 class WindowsDiskDeviceMixin(object):
     @cached_method
-    @replace_invalid_handle_with_device_disappeared
+    @replace_invalid_handle_with_device_error
     def get_size_in_bytes(self):
         return defer(self.get_ioctl_interface().disk_get_drive_geometry_ex)()
 

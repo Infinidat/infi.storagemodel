@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from ..base import scsi, gevent_wrapper
-from ..errors import StorageModelFindError, DeviceDisappeared
+from ..errors import StorageModelFindError
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 from infi.storagemodel.base.scsi import SCSIBlockDevice

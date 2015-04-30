@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from infi.storagemodel.base import multipath, gevent_wrapper
-from infi.storagemodel.errors import StorageModelFindError, MultipathDaemonTimeoutError, DeviceDisappeared
+from infi.storagemodel.errors import StorageModelFindError, MultipathDaemonTimeoutError
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 import itertools

@@ -37,10 +37,11 @@ class UnmountFailedDeviceIsBusy(DeviceIsBusy):
         return "Cannot unmount filesystem {}, device {} is busy".format(self.args[1], self.args[0])
 
 
-class DeviceDisappeared(RescanIsNeeded):
+class DeviceError(RescanIsNeeded):
     def __init__(self, *args, **kwargs):
         StorageModelError.__init__(self, *args, **kwargs)
-    pass
+
+DeviceDisappeared = DeviceError     # backward compatibility
 
 class TimeoutError(StorageModelError):
     """Timeout error"""
@@ -114,7 +115,7 @@ def check_for_scsi_errors(func):
             if not e.sense_obj:
                 msg = "got no sense from device {!r} during {!r}".format(_safe_repr(device), func)
                 logger.error(msg, exc_info=exc_info())
-                raise chain(DeviceDisappeared(msg))
+                raise chain(DeviceError(msg))
             (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
             if (key, code) in CHECK_CONDITIONS_TO_CHECK:
                 msg = "device {!r} got {} {}".format(device, key, code)
@@ -128,9 +129,9 @@ def check_for_scsi_errors(func):
         except AsiSCSIError as error:
             msg = "device {!r} disappeared during {!r}: {}".format(_safe_repr(device), func, error)
             logger.error(msg)
-            raise chain(DeviceDisappeared(msg))
+            raise chain(DeviceError(msg))
         except (IOError, OSError, AsiOSError) as error:
             msg = "device {!r} disappeared during {!r}".format(_safe_repr(device), func)
             logger.error(msg, exc_info=exc_info())
-            raise chain(DeviceDisappeared(msg))
+            raise chain(DeviceError(msg))
     return callable
