@@ -1,4 +1,5 @@
-from ..unix import UnixStorageModel
+from infi.storagemodel.unix import UnixStorageModel
+from infi.storagemodel.unix.utils import execute_command
 from infi.execute import execute, execute_assert_success
 from infi.execute.exceptions import ExecutionError
 from infi.pyutils.lazy import cached_method
@@ -33,9 +34,9 @@ class SolarisStorageModel(UnixStorageModel):
         raise NotImplementedError()
 
     def rescan_method(self):
-        res = execute("cfgadm -lao show_SCSI_LUN".split())
+        res = execute_command("cfgadm -lao show_SCSI_LUN".split(), check_returncode=False)
         if res.get_returncode() not in (0, 2):
             raise ExecutionError(res)
-        execute_assert_success("devfsadm -vC".split())
-        execute_assert_success("devfsadm -r / -p /etc/path_to_inst".split())
+        execute_command("devfsadm -vC".split())
+        execute_command("devfsadm -r / -p /etc/path_to_inst".split())
         return 0
