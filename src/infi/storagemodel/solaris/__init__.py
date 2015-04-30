@@ -7,6 +7,8 @@ from infi.pyutils.lazy import cached_method
 # pylint: disable=W0212,E1002
 
 class SolarisStorageModel(UnixStorageModel):
+    rescan_subprocess_timeout = 180
+
     @cached_method
     def _get_device_manager(self):
         from .devicemanager import DeviceManager
