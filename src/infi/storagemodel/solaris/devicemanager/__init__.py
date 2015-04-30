@@ -112,13 +112,16 @@ class DeviceManager(object):
             logger.exception("Can't parse device name: {}".format(dev_string))
             return None
 
-    def get_all_block_devices(self):
-        from os import path, listdir
+    def get_all_scsi_block_devices(self):
+        from os import path, listdir, readlink
         devlist = []
         for device in listdir(DISK_DEVICE_PATH):
-            if not path.exists(path.join(DISK_DEVICE_PATH, device)): # checks the validity of the symlink
+            device_fullpath = path.join(DISK_DEVICE_PATH, device)
+            if not path.exists(device_fullpath):  # checks the validity of the symlink
                 continue
             if not (device.endswith("d0") or device.endswith("s2")):
+                continue
+            if 'virtual-devices' in readlink(device_fullpath):  # for example, virtual disk in ldom
                 continue
             truncated_ctds = DeviceManager.get_ctds_tuple_from_device_name(device.strip("s2"))
             ctds_tuple = DeviceManager.get_ctds_tuple_from_device_name(device)

@@ -52,7 +52,7 @@ class SolarisSCSIModel(SCSIModel):
 
     @cached_method
     def get_all_scsi_block_devices(self):
-        return [SolarisSCSIBlockDevice(device) for device in self._device_manager.get_all_block_devices()]
+        return [SolarisSCSIBlockDevice(device) for device in self._device_manager.get_all_scsi_block_devices()]
 
     @cached_method
     def get_all_storage_controller_devices(self):
