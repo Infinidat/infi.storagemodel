@@ -71,12 +71,16 @@ class SolarisMultipathClient(object):
         return multipaths
 
     def _run_command(self, cmd):
-        from infi.storagemodel.unix.utils import execute_command
+        from infi.execute import ExecutionError
+        from infi.storagemodel.unix.utils import execute_command, ExecutionError
         try:
             return execute_command(cmd.split()).get_stdout()
         except OSError as e:
             if e.errno not in (2, 20): # file not found, not a directory
                 logger.exception("{} failed with unknown reason".formart(cmd[0]))
+            return ""
+        except ExecutionError:
+            logger.exception("{} failed, returning empty output".formart(cmd[0]))
             return ""
 
     def read_multipaths_list(self):
