@@ -72,7 +72,7 @@ class SolarisMultipathClient(object):
 
     def _run_command(self, cmd):
         from infi.execute import ExecutionError
-        from infi.storagemodel.unix.utils import execute_command, ExecutionError
+        from infi.storagemodel.unix.utils import execute_command
         try:
             return execute_command(cmd.split()).get_stdout()
         except OSError as e:
