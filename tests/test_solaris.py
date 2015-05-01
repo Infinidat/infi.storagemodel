@@ -20,7 +20,7 @@ class SolarisDeviceManagerTestCase(TestCase):
         self.dm = DeviceManager()
 
     def test_get_block_devices(self):
-        self.assertNotEqual(len(self.dm.get_all_block_devices()), 0) # expect to find at least the local disk
+        self.assertNotEqual(len(self.dm.get_all_scsi_block_devices()), 0) # expect to find at least the local disk
 
     def test_get_storage_controllers(self):
         self.dm.get_all_scsi_storage_controllers()
