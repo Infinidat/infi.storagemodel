@@ -14,7 +14,7 @@ class UnixUtils(Utils):
 
 
 def execute_command(cmd, check_returncode=True, timeout=WAIT_TIME):  # pragma: no cover
-    from infi.execute import execute
+    from infi.execute import execute, ExecutionError
     logger.info("executing {}".format(cmd))
     process = execute(cmd)
     process.wait(WAIT_TIME)
@@ -23,7 +23,7 @@ def execute_command(cmd, check_returncode=True, timeout=WAIT_TIME):  # pragma: n
     logger.debug("stderr: {}".format(process.get_stderr()))
     if check_returncode and process.get_returncode() != 0:
         formatted_cmd = cmd if isinstance(cmd, basestring) else repr(' '.join(cmd))
-        raise RuntimeError("execution of {} failed".format(formatted_cmd))
+        raise ExecutionError(process)
     return process
 
 def execute_command_safe(cmd, *args, **kwargs):
