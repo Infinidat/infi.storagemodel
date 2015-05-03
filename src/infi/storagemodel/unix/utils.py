@@ -18,7 +18,7 @@ def execute_command(cmd, check_returncode=True, timeout=WAIT_TIME):  # pragma: n
     logger.info("executing {}".format(cmd))
     process = execute(cmd)
     process.wait(WAIT_TIME)
-    logger.info("execution of cmd {} (pid {}) returned {}".format(cmd, process.get_id(), process.get_returncode()))
+    logger.info("execution of cmd {} (pid {}) returned {}".format(cmd, process.get_pid(), process.get_returncode()))
     logger.debug("stdout: {}".format(process.get_stdout()))
     logger.debug("stderr: {}".format(process.get_stderr()))
     if check_returncode and process.get_returncode() != 0:
