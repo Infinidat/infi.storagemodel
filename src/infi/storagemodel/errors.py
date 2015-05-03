@@ -25,6 +25,10 @@ class RescanIsNeeded(StorageModelError):
     pass
 
 
+class RescanError(StorageModelError):
+    pass
+
+
 class DeviceIsBusy(StorageModelError):
     pass
 
