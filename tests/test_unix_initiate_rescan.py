@@ -24,6 +24,9 @@ class StuckMockModel(unix.UnixStorageModel):
 class AMultiprocessingRescanTestCase(TestCase):  # this test cases needs to be executed before the gipc one
     @classmethod
     def setUpClass(cls):
+        from os import name
+        if name == 'nt':
+            raise SkipTest("skip these tests on windows")
         cls.prepare_patch()
 
     @classmethod
