@@ -56,6 +56,7 @@ class UnixStorageModel(StorageModel):
                         raise RescanError("rescan process exited with non-zero exit code {}".format(self.rescan_process.exitcode))
         else:
             if isinstance(self.rescan_process, Process):
+                self.rescan_process.join()  # process no longer alive, this is safe
                 logger.debug("previous rescan process exit code: {}".format(self.rescan_process.exitcode))
                 if raise_error and self.rescan_process.exitcode not in (None, 0):
                     raise RescanError("rescan process exited with non-zero exit code {}".format(self.rescan_process.exitcode))
