@@ -41,6 +41,7 @@ class SolarisStorageModel(UnixStorageModel):
         res = execute_command("cfgadm -lao show_SCSI_LUN".split(), check_returncode=False)
         if res.get_returncode() not in (0, 2):
             raise ExecutionError(res)
-        execute_command("devfsadm -vC".split())
-        execute_command("devfsadm -r / -p /etc/path_to_inst".split())
+        execute_assert_success("devfsadm -vC".split())
+        execute_assert_success("devfsadm -r / -p /etc/path_to_inst".split())
+        execute("vxdctl enable".split()) # TODO execute only if veritas is installed
         return 0

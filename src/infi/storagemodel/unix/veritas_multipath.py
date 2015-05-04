@@ -10,9 +10,11 @@ logger = getLogger(__name__)
 
 
 class VeritasMultipathEntry(Munch):
-    def __init__(self, dmp_name, paths):
+    def __init__(self, dmp_name, paths, vendor_id, product_id):
         self.paths = paths
         self.dmp_name = dmp_name
+        self.vendor_id = vendor_id
+        self.product_id = product_id
 
 
 class VeritasSinglePathEntry(Munch):
@@ -29,7 +31,7 @@ class VeritasMultipathClient(object):
         multipath_dicts = self.parse_paths_list(self.read_paths_list())
         for multi in multipath_dicts:
             paths = [VeritasSinglePathEntry(p['name'], p['ctlr'], p['state'], p['aportWWN']) for p in multi['paths']]
-            multipaths.append(VeritasMultipathEntry(multi['dmpdev'], paths))
+            multipaths.append(VeritasMultipathEntry(multi['dmpdev'], paths, multi['vid'], multi['pid']))
         return multipaths
 
     def read_paths_list(self):

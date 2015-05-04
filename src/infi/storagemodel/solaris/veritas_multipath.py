@@ -3,10 +3,13 @@ from infi.storagemodel.base import multipath, gevent_wrapper
 from infi.storagemodel.base.disk import NoSuchDisk
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
+import os
 
 from logging import getLogger
 logger = getLogger(__name__)
 
+
+QUERY_TIMEOUT = 3 # 3 seconds
 
 class SolarisVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
     def __init__(self, scsi, multipath_object):
@@ -23,7 +26,7 @@ class SolarisVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
 
     @cached_method
     def get_block_access_path(self):
-        return "/dev/vx/dmp/{}".format(self.multipath_object.dmp_name)
+        return "/dev/vx/rdmp/{}".format(self.multipath_object.dmp_name)
 
     @cached_method
     def get_paths(self):
@@ -43,10 +46,10 @@ class SolarisVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
     def asi_context(self):
         import os
         from infi.asi.unix import OSFile
-        from infi.asi.Solaris import SolarisIoctlCommandExecuter
+        from infi.asi import create_platform_command_executer, create_os_file
 
-        handle = OSFile(os.open(self.get_block_access_path(), os.O_RDWR))
-        executer = SolarisIoctlCommandExecuter(handle)
+        handle = create_os_file(self.get_block_access_path())
+        executer = create_platform_command_executer(handle, timeout=QUERY_TIMEOUT)
         executer.call = gevent_wrapper.defer(executer.call)
         try:
             yield executer
@@ -57,14 +60,11 @@ class SolarisVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
     def get_disk_drive(self):  # pragma: no cover
         raise NoSuchDisk
 
-    @cached_method
-    def get_size_in_bytes(self):
-        from fcntl import ioctl
-        from struct import unpack
-        BLKGETSIZE64 = 0x80081272
-        block_device = open(self.get_block_access_path())
-        size = ioctl(block_device, BLKGETSIZE64, '\x00\x00\x00\x00\x00\x00\x00\x00')
-        return unpack('L', size)[0]
+    def get_scsi_vendor_id(self):
+        return self.multipath_object.vendor_id
+
+    def get_scsi_product_id(self):
+        return self.multipath_object.product_id
 
 
 class VeritasPath(multipath.Path):
@@ -86,7 +86,7 @@ class VeritasPath(multipath.Path):
         return "up" if "enabled" in self.multipath_object_path.state else "down"
 
     def get_io_statistics(self):
-        # TODO figure out how kstat device names (ssd*) are related to veritas paths
+        # TODO we can relate between os names and veritas names using vxdisk -e list and get the stats using kstat
         return multipath.PathStatistics(-1, -1, -1, -1)
 
 
