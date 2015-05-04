@@ -80,7 +80,7 @@ class SolarisMultipathClient(object):
                 logger.exception("{} failed with unknown reason".formart(cmd[0]))
             return ""
         except ExecutionError:
-            logger.exception("{} failed, returning empty output".formart(cmd[0]))
+            logger.exception("{} failed, returning empty output".format(cmd[0]))
             return ""
 
     def read_multipaths_list(self):
