@@ -43,5 +43,8 @@ class SolarisStorageModel(UnixStorageModel):
             raise ExecutionError(res)
         execute_assert_success("devfsadm -vC".split())
         execute_assert_success("devfsadm -r / -p /etc/path_to_inst".split())
-        execute("vxdctl enable".split()) # TODO execute only if veritas is installed
+        try:
+            execute("vxdctl enable".split()) # TODO execute only if veritas is installed
+        except OSError:
+            pass
         return 0
