@@ -61,13 +61,16 @@ class MultipathFrameworkModel(object):
 
 class NativeMultipathModel(MultipathFrameworkModel):
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
     pass
 
 class VeritasMultipathModel(MultipathFrameworkModel):
-    # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
-    pass
+    @cached_method
+    def get_all_multipath_block_devices(self):  # pragma: no cover
+        return []
+
+    @cached_method
+    def get_all_multipath_storage_controller_devices(self):  # pragma: no cover
+        return []
 
 class MultipathDevice(object):
     pass
@@ -114,7 +117,8 @@ class MultipathStorageController(InquiryInformationMixin, MultipathDevice):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<MultipathStorageController {} for {}>".format(self.get_multipath_access_path(), self.get_display_name())
+        return "<{} {} for {}>".format(self.__class__.__name__,
+            self.get_multipath_access_path(), self.get_display_name())
 
 class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
     @cached_method
@@ -133,6 +137,20 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
         from infi.storagemodel import get_storage_model
         model = get_storage_model().get_disk()
         return model.find_disk_drive_by_block_access_path(self.get_block_access_path())
+
+    @cached_method
+    def get_size_in_bytes(self):
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.cdb.read_capacity import ReadCapacity10Command, ReadCapacity16Command
+
+        with self.asi_context() as asi:
+            for command in [ReadCapacity16Command, ReadCapacity10Command]:
+                try:
+                    result = sync_wait(command().execute(asi))
+                    return result.last_logical_block_address * result.block_length_in_bytes
+                except:
+                    pass
+            return 0
 
     #############################
     # Platform Specific Methods #
@@ -157,12 +175,6 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
         raise NotImplementedError()
 
     @cached_method
-    def get_size_in_bytes(self):  # pragma: no cover
-        """Returns size in bytes"""
-        # platform implementation
-        raise NotImplementedError()
-
-    @cached_method
     def get_paths(self):  # pragma: no cover
         """Returns a list of `infi.storagemodel.base.multipath.Path` instances"""
         # platform implementation
@@ -175,7 +187,8 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<MultipathBlockDevice {} for {}>".format(self.get_block_access_path(), self.get_display_name())
+        return "<{} {} for {}>".format(self.__class__.__name__,
+            self.get_block_access_path(), self.get_display_name())
 
 class LoadBalancePolicy(object):
     """ Base class of all available load balancing policies """
@@ -192,7 +205,7 @@ class LoadBalancePolicy(object):
 class FailoverOnly(LoadBalancePolicy):
     """ Load balancing policy where the alternative paths are used only in case the active path fails. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
 
     name = "Fail Over Only"
 
@@ -203,13 +216,13 @@ class FailoverOnly(LoadBalancePolicy):
 class RoundRobin(LoadBalancePolicy):
     """ Load balancing policy where all paths are used in a balanced way. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Round Robin"
 
 class RoundRobinWithSubset(LoadBalancePolicy):
     """ Load balancing policy where a subset of the paths are used in a balanced way. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Round Robin with subset"
 
     def __init__(self, active_path_ids):
@@ -220,20 +233,20 @@ class RoundRobinWithSubset(LoadBalancePolicy):
 class RoundRobinWithTPGSSubset(RoundRobinWithSubset):
     """ Load balancing policy where only paths that are active/optimized according to TPGS are used """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class RoundRobinWithExplicitSubset(RoundRobinWithSubset):
     """ Load balancing policy where an explicitly-given subset of the paths are used """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class WeightedPaths(LoadBalancePolicy):
     """ Load balancing policy that assigns a weight to each path. The weight indicates the relative priority of a
         given path. The larger the number, the lower ranked the priority. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Weighted Paths"
     def __init__(self, weights):
         """**weights**: a dictionary mapping from Path IDs to their integer weight"""
@@ -244,13 +257,13 @@ class WeightedPaths(LoadBalancePolicy):
 class LeastBlocks(LoadBalancePolicy):
     """ Load balancing policy that sends I/O down the path with the least number of data blocks currently being processed """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Least Blocks"
 
 class LeastQueueDepth(LoadBalancePolicy):
     """ Load balancing policy that sends I/O down the path with the fewest currently outstanding I/O requests. """
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     name = "Least Queue Depth"
 
 class PathStatistics(object):

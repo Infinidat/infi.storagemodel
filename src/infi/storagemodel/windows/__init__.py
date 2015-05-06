@@ -33,7 +33,7 @@ class WindowsStorageModel(StorageModel):
         from .utils import WindowsUtils
         return WindowsUtils()
 
-    def initiate_rescan(self, wait_for_completion=True, raise_error=False):
+    def _initiate_rescan(self, wait_for_completion=True, raise_error=False):
         from infi.devicemanager import DeviceManager
         from infi.storagemodel.base.gevent_wrapper import safe_joinall, defer, spawn
         dm = DeviceManager()

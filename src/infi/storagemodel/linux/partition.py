@@ -29,22 +29,22 @@ class LinuxPartition(partition.Partition):
 
 class LinuxPrimaryPartition(LinuxPartition, partition.PrimaryPartition):
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class LinuxExtendedPartition(LinuxPartition, partition.ExtendedPartition):
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class LinuxLogicalPartition(LinuxPartition, partition.LogicalPartition):
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class LinuxGUIDPartition(LinuxPartition, partition.GUIDPartition):
     # pylint: disable=W0223
-    # This methods below are overriden by platform-specific implementations
+    # The methods below are overriden by platform-specific implementations
     pass
 
 class LinuxPartitionTable(object):

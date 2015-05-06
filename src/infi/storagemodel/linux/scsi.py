@@ -1,11 +1,13 @@
 from contextlib import contextmanager
 from ..base import scsi, gevent_wrapper
-from ..errors import StorageModelFindError, DeviceDisappeared
+from ..errors import StorageModelFindError
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 from infi.storagemodel.base.scsi import SCSIBlockDevice
 from infi.exceptools import chain
 from infi.pyutils.decorators import wraps
+from .rescan_scsi_bus.getters import is_sg_module_loaded
+from .rescan_scsi_bus.scsi import execute_modprobe_sg
 
 MS = 1000
 SG_TIMEOUT_IN_SEC = 3
@@ -15,11 +17,9 @@ SG_TIMEOUT_IN_MS = SG_TIMEOUT_IN_SEC * MS
 class LinuxSCSIDeviceMixin(object):
     @contextmanager
     def asi_context(self):
-        import os
-        from infi.asi.unix import OSFile
-        from infi.asi import create_platform_command_executer
+        from infi.asi import create_platform_command_executer, create_os_file
 
-        handle = OSFile(os.open(self.get_scsi_access_path(), os.O_RDWR))
+        handle = create_os_file(self.get_scsi_access_path())
         executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
         executer.call = gevent_wrapper.defer(executer.call)
         try:
@@ -50,7 +50,6 @@ class LinuxSCSIDeviceMixin(object):
     @cached_method
     def get_scsi_revision(self):
         return self.sysfs_device.get_revision().strip()
-
 
     @cached_method
     def get_scsi_product_id(self):
@@ -107,6 +106,9 @@ class LinuxSCSIEnclosure(LinuxSCSIDeviceMixin, scsi.SCSIEnclosure):
 class LinuxSCSIModel(scsi.SCSIModel):
     def __init__(self, sysfs):
         self.sysfs = sysfs
+        # our need the 'sg' module, which is no longer loaded during system boot on redhat-7.1
+        if not is_sg_module_loaded():
+            execute_modprobe_sg()
 
     @cached_method
     def get_all_scsi_block_devices(self):

@@ -99,7 +99,7 @@ class InfiniBoxInquiryMixin(object):
             json_page = JSONInquiryPageBuffer()
             json_page.unpack(unknown_page.pack())
             return json_page
-        except AsiCheckConditionError, error:
+        except AsiCheckConditionError as error:
             if _is_exception_of_unsupported_inquiry_page(error):
                 raise chain(InquiryException("JSON Inquiry command error"))
             raise
@@ -114,7 +114,7 @@ class InfiniBoxInquiryMixin(object):
             return string_page
         except KeyError:
             raise chain(InquiryException("Inquiry command error"))
-        except AsiCheckConditionError, error:
+        except AsiCheckConditionError as error:
             if _is_exception_of_unsupported_inquiry_page(error):
                 raise chain(InquiryException("Inquiry command error"))
             raise

@@ -1,4 +1,3 @@
-
 from .gevent_wrapper import sleep
 from infi.pyutils.lazy import cached_method, clear_cache
 from logging import getLogger
@@ -74,7 +73,7 @@ class StorageModel(object):
         from infi.storagemodel.errors import RescanIsNeeded, TimeoutError, StorageModelError
         try:
             return predicate()
-        except (RescanIsNeeded, TimeoutError, StorageModelError), error:
+        except (RescanIsNeeded, TimeoutError, StorageModelError) as error:
             logger.debug("Predicate {!r} raised {!r} during rescan".format(predicate, error), exc_info=True)
             return None
         except:
@@ -91,22 +90,22 @@ class StorageModel(object):
 
         **timeout_in_seconds**: time in seconds to poll the predicate.
 
-        **rescan_kwargs**: additional keyword arguments to pass to `initiate_rescan`.
+        **rescan_kwargs**: additional keyword arguments to pass to `_initiate_rescan`.
 
         Raises `infi.storagemodel.errors.TimeoutError` exception if the timeout is reached.
         """
         from time import time
-        from sys import maxint
+        from sys import maxsize
         from ..errors import TimeoutError
         if timeout_in_seconds is None:
-            timeout_in_seconds = maxint
+            timeout_in_seconds = maxsize
         if predicate is None:
             from ..predicates import WaitForNothing
             predicate = WaitForNothing()
         self.refresh()
         start_time = time()
         logger.debug("Initiating rescan with keyword arguments {!r}".format(rescan_kwargs))
-        self.initiate_rescan(**rescan_kwargs)
+        self._initiate_rescan(**rescan_kwargs)
         while True:
             logger.debug("Trying predicate: {!r}".format(predicate))
             result = self._try_predicate(predicate)
@@ -123,14 +122,14 @@ class StorageModel(object):
             self.refresh()
 
     def retry_rescan(self, **rescan_kwargs):
-        self.initiate_rescan(**rescan_kwargs)
+        self._initiate_rescan(**rescan_kwargs)
 
 
     #############################
     # Platform Specific Methods #
     #############################
 
-    def initiate_rescan(self, wait_for_completion=False, raise_error=False):  # pragma: no cover
+    def _initiate_rescan(self, wait_for_completion=False, raise_error=False):  # pragma: no cover
         """A primitive rescan method that can be used in case you do not need the more elaborate rescan_and_wait_for method. """
         # platform implementation
         raise NotImplementedError()
@@ -144,8 +143,9 @@ class StorageModel(object):
         raise NotImplementedError()
 
     def _create_veritas_multipath_model(self):  # pragma: no cover
-        # platform implementation
-        raise NotImplementedError()
+        # Naive implementation is empty
+        from infi.storagemodel.base.multipath import VeritasMultipathModel
+        return VeritasMultipathModel()
 
     def _create_disk_model(self):  # pragma: no cover
         # platform implementation

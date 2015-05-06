@@ -71,9 +71,9 @@ def get_infinidat_block_devices_and_controllers():
 
 def get_infinidat_block_devices_and_controllers__mapped_to_lun0():
     from infi.storagemodel.base.multipath import MultipathBlockDevice, MultipathStorageController
-    from infi.storagemodel.base.scsi import SCSIDevice
+    from infi.storagemodel.base.scsi import SCSIDevice, SCSIStorageController
     devices = get_infinidat_block_devices_and_controllers()
     return [device for device in devices if
-            (isinstance(device, SCSIDevice) and device.get_hctl().get_lun() == 0) or \
-            (isinstance(device, (MultipathBlockDevice, MultipathStorageController)) and
+            (isinstance(device, (SCSIDevice, SCSIStorageController)) and device.get_hctl().get_lun() == 0) or \
+            (isinstance(device, (MultipathStorageController, MultipathBlockDevice)) and
              any(path.get_hctl().get_lun() == 0 for path in device.get_paths()))]

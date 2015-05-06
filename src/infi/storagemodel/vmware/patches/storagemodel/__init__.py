@@ -98,7 +98,7 @@ class VMwareHostStorageModel(StorageModel):
 
     def __repr__(self):
         try:
-            return "<VMwareHostStorageModel(moref={!r})>".format(self._moref)
+            return "<{}(moref={!r})>".format(self.__class__.__name__, self._moref)
         except:
             return super(VMwareHostStorageModel, self).__repr__()
 
@@ -120,23 +120,23 @@ class VMwareHostStorageModel(StorageModel):
         except URLError:  # pragma: no cover
             # the storage_system calls above wait for completion and therefore may receive timeout exception
             # (in the form of URLError)
-            # however we don't care if the tasks take longer than expected because this is initiate_rescan only.
+            # however we don't care if the tasks take longer than expected because this is _initiate_rescan only.
             # if we want to wait, we use the rescan_and_wait_for function
             self._debug("_refresh_host_storage caught URLError (timeout)")
         except:
             logger.exception("_refresh_host_storage caught an exception")
-            raise   # hiding or no hiding the erros is handled in initiate_rescan, according to 'raise_error'
+            raise   # hiding or no hiding the erros is handled in _initiate_rescan, according to 'raise_error'
         finally:
             self._last_rescan_timestamp = time()
 
     def retry_rescan(self, **rescan_kwargs):
         now = time()
         if (now - self._last_rescan_timestamp) > 30:
-            self.initiate_rescan(**rescan_kwargs)
+            self._initiate_rescan(**rescan_kwargs)
         else:
             self._debug("no point in retrying rescan in VMware as it takes too long, and it can take some time for the property collector to update")
 
-    def initiate_rescan(self, wait_for_completion=True, raise_error=False, do_rescan=True, do_refresh=False):
+    def _initiate_rescan(self, wait_for_completion=True, raise_error=False, do_rescan=True, do_refresh=False):
         from infi.storagemodel.base.gevent_wrapper import spawn, is_thread_alive
         host = self._client.get_managed_object_by_reference(self._moref)
         # we've seen several time in the tests that host.configManager is a list; how weird is that?

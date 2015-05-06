@@ -2,8 +2,8 @@ from os import getpid
 from logging import getLogger
 from .utils import func_logger, format_hctl, ScsiCommandFailed
 from .scsi import scsi_host_scan, scsi_add_single_device, remove_device_via_sysfs
-from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready
-from .getters import get_scsi_generic_device
+from .scsi import do_report_luns, do_standard_inquiry, do_test_unit_ready, execute_modprobe_sg
+from .getters import get_scsi_generic_device, is_sg_module_loaded
 from .getters import get_hosts, get_channels, get_targets, get_luns
 from .getters import is_there_a_bug_in_target_removal, is_there_a_bug_in_sysfs_async_scanning
 
@@ -115,6 +115,15 @@ def rescan_scsi_host(host):
 
 @func_logger
 def rescan_scsi_hosts():
+    if not is_sg_module_loaded():
+        # our need the 'sg' module, which is no longer loaded during system boot on redhat-7.1
+        # altough the module should've been loaded by LinuxScsiModel.__init__
+        # if we do not check this here and continue with the rescan,
+        # we will remove the devices that do not have an sg-device from the scsi subsystem
+        # including the boot disk, and that is bad
+        # /usr/bin/rescan-scsi-bus.sh modprobes sg as well and immediately proceeds with the rescan
+        # so we do the same
+        execute_modprobe_sg()
     subprocesses = []
     for host_number in get_hosts():
         subprocesses.extend(rescan_scsi_host(host_number))

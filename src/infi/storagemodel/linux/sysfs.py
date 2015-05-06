@@ -2,7 +2,7 @@ import os
 import glob
 from infi.dtypes.hctl import HCTL
 from infi.pyutils.lazy import cached_method
-from ..errors import DeviceDisappeared
+from ..errors import DeviceError
 from infi.sgutils.sg_map import get_hctl_for_sd_device
 
 SYSFS_CLASS_SCSI_DEVICE_PATH = "/sys/class/scsi_device"
@@ -20,7 +20,7 @@ log = getLogger(__name__)
 
 
 def _sysfs_read_field(device_path, field):
-    with open(os.path.join(device_path, field), "rb") as f:
+    with open(os.path.join(device_path, field), "r") as f:
         return f.read()
 
 
@@ -45,8 +45,8 @@ class SysfsBlockDevice(SysfsBlockDeviceMixin):
         self.sysfs_block_device_path = block_device_path
 
     def __repr__(self):
-        _repr = "<SysfsBlockDevice(block_device_name={!r}, block_device_path={!r}>"
-        return _repr.format(self.block_device_name, self.sysfs_block_device_path)
+        _repr = "<{}(block_device_name={!r}, block_device_path={!r}>"
+        return _repr.format(self.__class__.__name__, self.block_device_name, self.sysfs_block_device_path)
 
 
 class SysfsSCSIDevice(object):
@@ -63,7 +63,7 @@ class SysfsSCSIDevice(object):
             sg_dev_names = glob.glob(os.path.join(self.sysfs_dev_path, "scsi_generic*"))
         if len(sg_dev_names) != 1:
             msg = "{} doesn't have a single device/scsi_generic/sg* path ({!r})"
-            raise DeviceDisappeared(msg.format(self.sysfs_dev_path, sg_dev_names))
+            raise DeviceError(msg.format(self.sysfs_dev_path, sg_dev_names))
         self.scsi_generic_device_name = sg_dev_names[0].split(':')[-1]
         self.sysfs_scsi_generic_device_path = os.path.join(self.sysfs_dev_path, "scsi_generic",
                                                            self.scsi_generic_device_name)
@@ -96,8 +96,8 @@ class SysfsSCSIDevice(object):
         return _sysfs_read_devno(self.sysfs_scsi_generic_device_path)
 
     def __repr__(self):
-        _repr = "<SysfsSCSIDevice(sysfs_dev_path={!r}, hctl={!r})>"
-        return _repr.format(self.sysfs_dev_path, self.hctl)
+        _repr = "<{}(sysfs_dev_path={!r}, hctl={!r})>"
+        return _repr.format(self.__class__.__name__, self.sysfs_dev_path, self.hctl)
 
     def get_sysfs_dev_path(self):
         return self.sysfs_dev_path
@@ -114,8 +114,8 @@ class SysfsSDDisk(SysfsBlockDeviceMixin, SysfsSCSIDevice):
         log.debug("sysfs_block_device_path = {!r}".format(self.sysfs_block_device_path))
 
     def __repr__(self):
-        _repr = "<SysfsBlockDeviceMixin(sysfs_dev_path={!r}, hctl={!r})>"
-        return _repr.format(self.sysfs_dev_path, self.hctl)
+        _repr = "<{}(sysfs_dev_path={!r}, hctl={!r})>"
+        return _repr.format(self.__class__.__name__, self.sysfs_dev_path, self.hctl)
 
 
 class SysfsEnclosureDevice(SysfsSCSIDevice):
@@ -146,10 +146,6 @@ class SysfsEnclosureDevice(SysfsSCSIDevice):
             hctl = os.path.basename(os.readlink(dev_path))
             return HCTL.from_string(hctl)
         return None
-
-    def __repr__(self):
-        _repr = "<SysfsEnclosureDevice(sysfs_dev_path={!r}, hctl={!r})>"
-        return _repr.format(self.sysfs_dev_path, self.hctl)
 
 
 class Sysfs(object):
@@ -186,7 +182,7 @@ class Sysfs(object):
                 self._append_device_by_type(hctl_str, dev_path, scsi_type)
             except (IOError, OSError):
                 log.debug("no device type for hctl {}".format(hctl_str))
-            except (DeviceDisappeared):
+            except (DeviceError):
                 log.debug("device for hctl {} is dangling, skipping it".format(hctl_str))
 
         for name, path in self._get_sysfs_block_devices_pathnames().items():
@@ -268,7 +264,7 @@ class Sysfs(object):
         return disk[0]
 
     def __repr__(self):
-        _repr = ("<Sysfs: sg_disks={!r}, sd_disks={!r}, controllers={!r}, block_devices={!r}, " +
+        _repr = ("<{}: sg_disks={!r}, sd_disks={!r}, controllers={!r}, block_devices={!r}, " +
                  "block_devno_to_device={!r}, enclosures={!r}>")
-        return _repr.format(self.sg_disks, self.sd_disks, self.controllers, self.block_devices,
-                            self.block_devno_to_device, self.enclosures)
+        return _repr.format(self.__class__.__name__, self.sg_disks, self.sd_disks, self.controllers,
+                            self.block_devices, self.block_devno_to_device, self.enclosures)

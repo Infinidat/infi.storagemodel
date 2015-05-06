@@ -1,6 +1,8 @@
+from infi.storagemodel.predicates import FiberChannelMappingExists, FiberChannelMappingNotExists
 
 from logging import getLogger
 log = getLogger(__name__)
+
 
 class InfinidatVolumeExists(object):
     """A predicate that checks if an Infinidat volume exists"""
@@ -35,19 +37,14 @@ class InfinidatVolumeExists(object):
                    for device in devices_to_query)
 
     def __repr__(self):
-        return "<InfinidatVolumeExists(system_serial={!r}, volume_id={!r})>".format(self.system_serial,
-                                                                                    self.volume_id)
+        return "<{}(system_serial={!r}, volume_id={!r})>".format(self.__class__.__name__, self.system_serial, self.volume_id)
+
 
 class InfinidatVolumeDoesNotExist(InfinidatVolumeExists):
     """A predicate that checks if an Infinidat volume does not exist"""
     def __call__(self):
         return not super(InfinidatVolumeDoesNotExist, self).__call__()
 
-    def __repr__(self):
-        return "<InfinidatVolumeDoesNotExist(system_serial={!r}, volume_id={!r})>".format(self.system_serial,
-                                                                                          self.volume_id)
-
-from infi.storagemodel.predicates import FiberChannelMappingExists, FiberChannelMappingNotExists
 
 class FiberChannelMappingExistsUsingLinuxSG(FiberChannelMappingExists):
     def _get_chain_of_devices(self, model):
@@ -56,20 +53,18 @@ class FiberChannelMappingExistsUsingLinuxSG(FiberChannelMappingExists):
                      model.get_scsi().get_all_storage_controller_devices())
 
     def __repr__(self):
-        return "<FiberChannelMappingExistsUsingLinuxSG: {!r}>".format(self.connectivity)
+        return "<{}: {!r}>".format(self.__class__.__name__, self.connectivity)
+
 
 class FiberChannelMappingNotExistsUsingLinuxSG(FiberChannelMappingExistsUsingLinuxSG):
     def __call__(self):
         return not super(FiberChannelMappingNotExistsUsingLinuxSG, self).__call__()
 
-    def __repr__(self):
-        return "<FiberChannelMappingNotExistsUsingLinuxSG: {!r}>".format(self.connectivity)
-
 
 def get_predicate_for_checking_non_zero_host_id(system_serial):
     def all_storage_devices_on_logical_unit_0_of_specific_box_show_non_zero_host_id():
         from infi.storagemodel.vendor.infinidat.shortcuts import get_infinidat_block_devices_and_controllers__mapped_to_lun0
-        from infi.storagemodel.errors import DeviceDisappeared, RescanIsNeeded, StorageModelFindError
+        from infi.storagemodel.errors import RescanIsNeeded
         devices = []
 
         try:

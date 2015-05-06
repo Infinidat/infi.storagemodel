@@ -6,6 +6,7 @@ from infi.pyutils.lazy import clear_cache
 from unittest import TestCase, SkipTest
 from mock import Mock, patch
 from os import name
+from infi.os_info import get_platform_string
 
 VXDMPADM_OUTPUT_TEMPLATE = """dmpdev      = sda
 state       = enabled
@@ -82,14 +83,14 @@ class MockSCSIBlockDevice(LinuxSCSIBlockDevice):
 
 @contextmanager
 def veritas_multipathing_context(output):
-    if name == "nt":
+    if "windows" in get_platform_string():
         raise SkipTest
-    with patch('infi.storagemodel.linux.veritas_multipath.VeritasMultipathClient.read_paths_list') as read_path_list:
+    with patch('infi.storagemodel.unix.veritas_multipath.VeritasMultipathClient.read_paths_list') as read_paths_list:
         with patch('infi.storagemodel.linux.sysfs.Sysfs.find_scsi_disk_by_hctl') as find_scsi_disk_by_hctl:
             with patch('infi.storagemodel.base.scsi.SCSIModel.find_scsi_block_device_by_block_access_path') as find_func:
                 find_func.return_value = MockSCSIBlockDevice(None)
                 find_scsi_disk_by_hctl.return_value = None
-                read_path_list.return_value = output
+                read_paths_list.return_value = output
                 sm = get_storage_model()
                 clear_cache(sm)
                 yield sm.get_veritas_multipath()

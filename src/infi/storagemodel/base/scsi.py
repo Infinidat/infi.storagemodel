@@ -1,4 +1,3 @@
-
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
 
@@ -56,8 +55,8 @@ class SCSIDevice(InquiryInformationMixin, object):
         return getattr(self, "_serial", "<unknown-scsi-serial-number>")
 
     def __repr__(self):
-        return "<SCSIDevice {} for {} ({})>".format(self.get_scsi_access_path(), self.get_display_name(),
-                                                    self._get_scsi_serial_for_repr())
+        return "<{} {} for {} ({})>".format(self.__class__.__name__,
+            self.get_scsi_access_path(), self.get_display_name(), self._get_scsi_serial_for_repr())
 
 
 class SCSIBlockDevice(SCSIDevice):
@@ -79,23 +78,29 @@ class SCSIBlockDevice(SCSIDevice):
         """Returns a string path for the device
 
                     - In Windows, it's something under globalroot
-                    - In linux, it's /dev/sdX"""
+                    - In Linux, it's /dev/sdX
+                    - In Solaris, it's /dev/dsk/cXtXdXsX"""
 
         # platform implementation
         raise NotImplementedError()
 
     def __repr__(self):
-        return "<SCSIBlockDevice: {} for {}>".format(self.get_block_access_path(),
-                                                     super(SCSIBlockDevice, self).__repr__())
-
-    #############################
-    # Platform Specific Methods #
-    #############################
+        return "<{}: {} for {}>".format(self.__class__.__name__,
+            self.get_block_access_path(), super(SCSIBlockDevice, self).__repr__())
 
     @cached_method
-    def get_size_in_bytes(self):  # pragma: no cover
-        # platform implementation
-        raise NotImplementedError()
+    def get_size_in_bytes(self):
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        from infi.asi.cdb.read_capacity import ReadCapacity10Command, ReadCapacity16Command
+
+        with self.asi_context() as asi:
+            for command in [ReadCapacity16Command, ReadCapacity10Command]:
+                try:
+                    result = sync_wait(command().execute(asi))
+                    return result.last_logical_block_address * result.block_length_in_bytes
+                except:
+                    pass
+            return 0
 
 
 class SCSIStorageController(SCSIDevice):
@@ -106,7 +111,7 @@ class SCSIStorageController(SCSIDevice):
         return VendorFactory.create_scsi_controller_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     def __repr__(self):
-        return "<SCSIStorageController {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
+        return "<{} {} for {}>".format(self.__class__.__name__, self.get_scsi_access_path(), self.get_display_name())
 
 
 class SCSIEnclosure(SesInformationMixin, SCSIDevice):
@@ -117,7 +122,7 @@ class SCSIEnclosure(SesInformationMixin, SCSIDevice):
         return VendorFactory.create_scsi_enclosure_by_vid_pid(self.get_scsi_vid_pid(), self)
 
     def __repr__(self):
-        return "<SCSIEnclosure {} for {}>".format(self.get_scsi_access_path(), self.get_display_name())
+        return "<{} {} for {}>".format(self.__class__.__name__, self.get_scsi_access_path(), self.get_display_name())
 
 
 class SCSIModel(object):

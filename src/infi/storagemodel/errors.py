@@ -25,6 +25,10 @@ class RescanIsNeeded(StorageModelError):
     pass
 
 
+class RescanError(StorageModelError):
+    pass
+
+
 class DeviceIsBusy(StorageModelError):
     pass
 
@@ -37,10 +41,11 @@ class UnmountFailedDeviceIsBusy(DeviceIsBusy):
         return "Cannot unmount filesystem {}, device {} is busy".format(self.args[1], self.args[0])
 
 
-class DeviceDisappeared(RescanIsNeeded):
+class DeviceError(RescanIsNeeded):
     def __init__(self, *args, **kwargs):
         StorageModelError.__init__(self, *args, **kwargs)
-    pass
+
+DeviceDisappeared = DeviceError     # backward compatibility
 
 class TimeoutError(StorageModelError):
     """Timeout error"""
@@ -71,6 +76,11 @@ class InvalidLabel(StorageModelError):
 class LabelNotSupported(StorageModelError):
     pass
 
+class DeviceIsNotLinuxPartition(StorageModelError):
+    pass
+
+class ScsiGenericNotLoaded(StorageModelError):
+    pass
 
 CHECK_CONDITIONS_TO_CHECK = [
     # 2-tuple of (sense_key, additional_sense_code)
@@ -105,27 +115,27 @@ def check_for_scsi_errors(func):
             response = func(*args, **kwargs)
             logger.debug("Got response {!r}".format(response))
             return response
-        except AsiCheckConditionError, e:
+        except AsiCheckConditionError as e:
             if not e.sense_obj:
                 msg = "got no sense from device {!r} during {!r}".format(_safe_repr(device), func)
                 logger.error(msg, exc_info=exc_info())
-                raise chain(DeviceDisappeared(msg))
+                raise chain(DeviceError(msg))
             (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
             if (key, code) in CHECK_CONDITIONS_TO_CHECK:
                 msg = "device {!r} got {} {}".format(device, key, code)
                 logger.debug(msg)
                 raise chain(RescanIsNeeded(msg))
             raise
-        except AsiRequestQueueFullError, e:
+        except AsiRequestQueueFullError as e:
             msg = "got queue full from device {!r} during {!r}".format(_safe_repr(device), func)
             logger.debug(msg)
             raise chain(RescanIsNeeded(msg))
         except AsiSCSIError as error:
             msg = "device {!r} disappeared during {!r}: {}".format(_safe_repr(device), func, error)
             logger.error(msg)
-            raise chain(DeviceDisappeared(msg))
-        except (IOError, OSError, AsiOSError), error:
+            raise chain(DeviceError(msg))
+        except (IOError, OSError, AsiOSError) as error:
             msg = "device {!r} disappeared during {!r}".format(_safe_repr(device), func)
             logger.error(msg, exc_info=exc_info())
-            raise chain(DeviceDisappeared(msg))
+            raise chain(DeviceError(msg))
     return callable
