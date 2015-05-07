@@ -53,12 +53,12 @@ def get_infinidat_block_devices():
     veritas_non_multipath_devices = get_infinidat_non_veritas_multipathed_scsi_block_devices()
     native_non_multipath_devices = get_infinidat_non_multipathed_scsi_block_devices()
     if veritas_multipath_devices:
-        return veritas_multipath_devices + veritas_non_multipath_devices
+        return list(set(veritas_multipath_devices + veritas_non_multipath_devices))
     if native_multipath_devices:
-        return native_multipath_devices + native_non_multipath_devices
+        return list(set(native_multipath_devices + native_non_multipath_devices))
 
     # if veritas is installed the left one is empty and if not, the right one is empty
-    return  veritas_non_multipath_devices + native_non_multipath_devices
+    return list(set(veritas_non_multipath_devices + native_non_multipath_devices))
 
 def get_infinidat_storage_controller_devices():
     return get_infinidat_native_multipath_storage_controller_devices() + get_infinidat_non_multipathed_scsi_storage_controller_devices()
