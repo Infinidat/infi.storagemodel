@@ -1,6 +1,5 @@
 from infi.storagemodel.unix.veritas_multipath import VeritasMultipathClient
 from infi.storagemodel.base import multipath, gevent_wrapper
-from infi.storagemodel.base.disk import NoSuchDisk
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
 
@@ -74,10 +73,6 @@ class LinuxVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
             yield executer
         finally:
             handle.close()
-
-    @cached_method
-    def get_disk_drive(self):  # pragma: no cover
-        raise NoSuchDisk
 
     @cached_method
     def get_size_in_bytes(self):

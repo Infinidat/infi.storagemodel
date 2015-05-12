@@ -1,6 +1,5 @@
 from infi.storagemodel.unix.utils import execute_command_safe
 from infi.storagemodel.base import multipath, gevent_wrapper
-from infi.storagemodel.base.disk import NoSuchDisk
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
 from munch import Munch

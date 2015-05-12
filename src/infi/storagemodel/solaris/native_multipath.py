@@ -1,6 +1,5 @@
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.errors import ScsiGenericNotLoaded
-from infi.storagemodel.base.disk import NoSuchDisk
 from infi.storagemodel.solaris.devicemanager import DeviceManager
 from infi.storagemodel.base import multipath, gevent_wrapper
 from contextlib import contextmanager
@@ -135,10 +134,6 @@ class SolarisNativeMultipathDeviceMixin(object):
     def get_paths(self):
         return [SolarisPath(p, self._multipath_object.device_path) for p in self._multipath_object.paths \
                 if p.get_hctl() is not None]
-
-    @cached_method
-    def get_disk_drive(self):  # pragma: no cover
-        raise NoSuchDisk
 
     @cached_method
     def get_display_name(self):
