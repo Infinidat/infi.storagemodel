@@ -196,7 +196,7 @@ class SolarisNativeMultipathStorageController(SolarisNativeMultipathDeviceMixin,
 
         # if sgen is not loaded we can't open the device
         if not os.path.exists(self.get_block_access_path()) and os.path.exists(self.get_block_access_path().strip(":array_ctrl")):
-            msg = "can't query device {} since block access path doesn't exist".format(self.get_display_name())
+            msg = "can't query device {} since block access path doesn't exist (sgen is not loaded)".format(self.get_display_name())
             raise ScsiGenericNotLoaded(msg)
 
         handle = create_os_file(self.get_block_access_path())

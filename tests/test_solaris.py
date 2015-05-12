@@ -1311,8 +1311,20 @@ class SolarisSCSITestCase(TestCase):
                     return "crap", "crap"
                 return "NFINIDAT", "InfiniBox"
 
-            listdir_mock.side_effect = listdir_map.get
-            readlink_mock.side_effect = readlink_map.get
+            def readlink_side_effect(path):
+                if path.startswith("/dev/dsk") or path.startswith("/dev/rdsk"):
+                    return readlink_map.get(path)
+                else:
+                    return os.readlink(path)
+
+            def listdir_side_effect(path):
+                if path.startswith("/dev/dsk") or path.startswith("/dev/rdsk"):
+                    return listdir_map.get(path)
+                else:
+                    return os.listdir(path)
+
+            listdir_mock.side_effect = listdir_side_effect
+            readlink_mock.side_effect = readlink_side_effect
             open_mock.side_effect = create_file_context_manager
             exists_mock.return_value = True
             get_vid_mock.side_effect = vid_side_effect
