@@ -29,17 +29,16 @@ def spawn(target, *args, **kwargs):
 
 try:
     from infi.gevent_utils.deferred import create_threadpool_executed_func as defer
-    from infi.gevent_utils.safe_greenlets import safe_spawn, safe_joinall
+    from infi.gevent_utils.silent_greenlets import spawn, joinall
 except ImportError:
     defer = lambda func: func
-    safe_spawn = spawn
-    def safe_joinall(threads, timeout=None, raise_error=False):
+    def joinall(threads, timeout=None, raise_error=False):
         # TODO treat timeout and raise_error
         [thread.join() for thread in threads]
 
 
 def run_together(callables):
-    safe_joinall([safe_spawn(item) for item in callables])
+    joinall([spawn(item) for item in callables], raise_error=True)
 
 
 def get_process_class():
