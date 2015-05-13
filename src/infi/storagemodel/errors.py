@@ -131,11 +131,11 @@ def check_for_scsi_errors(func):
             logger.debug(msg)
             raise chain(RescanIsNeeded(msg))
         except AsiSCSIError as error:
-            msg = "device {!r} disappeared during {!r}: {}".format(_safe_repr(device), func, error)
+            msg = "error with device {!r} during {!r}: {}".format(_safe_repr(device), func, error)
             logger.error(msg)
             raise chain(DeviceError(msg))
         except (IOError, OSError, AsiOSError) as error:
-            msg = "device {!r} disappeared during {!r}".format(_safe_repr(device), func)
+            msg = "error with device {!r} during {!r}".format(_safe_repr(device), func)
             logger.error(msg, exc_info=exc_info())
             raise chain(DeviceError(msg))
     return callable
