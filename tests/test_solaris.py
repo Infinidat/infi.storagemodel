@@ -6,7 +6,7 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import clear_cache
 from unittest import TestCase, SkipTest
 from mock import Mock, patch
-from os import name
+from os import name, readlink, listdir
 from infi.os_info import get_platform_string
 
 class SolarisDeviceManagerTestCase(TestCase):
@@ -1315,13 +1315,13 @@ class SolarisSCSITestCase(TestCase):
                 if path.startswith("/dev/dsk") or path.startswith("/dev/rdsk"):
                     return readlink_map.get(path)
                 else:
-                    return os.readlink(path)
+                    return readlink(path)
 
             def listdir_side_effect(path):
                 if path.startswith("/dev/dsk") or path.startswith("/dev/rdsk"):
                     return listdir_map.get(path)
                 else:
-                    return os.listdir(path)
+                    return listdir(path)
 
             listdir_mock.side_effect = listdir_side_effect
             readlink_mock.side_effect = readlink_side_effect
