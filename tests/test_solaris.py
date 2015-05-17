@@ -6,7 +6,11 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import clear_cache
 from unittest import TestCase, SkipTest
 from mock import Mock, patch
-from os import name, readlink, listdir
+try:
+    from os import name, readlink, listdir
+except ImportError:
+    # no readlink on Windows, but we don't run on Windows
+    pass
 from infi.os_info import get_platform_string
 
 class SolarisDeviceManagerTestCase(TestCase):
