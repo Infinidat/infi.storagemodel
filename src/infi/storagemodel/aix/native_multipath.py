@@ -11,6 +11,8 @@ from .scsi import AixModelMixin, AixSCSIDevice
 class AixFailover(FailoverOnly):
     """fail_over:      I/O is routed to one path at a time. If if fails next enabled path is selected. (Path priority determines which path is next)"""
     name = "fail_over"
+    def __init__(self):
+        super(AixFailover, self).__init__(None)
 
 
 class AixRoundRobin(RoundRobin):
@@ -86,7 +88,13 @@ class AixMultipathMixin(object):
         lines = proc.get_stdout().strip().split("\n")
         result = []
         for line in lines:
-            path_id, driver, target, lun, status = line.split(",")
+            if line.count(",") == 4:
+                path_id, driver, target, lun, status = line.split(",")
+            else:
+                # non-FC disks may not have two values for "connection".
+                # still treat the connection as the target and emulate the LUN
+                path_id, driver, target, status = line.split(",")
+                lun = "0"
             target = int(target, 16)
             lun = int(lun, 16) >> 48
             result.append(AixPath(self._name, path_id, driver, target, lun, status))

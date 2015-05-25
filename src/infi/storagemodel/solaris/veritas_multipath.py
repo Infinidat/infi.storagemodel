@@ -1,6 +1,5 @@
 from infi.storagemodel.unix.veritas_multipath import VeritasMultipathClient
 from infi.storagemodel.base import multipath, gevent_wrapper
-from infi.storagemodel.base.disk import NoSuchDisk
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
 import os
@@ -55,10 +54,6 @@ class SolarisVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
             yield executer
         finally:
             handle.close()
-
-    @cached_method
-    def get_disk_drive(self):  # pragma: no cover
-        raise NoSuchDisk
 
     def get_scsi_vendor_id(self):
         return self.multipath_object.vendor_id

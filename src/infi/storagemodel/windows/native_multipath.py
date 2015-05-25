@@ -42,8 +42,11 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         policies_dict = LazyLoadBalancingInfomrationDict(wmi_client)
 
         def _get_multipath_object(device_object):
-            key = u"%s_0" % device_object._instance_id
-            return multipath_dict.get(key, None)
+            prefix = u"%s_" % device_object._instance_id
+            for key in multipath_dict:
+                if key.startswith(prefix):
+                    return multipath_dict[key]
+            return None
 
         def _is_physical_drive(device_object):
             if device_object.get_physical_drive_number() != -1:

@@ -50,10 +50,21 @@ class SolarisSCSIModel(SCSIModel):
     def __init__(self, device_manager):
         self._device_manager = device_manager
 
+    def is_device_ready(self, dev):
+        from infi.storagemodel.errors import DeviceError
+        try:
+            return dev.get_scsi_test_unit_ready()
+        except DeviceError:
+            return False
+
     @cached_method
     def get_all_scsi_block_devices(self):
-        return [SolarisSCSIBlockDevice(device) for device in self._device_manager.get_all_scsi_block_devices()]
+        devs = [SolarisSCSIBlockDevice(device) for device in \
+                self._device_manager.get_all_scsi_block_devices()]
+        return [d for d in devs if self.is_device_ready(d)]
 
     @cached_method
     def get_all_storage_controller_devices(self):
-        return [SolarisSCSIStorageControllerDevice(device) for device in self._device_manager.get_all_scsi_storage_controllers()]
+        devs = [SolarisSCSIStorageControllerDevice(device) \
+                for device in self._device_manager.get_all_scsi_storage_controllers()]
+        return [d for d in devs if self.is_device_ready(d)]

@@ -31,7 +31,7 @@ class AixSCSIDevice(SCSIDevice):
     def _get_host_by_driver(cls, driver_name):
         adapter = execute_assert_success(["/usr/sbin/lsdev", "-F", "parent", "-l", driver_name]).get_stdout().strip()
         mapping = cls._get_adapter_to_host_mapping()
-        return mapping[adapter]
+        return mapping.get(adapter, -1)
 
     @contextmanager
     def asi_context(self):

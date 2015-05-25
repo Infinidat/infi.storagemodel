@@ -1,6 +1,5 @@
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.errors import ScsiGenericNotLoaded
-from infi.storagemodel.base.disk import NoSuchDisk
 from infi.storagemodel.solaris.devicemanager import DeviceManager
 from infi.storagemodel.base import multipath, gevent_wrapper
 from contextlib import contextmanager
@@ -137,10 +136,6 @@ class SolarisNativeMultipathDeviceMixin(object):
                 if p.get_hctl() is not None]
 
     @cached_method
-    def get_disk_drive(self):  # pragma: no cover
-        raise NoSuchDisk
-
-    @cached_method
     def get_display_name(self):
         return self.get_block_access_path().split('/')[-1]
 
@@ -196,7 +191,7 @@ class SolarisNativeMultipathStorageController(SolarisNativeMultipathDeviceMixin,
 
         # if sgen is not loaded we can't open the device
         if not os.path.exists(self.get_block_access_path()) and os.path.exists(self.get_block_access_path().strip(":array_ctrl")):
-            msg = "can't query device {} since block access path doesn't exist".format(self.get_display_name())
+            msg = "can't query device {} since block access path doesn't exist (sgen is not loaded)".format(self.get_display_name())
             raise ScsiGenericNotLoaded(msg)
 
         handle = create_os_file(self.get_block_access_path())

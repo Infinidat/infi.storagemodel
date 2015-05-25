@@ -6,7 +6,11 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import clear_cache
 from unittest import TestCase, SkipTest
 from mock import Mock, patch
-from os import name
+try:
+    from os import name, readlink, listdir
+except ImportError:
+    # no readlink on Windows, but we don't run on Windows
+    pass
 from infi.os_info import get_platform_string
 
 class SolarisDeviceManagerTestCase(TestCase):
@@ -293,12 +297,13 @@ class SolarisSCSITestCase(TestCase):
         if "solaris" not in get_platform_string():
             raise SkipTest
 
+        @patch('infi.storagemodel.base.inquiry.InquiryInformationMixin.get_scsi_test_unit_ready', autospec=True)
         @patch('infi.storagemodel.base.inquiry.InquiryInformationMixin.get_scsi_vendor_id_or_unknown_on_error', autospec=True)
         @patch('os.path.exists')
         @patch('os.readlink')
         @patch('os.listdir')
         @patch('__builtin__.open')
-        def _inner_test_func(open_mock, listdir_mock, readlink_mock, exists_mock, get_vid_mock):
+        def _inner_test_func(open_mock, listdir_mock, readlink_mock, exists_mock, get_vid_mock, get_test_unit_mock):
             readlink_map = {'/dev/rdsk/c3t5742B0F000753611d10p0': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:q,raw',
                             '/dev/rdsk/c3t5742B0F000753611d10p1': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:r,raw',
                             '/dev/rdsk/c3t5742B0F000753611d10p2': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:s,raw',
@@ -1311,11 +1316,24 @@ class SolarisSCSITestCase(TestCase):
                     return "crap", "crap"
                 return "NFINIDAT", "InfiniBox"
 
-            listdir_mock.side_effect = listdir_map.get
-            readlink_mock.side_effect = readlink_map.get
+            def readlink_side_effect(path):
+                if path.startswith("/dev/dsk") or path.startswith("/dev/rdsk"):
+                    return readlink_map.get(path)
+                else:
+                    return readlink(path)
+
+            def listdir_side_effect(path):
+                if path.startswith("/dev/dsk") or path.startswith("/dev/rdsk"):
+                    return listdir_map.get(path)
+                else:
+                    return listdir(path)
+
+            listdir_mock.side_effect = listdir_side_effect
+            readlink_mock.side_effect = readlink_side_effect
             open_mock.side_effect = create_file_context_manager
             exists_mock.return_value = True
             get_vid_mock.side_effect = vid_side_effect
+            get_test_unit_mock.return_value = True
 
             from infi.storagemodel import get_storage_model
             scsi_model = get_storage_model().get_scsi()
