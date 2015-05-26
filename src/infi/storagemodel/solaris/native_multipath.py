@@ -136,6 +136,10 @@ class SolarisNativeMultipathDeviceMixin(object):
                 if p.get_hctl() is not None]
 
     @cached_method
+    def get_disk_drive(self):  # pragma: no cover
+        raise NotImplementedError
+
+    @cached_method
     def get_display_name(self):
         return self.get_block_access_path().split('/')[-1]
 

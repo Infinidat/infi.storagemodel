@@ -55,6 +55,10 @@ class SolarisVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
         finally:
             handle.close()
 
+    @cached_method
+    def get_disk_drive(self):  # pragma: no cover
+        raise NotImplementedError
+
     def get_scsi_vendor_id(self):
         return self.multipath_object.vendor_id
 

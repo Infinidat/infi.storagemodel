@@ -40,6 +40,10 @@ class LinuxVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
         raise NotImplementedError() # TODO
 
     @cached_method
+    def get_disk_drive(self):  # pragma: no cover
+        raise NotImplementedError
+
+    @cached_method
     def get_scsi_vendor_id(self):
         try:
             return self.get_paths()[0].sysfs_device.get_vendor().strip()
