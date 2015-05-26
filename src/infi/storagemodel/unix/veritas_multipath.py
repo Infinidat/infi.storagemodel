@@ -8,6 +8,14 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
+def is_veritas_multipathing_installed():
+    from os import path, environ
+    veritas_executables = ('vxdmpadm',)
+    return environ.get("VMPATH") or \
+           any(path.exists(path.join(path.sep, "usr", "sbin", basename)) for basename in veritas_executables) or \
+           bool(environ.get("MOCK_VERITAS"))
+
+
 class VeritasMultipathEntry(Munch):
     def __init__(self, dmp_name, paths, vendor_id, product_id):
         self.paths = paths
@@ -34,7 +42,7 @@ class VeritasMultipathClient(object):
         return multipaths
 
     def read_paths_list(self):
-        return execute_command_safe("vxdmpadm list dmpnode")
+        return execute_command_safe("vxdmpadm list dmpnode") if is_veritas_multipathing_installed() else ""
 
     def parse_paths_list(self, paths_list_output):
         from re import compile, MULTILINE, DOTALL
