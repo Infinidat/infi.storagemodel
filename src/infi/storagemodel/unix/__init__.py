@@ -39,8 +39,15 @@ class UnixStorageModel(StorageModel):
 
     def _initiate_rescan(self, wait_for_completion=True, raise_error=False):
         from infi.storagemodel.base import gevent_wrapper
+        from os import getpid
+        def get_process_parent_pid(process_object):
+            # works for gipc._GProcess and multiprocessing.Process
+            return process_object._parent_pid
+
         Process = gevent_wrapper.get_process_class()
         gevent_wrapper.sleep(0)  # give time for gipc time to join on the defunct rescan process
+        if self.rescan_process and getpid() != get_process_parent_pid(self.rescan_process):
+            self.rescan_process = None
         if isinstance(self.rescan_process, Process) and self.rescan_process.is_alive():
             if (datetime.now() - self.rescan_process_start_time).total_seconds() > self.rescan_subprocess_timeout:
                 logger.debug("rescan process timed out, killing it")
