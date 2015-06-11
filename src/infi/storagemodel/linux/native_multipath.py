@@ -93,7 +93,6 @@ class LinuxPath(multipath.Path):
     @contextmanager
     def asi_context(self):
         import os
-        from infi.asi.unix import OSFile
         from infi.asi import create_platform_command_executer, create_os_file
         from .scsi import SG_TIMEOUT_IN_MS
         path = os.path.join("/dev", self.sysfs_device.get_scsi_generic_device_name())

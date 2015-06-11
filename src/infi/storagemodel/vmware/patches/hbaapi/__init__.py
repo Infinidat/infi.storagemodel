@@ -10,7 +10,6 @@ logger = getLogger(__name__)
 PROPERTY_COLLECTOR_KEY = 'infi.hbaapi'
 HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
 TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology.adapter'
-FCHBA_CLASS_NAME = 'vim.host.FibreChannelHba'
 TARGET_PROPERTY_PATH = TOPOLOGY_PROPERTY_PATH + '["{}"].target["{}"]'
 
 def install_property_collectors_on_client(client):
@@ -43,8 +42,9 @@ class HostSystemPortGenerator(Generator):
         return self._get_properties().get(HBAAPI_PROPERTY_PATH, [])
 
     def _get_all_fiber_channel_host_bus_adapters(self):
-        return filter(lambda hba: hba.__class__.__name__ == FCHBA_CLASS_NAME,
-                      self._get_all_host_bus_adapters())
+        from pyVmomi import vim
+        FCHBA_CLASS = vim.host.FibreChannelHba
+        return [adapter for adapter in self._get_all_host_bus_adapters() if isinstance(adapter, FCHBA_CLASS)]
 
     def _translate_long_to_wwn(self, wwn_long):
         return WWN(hex(wwn_long)[:-1])

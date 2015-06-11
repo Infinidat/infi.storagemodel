@@ -1,5 +1,6 @@
 import struct
 from .....errors import StorageModelError
+from .. import NFINIDAT_IEEE
 from infi.asi.cdb.inquiry.vpd_pages import designators
 
 
@@ -43,3 +44,9 @@ class InfinidatNAA(object):
         designator = designators.NAA_IEEE_Registered_Extended_Designator()
         designator.unpack(raw_data)
         return designator
+
+    @classmethod
+    def from_volume_id_and_system_serial(cls, volume_id, system_serial):
+        # Concatenation of IEEE_company_id-24bit, reserved-20bit, system_id-16bit and volume_id-64bit
+        descriptor = "6{:06x}{:05x}{:04x}{:016x}".format(NFINIDAT_IEEE, 0, system_serial, volume_id)
+        return cls(descriptor.decode("hex"))

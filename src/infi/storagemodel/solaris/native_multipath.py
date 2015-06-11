@@ -162,7 +162,6 @@ class SolarisNativeMultipathBlockDevice(SolarisNativeMultipathDeviceMixin, multi
     @contextmanager
     def asi_context(self):
         import os
-        from infi.asi.unix import OSFile
         from infi.asi import create_platform_command_executer, create_os_file
 
         handle = create_os_file(self.get_block_access_path())
@@ -190,7 +189,6 @@ class SolarisNativeMultipathStorageController(SolarisNativeMultipathDeviceMixin,
     @contextmanager
     def asi_context(self):
         import os
-        from infi.asi.unix import OSFile
         from infi.asi import create_platform_command_executer, create_os_file
 
         # if sgen is not loaded we can't open the device
