@@ -30,7 +30,7 @@ def main():
     print("DEVICE          \t:VEND     \t:PROD            \t:REV   \t:SER NUM                         \t:CAP(kb)            \t:PATHS")
     print("-----------------------------------------------------------------------------------------------------------------------------------------------")
 
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger("inq")
     model = get_storage_model()
     scsi = model.get_scsi()
