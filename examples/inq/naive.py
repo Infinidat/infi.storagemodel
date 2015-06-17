@@ -31,7 +31,7 @@ def main():
     print("-----------------------------------------------------------------------------------------------------------------------------------------------")
 
     logging.basicConfig(level=logging.ERROR)
-    logger = logger.getLogger("inq")
+    logger = logging.getLogger("inq")
     model = get_storage_model()
     scsi = model.get_scsi()
     mpio = model.get_native_multipath()
