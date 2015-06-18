@@ -21,7 +21,7 @@ class SupportedVPDPagesDict(LazyImmutableDict):
             return sync_wait(inquiry_command.execute(asi))
 
     def __repr__(self):
-        return "<Supported VPD Pages for {!r}: {!r}>".format(self.device, self.keys())
+        return "<Supported VPD Pages for {!r}: {!r}>".format(self.device, sorted(self.keys()))
 
 
 class InquiryInformationMixin(object):
