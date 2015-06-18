@@ -59,9 +59,10 @@ class VeritasMultipathClient(object):
                             r"^avid\s*=\s*(?P<avid>[-\w]+)\n" + \
                             r"^lun-sno\s*=\s*(?P<lun_sno>\w*)\n" + \
                             r"^udid\s*=\s*(?P<udid>[\w%\.-]+)\n" + \
-                            r"^dev-attr\s*=\s*(?P<dev_attr>[-\w]+)\n" + \
+                            r"^dev-attr\s*=\s*(?P<dev_attr>[ \-\w]+)\n" + \
                             r"^lun_type\s*=\s*(?P<lun_type>[-\w]+)\n" + \
                             r"^scsi3_vpd\s*=\s*(?P<scsi3_vpd>[-\w\:]+)\n" + \
+                            r"(^raid_type\s*=\s*(?P<raid_type>\w+)\n){0,1}" + \
                             r"^replicated\s*=\s*(?P<replicated>\w+)\n" + \
                             r"^num_paths\s*=\s*(?P<num_paths>\w+)\n"  + \
                             r"^###path\s*=[\s\w]+\n" + \
