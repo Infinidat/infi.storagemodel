@@ -62,6 +62,7 @@ def asi_context(sg_device):
 
 def check_for_scsi_errors(func):
     from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError
+    from infi.asi.cdb.report_luns import UnsupportedReportLuns
     @wraps(func)
     def decorator(*args, **kwargs):
         counter = 10
@@ -83,6 +84,10 @@ def check_for_scsi_errors(func):
                 msg = "{} sg device {} got unrecoverable error {} during {}"
                 logger.error(msg.format(getpid(), sg_device, error, cdb))
                 counter = 0
+            except UnsupportedReportLuns as error:
+                msg = "{} sg device {} has unsupported luns report: {}"
+                logger.error(msg.format(getpid(), sg_device, error))
+                raise ScsiCommandFailed()
         raise chain(ScsiCommandFailed())
     return decorator
 
