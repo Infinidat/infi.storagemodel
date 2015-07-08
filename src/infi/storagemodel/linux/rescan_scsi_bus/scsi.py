@@ -73,9 +73,6 @@ def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
             except:
                 pass
 
-
-
-
 def read_from_queue(reader, subprocess):
     from infi.storagemodel.base.gevent_wrapper import get_timeout
     timeout, timeout_exception = get_timeout(TIMEOUT_IN_SEC)

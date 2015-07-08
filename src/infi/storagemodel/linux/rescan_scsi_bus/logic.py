@@ -67,7 +67,11 @@ def handle_device_removal(host, channel, target, lun):
 
 @func_logger
 def target_scan(host, channel, target):
-    expected_luns = get_luns_from_report_luns(host, channel, target)
+    try:
+        expected_luns = get_luns_from_report_luns(host, channel, target)
+    except ScsiCommandFailed:
+        logger.debug("report luns failed, ignoring target {}:{}:{}".format(host, channel, target))
+        return
     actual_luns = get_luns(host, channel, target)
     logger.debug("{} expected_luns: {}".format(getpid(), expected_luns))
     logger.debug("{} actual_luns: {}".format(getpid(), actual_luns))
