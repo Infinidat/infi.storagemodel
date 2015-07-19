@@ -151,3 +151,11 @@ class AixNativeMultipathModel(MultipathFrameworkModel, AixModelMixin):
         controllers = [controller for controller in controllers
                        if controller.get_display_name() in multipath_devices]
         return controllers
+
+    def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
+        """Returns items from the list that are not part of multipath devices claimed by this framework"""
+        return scsi_block_devices  # no co-existence
+
+    def filter_non_multipath_scsi_storage_controller_devices(self, scsi_controller_devices):
+        """Returns items from the list that are not part of multipath devices claimed by this framework"""
+        return scsi_controller_devices  # no co-existence

@@ -1,5 +1,4 @@
 from ..unix import UnixStorageModel
-from infi.execute import execute_assert_success
 
 
 class AixStorageModel(UnixStorageModel):
@@ -20,8 +19,12 @@ class AixStorageModel(UnixStorageModel):
     def _create_mount_repository(self):
         raise NotImplementedError()
 
+    def _create_veritas_multipath_model(self):
+        raise NotImplementedError()
+
     def rescan_method(self):
-        execute_assert_success(["cfgmgr"])
+        from .rescan import AixRescan
+        AixRescan().rescan()
         return 0
 
     def refresh(self):
