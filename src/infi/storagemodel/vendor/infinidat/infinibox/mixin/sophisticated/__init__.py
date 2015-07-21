@@ -75,6 +75,12 @@ class SophisticatedMixin(object):
         except InquiryException:
             return self._get_key_from_json_page('cluster_entity_id')
 
+    def _get_pool_id_from_json_page(self):
+        try:
+            return self._get_key_from_json_page('pool_id', 0xc6)
+        except InquiryException:
+            return self._get_key_from_json_page('pool_id')
+
     def _get_system_serial_from_naa(self):
         return self.get_naa().get_system_serial()
 
@@ -106,3 +112,10 @@ class SophisticatedMixin(object):
     def get_cluster_id(self):
         return self._get_cluster_entity_id_from_json_page()
 
+    @cached_method
+    def get_pool_id(self):
+        return self._get_pool_id_from_json_page()
+
+    @cached_method
+    def get_pool_name(self):
+        return self.get_string_data(page=0xca)
