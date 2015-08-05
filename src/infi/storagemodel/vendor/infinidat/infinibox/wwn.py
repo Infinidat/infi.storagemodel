@@ -1,8 +1,8 @@
 from infi.dtypes.wwn import WWN, InvalidWWN
+from . import NFINIDAT_IEEE
 
-TARGET_PATTERN = r"^5742b0f0(?P<system_serial>[A-Fa-f0-9]{6})(?P<node_id>[A-Fa-f0-9])(?P<port_id>[A-Fa-f0-9])$"
-SOFT_TARGET_PATTERN = r"^2(?P<soft_target_id>[A-Fa-f0-9]{3})742b0f(?P<system_serial>[A-Fa-f0-9]{6})$"
-
+TARGET_PATTERN = r"^5" + hex(NFINIDAT_IEEE)[2:] + "0(?P<system_serial>[A-Fa-f0-9]{6})(?P<node_id>[A-Fa-f0-9])(?P<port_id>[A-Fa-f0-9])$"
+SOFT_TARGET_PATTERN = r"^2(?P<soft_target_id>[A-Fa-f0-9]{3})" + hex(NFINIDAT_IEEE)[2:] + "(?P<system_serial>[A-Fa-f0-9]{6})$"
 
 def extract_infinibox_data_from_wwn(wwn):
     from re import match
@@ -37,3 +37,6 @@ class InfinidatWWN(WWN):
     def get_soft_target_id(self):
         """:raises KeyError: in case of non-NPIV target port"""
         return int(self._groupdict['soft_target_id'])
+
+    def is_soft_target(self):
+        return self._groupdict.has_key('soft_target_id')
