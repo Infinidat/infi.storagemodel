@@ -39,4 +39,4 @@ class InfinidatWWN(WWN):
         return int(self._groupdict['soft_target_id'])
 
     def is_soft_target(self):
-        return self._groupdict.has_key('soft_target_id')
+        return 'soft_target_id' in self._groupdict
