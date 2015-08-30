@@ -13,16 +13,28 @@ DIRECT_ACCESS_BLOCK_DEVICE = 0
 STORAGE_ARRAY_CONTROLLER_DEVICE = 12
 
 @func_logger
+def get_first_lun_in_target(host, channel, target):
+    # some SCSI targets do not have a logical unit atteched to LUN0
+    # this is a workaround for such cases where we need to get report-luns from a higher LUN
+    luns = sorted(get_luns(host, channel, target))
+    return luns[0] if luns else 0
+
+
+@func_logger
 def get_luns_from_report_luns(host, channel, target):
-    lun_type = get_lun_type(host, channel, target, 0)
+    first_lun = get_first_lun_in_target(host, channel, target)
+    lun_type = get_lun_type(host, channel, target, first_lun)
     if lun_type is None:
         return set()
     if lun_type not in (DIRECT_ACCESS_BLOCK_DEVICE, STORAGE_ARRAY_CONTROLLER_DEVICE):
         logger.debug("{} Skipping lun type {}".format(getpid(), lun_type))
         return set()
-    controller_lun_set = set([0]) # some devices, like IBM FlashSystem, does not return LUN0 in the list
-    sg_device = get_scsi_generic_device(host, channel, target, 0)
-    return controller_lun_set.union(set(do_report_luns(sg_device).lun_list))
+    controller_lun_set = set([first_lun]) # some devices, like IBM FlashSystem, does not return LUN0 in the list
+    sg_device = get_scsi_generic_device(host, channel, target, first_lun)
+    reported_luns = set(do_report_luns(sg_device).lun_list)
+    if first_lun != 0:
+        reported_luns -= set([0]) # some devices, like EMC Symmetrix, may not have any device attached to LUN0 yet still report it
+    return controller_lun_set.union(reported_luns)
 
 @func_logger
 def get_scsi_standard_inquiry(sg_device):
@@ -89,9 +101,10 @@ def target_scan(host, channel, target):
         handle_add_devices(host, channel, target, missing_luns)
     for lun in unmapped_luns:
         handle_device_removal(host, channel, target, lun)
+    first_lun = sorted(expected_luns)[0]
     for lun in existing_luns:
-        if lun == 0:
-            # call to get_luns_from_report_luns already called lun_scan for LUN 0,
+        if lun == first_lun:
+            # call to get_luns_from_report_luns already called lun_scan for the first lun (usually 0),
             # so it is redudtant to do it again
             continue
         lun_scan(host, channel, target, lun)
