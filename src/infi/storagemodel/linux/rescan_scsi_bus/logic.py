@@ -13,19 +13,15 @@ DIRECT_ACCESS_BLOCK_DEVICE = 0
 STORAGE_ARRAY_CONTROLLER_DEVICE = 12
 
 @func_logger
-def get_first_lun_in_target(host, channel, target):
-    # some SCSI targets do not have a logical unit atteched to LUN0
-    # this is a workaround for such cases where we need to get report-luns from a higher LUN
-    luns = sorted(get_luns(host, channel, target))
-    return luns[0] if luns else 0
-
-
-@func_logger
 def get_luns_from_report_luns(host, channel, target):
-    first_lun = get_first_lun_in_target(host, channel, target)
-    lun_type = get_lun_type(host, channel, target, first_lun)
+    for lun in sorted(get_luns(host, channel, target).union(set[0])):
+        lun_type = get_lun_type(host, channel, target, lun)
+        if lun_type is None:
+            continue
+        break
     if lun_type is None:
         return set()
+    first_lun = lun
     if lun_type not in (DIRECT_ACCESS_BLOCK_DEVICE, STORAGE_ARRAY_CONTROLLER_DEVICE):
         logger.debug("{} Skipping lun type {}".format(getpid(), lun_type))
         return set()
