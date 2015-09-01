@@ -14,7 +14,7 @@ STORAGE_ARRAY_CONTROLLER_DEVICE = 12
 
 @func_logger
 def get_luns_from_report_luns(host, channel, target):
-    for lun in sorted(get_luns(host, channel, target).union(set[0])):
+    for lun in sorted(get_luns(host, channel, target).union(set([0]))):
         lun_type = get_lun_type(host, channel, target, lun)
         if lun_type is None:
             continue
