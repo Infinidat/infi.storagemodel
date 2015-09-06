@@ -111,7 +111,11 @@ class WindowsNativeMultipathBlockDevice(WindowsDiskDeviceMixin, WindowsDeviceMix
 
     @cached_method
     def get_block_access_path(self):
-        return self.get_pdo()
+        from os import path
+        number = self.get_physical_drive_number()
+        if number == -1:
+            return self.get_pdo()
+        return '{sep}{sep}.{sep}PHYSICALDRIVE{number}'.format(sep=path.sep, number=self.get_physical_drive_number())
 
     @cached_method
     def get_paths(self):
