@@ -107,3 +107,22 @@ class WindowsDiskDeviceMixin(object):
     @cached_method
     def get_display_name(self):
         return "PHYSICALDRIVE%s" % self.get_physical_drive_number()
+
+    @cached_method
+    def get_block_access_path(self):
+        from os import path
+        number = self.get_physical_drive_number()
+        if number == -1:
+            return self.get_pdo()
+        return '{sep}{sep}.{sep}PHYSICALDRIVE{number}'.format(sep=path.sep, number=self.get_physical_drive_number())
+
+    @contextmanager
+    def asi_context(self):
+        from infi.asi import create_platform_command_executer, create_os_file
+        handle = create_os_file(self.get_block_access_path())
+        executer = create_platform_command_executer(handle)
+        executer.call = defer(executer.call)
+        try:
+            yield executer
+        finally:
+            handle.close()

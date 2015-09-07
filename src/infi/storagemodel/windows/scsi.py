@@ -21,13 +21,7 @@ class WindowsSCSIDevice(WindowsDeviceMixin, scsi.SCSIDevice):
         return self.get_scsi_access_path().split('\\')[-1]
 
 class WindowsSCSIBlockDevice(WindowsDiskDeviceMixin, WindowsSCSIDevice, scsi.SCSIBlockDevice):
-    @cached_method
-    def get_block_access_path(self):
-        from os import path
-        number = self.get_physical_drive_number()
-        if number == -1:
-            return self.get_pdo()
-        return '{sep}{sep}.{sep}PHYSICALDRIVE{number}'.format(sep=path.sep, number=self.get_physical_drive_number())
+    pass
 
 class WindowsSCSIStorageController(WindowsSCSIDevice, scsi.SCSIStorageController):
     pass
