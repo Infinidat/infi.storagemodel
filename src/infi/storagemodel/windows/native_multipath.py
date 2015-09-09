@@ -110,10 +110,6 @@ class WindowsNativeMultipathBlockDevice(WindowsDiskDeviceMixin, WindowsDeviceMix
         self._policies_dict = policies_dict
 
     @cached_method
-    def get_block_access_path(self):
-        return self.get_pdo()
-
-    @cached_method
     def get_paths(self):
         return [WindowsPath(item, self._multipath_object) for item in self._multipath_object.PdoInformation]
 
