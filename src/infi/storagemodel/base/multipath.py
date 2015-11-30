@@ -152,6 +152,13 @@ class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
                     pass
             return 0
 
+    @cached_method
+    def is_thin_provisioned(self):
+        LOGICAL_BLOCK_PROVISIONING_VPD_PAGE = 0xb2
+        PROV_TYPE_THIN = 2   # 0 = N/A, 1 = thick, 2 = thin
+        vpd_page = self.get_scsi_inquiry_pages()[LOGICAL_BLOCK_PROVISIONING_VPD_PAGE]
+        return vpd_page.provisioning_type == PROV_TYPE_THIN
+
     #############################
     # Platform Specific Methods #
     #############################
