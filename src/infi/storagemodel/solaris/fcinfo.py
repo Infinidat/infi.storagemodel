@@ -3,21 +3,21 @@ from infi.storagemodel.unix.utils import execute_command_safe
 import re
 
 def get_scsi_device_info(dev_path):
-    REGEXP = r"^\s*OS Device Name:\s*[\w\/]*{}\s*".format(dev_path) + \
-             r"(HBA Port WWN: \w+\s*(Remote Port WWN: \w+\s*LUN:\s*([0-9]+)\s*)+\s*)+" + \
+    REGEXP = r"OS Device Name:\s*[\w\/]*{}\s*".format(dev_path) + \
+             r"((((?:HBA Port WWN: \w+\s*(Remote Port WWN: \w+\s*)+)+)LUN:\s*(\d+)\s*)+\s*)+" + \
              r"Vendor:\s*\w+\s*Product:\s*\w+\s*Device Type:\s*"
     pattern = re.compile(REGEXP, re.MULTILINE | re.DOTALL)
     output = execute_command_safe("fcinfo lu -v")
-    return pattern.findall(output)[0][0]
+    return pattern.search(output).group(1)
 
-def get_hba_port_info_from_device_info(dev_path, hba_port_wwn):
-    REGEXP = r"(HBA Port WWN: \w+\s*(Remote Port WWN: \w+\s*LUN:\s*([0-9]+)\s*)+\s*)+".format(hba_port_wwn)
-    pattern = re.compile(REGEXP, re.MULTILINE | re.DOTALL)
+def get_device_wwns_and_lun(dev_path):
     device_info = get_scsi_device_info(dev_path)
-    return pattern.findall(device_info)[0][0]
+    for hosts_and_targets, lun in re.findall("((?:(?:HBA Port WWN: \w+(?:\s*Remote Port WWN: \w+)+)\s*)+)LUN:\s*(\d+)", device_info):
+        for host_wwn, target_info in re.findall("HBA Port WWN: (\w+)((?:\s*Remote Port WWN: \w+)+)", hosts_and_targets):
+            for target_wwn in re.findall("Remote Port WWN: (\w+)", target_info):
+                yield (host_wwn, target_wwn, lun)
 
 def get_path_lun(dev_path, hba_port_wwn, target_port_wwn):
-    REGEXP = r"\s*Remote Port WWN: {}\s*LUN:\s*([0-9]+)$".format(target_port_wwn)
-    pattern = re.compile(REGEXP, re.MULTILINE | re.DOTALL)
-    hba_port_info = get_hba_port_info_from_device_info(dev_path, hba_port_wwn)
-    return int(pattern.findall(hba_port_info)[0])
+    for host_wwn, target_wwn, lun in get_device_wwns_and_lun(dev_path):
+        if host_wwn == hba_port_wwn and target_wwn == target_port_wwn:
+            return int(lun)
