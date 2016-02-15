@@ -467,6 +467,93 @@ path        = sdbh enabled(a) primary FC c8 c8 0-500 50:01:73:80:30:6d:01:50 -
 """
 
 
+STORAGEMODEL_360_VERITAS_OUTPUT = """dmpdev        = disk_0
+state       = enabled
+enclosure   = disk
+cab-sno     = DISKS
+asl     = scsi3_jbod
+vid     = HITACHI
+pid     = H109060SESUN600G
+array-name  = Disk
+array-type  = Disk
+iopolicy    = MinimumQ
+avid        = -
+lun-sno     = 5000CCA0561FA034
+udid        = HITACHI%5FH109060SESUN600G%5FDISKS%5F5000CCA0561FA034
+dev-attr    = -
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = c0t5000CCA0561FA034d0s2 enabled(a) - FC c0 /scsi_vhci - - -
+
+dmpdev      = disk_1
+state       = enabled
+enclosure   = disk
+cab-sno     = DISKS
+asl     = scsi3_jbod
+vid     = HITACHI
+pid     = H109060SESUN600G
+array-name  = Disk
+array-type  = Disk
+iopolicy    = MinimumQ
+avid        = -
+lun-sno     = 5000CCA056241EE8
+udid        = HITACHI%5FH109060SESUN600G%5FDISKS%5F5000CCA056241EE8
+dev-attr    = -
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = c0t5000CCA056241EE8d0s2 enabled(a) - FC c0 /scsi_vhci - - -
+
+dmpdev      = disk_2
+state       = enabled
+enclosure   = disk
+cab-sno     = DISKS
+asl     = scsi3_jbod
+vid     = HITACHI
+pid     = H109060SESUN600G
+array-name  = Disk
+array-type  = Disk
+iopolicy    = MinimumQ
+avid        = -
+lun-sno     = 5000CCA0562421AC
+udid        = HITACHI%5FH109060SESUN600G%5FDISKS%5F5000CCA0562421AC
+dev-attr    = -
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = c0t5000CCA0562421ACd0s2 enabled(a) - FC c0 /scsi_vhci - - -
+
+dmpdev      = disk_3
+state       = enabled
+enclosure   = disk
+cab-sno     = DISKS
+asl     = scsi3_jbod
+vid     = HITACHI
+pid     = H109060SESUN600G
+array-name  = Disk
+array-type  = Disk
+iopolicy    = MinimumQ
+avid        = -
+lun-sno     = 5000CCA056242200
+udid        = HITACHI%5FH109060SESUN600G%5FDISKS%5F5000CCA056242200
+dev-attr    = -
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = c0t5000CCA056242200d0s2 enabled(a) - FC c0 /scsi_vhci - - -
+
+dmpdev      = aluadisk0_0
+state       = enabled
+enclosure   = aluadisk0
+cab-sno     = ALUAdisk
+asl     = scsi3_jbod
+vid     = NFINIDA
+pid     = InfiniBox
+array-name  = aluadisk
+array-type  = ALUA
+iopolicy    = MinimumQ
+avid        = -
+lun-sno     = 6742B0F0000004AA0000000000001B1B
+udid        = NFINIDAT%5FInfiniBox%5FALUAdisk%5F6742B0F0000004AA0000000000001B1B
+dev-attr    = -
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = c0t6742B0F0000004AA0000000000001B1Bd0s2 enabled(a) primary FC c0 /scsi_vhci - 57:42:b0:f0:00:04:aa:11 -
+"""
+
+
 class MockSCSIBlockDevice(LinuxSCSIBlockDevice):
     def get_hctl(self):
         return HCTL(1,2,3,4)
@@ -543,4 +630,9 @@ class VeritasMultipathingTestCase(TestCase):
             self.assertEquals(len(block_devices[0].get_paths()), 6)
             self.assertEquals(len(block_devices[-1].get_paths()), 2)
 
-
+    def test_storagemodel_360_output(self):
+        vxdmpadm_output = STORAGEMODEL_360_VERITAS_OUTPUT
+        with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
+            block_devices = veritas_multipath.get_all_multipath_block_devices()
+            # there are 5 devices in the output but only one is multipathed
+            self.assertEquals(len(block_devices), 1)

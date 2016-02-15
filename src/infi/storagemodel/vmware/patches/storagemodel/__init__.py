@@ -53,18 +53,6 @@ def get_stack_trace():
         return sys.exc_info()[2].tb_frame.f_back
 
 
-def format_stack_trace(f, limit=None):
-    import cStringIO
-    import traceback
-    sio = cStringIO.StringIO()
-    traceback.print_stack(f, limit=limit, file=sio)
-    s = sio.getvalue()
-    sio.close()
-    if s[-1:] == "\n":
-        s = s[:-1]
-    return s
-
-
 @contextmanager
 def with_host(client, host):
     from traceback import extract_stack
@@ -77,8 +65,7 @@ def with_host(client, host):
     try:
         current = StorageModelFactory.set(StorageModelFactory.create(client, host))
         if previous is current:
-            formatted_stacktrace = format_stack_trace(stack_trace)
-            logger.debug("entered context for the same host {} as part of {}:\nTraceback:\n{}".format(moref, caller, formatted_stacktrace))
+            logger.debug("entered context for the same host {} as part of {}".format(moref, caller))
         else:
             logger.debug("entered context for host {} as part of {}".format(moref, caller))
         yield

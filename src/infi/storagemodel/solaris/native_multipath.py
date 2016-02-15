@@ -28,8 +28,15 @@ class SolarisSinglePathEntry(Munch):
         self.hctl = self._get_hctl(mpath_dev_path)
 
     def _get_hctl(self, mpath_dev_path):
-        from infi.storagemodel.solaris.fcinfo import get_path_lun
         from infi.dtypes.hctl import HCTL
+
+        def get_path_lun():
+            from infi.hbaapi.generators.hbaapi import HbaApi
+            for device_name, host_wwn, target_wwn, lun in HbaApi().iter_port_mappings():
+                if mpath_dev_path in device_name and \
+                    str(host_wwn) == self.initiator_port_name and \
+                    str(target_wwn) == self.target_port_name:
+                    return lun
 
         def get_hct(hba_port_wwn, remote_port_wwn):
             from infi.hbaapi import get_ports_generator
@@ -46,7 +53,7 @@ class SolarisSinglePathEntry(Munch):
         if (h, c, t) == (-1, 0, -1):
             return None
         try:
-            l = get_path_lun(mpath_dev_path, self.initiator_port_name, self.target_port_name)
+            l = get_path_lun()
         except:
             return None
         return HCTL(h, c, t, l)

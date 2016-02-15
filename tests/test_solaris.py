@@ -1342,4 +1342,3 @@ class SolarisSCSITestCase(TestCase):
             self.assertEquals(len(infinidat_block_devices), 20)
 
         _inner_test_func()
-
