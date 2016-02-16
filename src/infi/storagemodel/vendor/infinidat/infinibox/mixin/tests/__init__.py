@@ -1,5 +1,6 @@
 from json import dumps
 from infi import unittest
+from infi.storagemodel.errors import check_for_insufficient_resources
 from .. import scsi_block_class, scsi_controller_class
 
 
@@ -128,3 +129,51 @@ class InfiniBoxInquiryTestCase(unittest.TestCase):
         self.assertEqual(device.get_cluster_name(), 'cluster_name')
         self.assertEqual(device.get_volume_id(), 1)
         self.assertEqual(device.get_volume_name(), 'volume_name')
+
+class InsufficientResourcesTestCase(unittest.TestCase):
+    def setUp(self):
+        from infi.asi.sense import SCSISenseDataDescriptorBased
+        from infi.asi.errors import AsiCheckConditionError
+        from binascii import unhexlify
+
+        buf = "720555030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        sense_obj = SCSISenseDataDescriptorBased.create_from_string(unhexlify(buf))
+        self._check_condition_exception = AsiCheckConditionError(buf, sense_obj)
+
+        other_buf = "720555040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        other_sense_obj = SCSISenseDataDescriptorBased.create_from_string(unhexlify(other_buf))
+        self._other_exception = AsiCheckConditionError(other_buf, other_sense_obj)
+
+
+    def test_once(self):
+        self._count = 0
+        @check_for_insufficient_resources
+        def func():
+            if self._count == 0:
+                self._count += 1
+                raise self._check_condition_exception
+            return 'asd'
+        self.assertEquals(func(), 'asd')
+
+    def test_infinite(self):
+        from infi.storagemodel.errors import InsufficientResourcesError
+        @check_for_insufficient_resources
+        def func():
+            raise self._check_condition_exception
+        with self.assertRaises(InsufficientResourcesError):
+            func()
+
+    def test_other_error(self):
+        from infi.asi.errors import AsiCheckConditionError
+        @check_for_insufficient_resources
+        def func():
+            raise self._other_exception
+        with self.assertRaises(AsiCheckConditionError):
+            func()
+
+    def test_other_exception(self):
+        @check_for_insufficient_resources
+        def func():
+            raise IndexError
+        with self.assertRaises(IndexError):
+            func()
