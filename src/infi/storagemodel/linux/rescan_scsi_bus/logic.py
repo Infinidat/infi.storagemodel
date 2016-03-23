@@ -80,6 +80,9 @@ def target_scan(host, channel, target):
     except ScsiCommandFailed:
         logger.debug("report luns failed, ignoring target {}:{}:{}".format(host, channel, target))
         return
+    if not expected_luns:
+        logger.info("No luns found for {}:{}:{}, ignoring target.".format(host, channel, target))
+        return
     actual_luns = get_luns(host, channel, target)
     logger.debug("{} expected_luns: {}".format(getpid(), expected_luns))
     logger.debug("{} actual_luns: {}".format(getpid(), actual_luns))
