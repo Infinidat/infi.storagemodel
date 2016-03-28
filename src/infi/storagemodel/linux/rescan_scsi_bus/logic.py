@@ -12,6 +12,9 @@ logger = getLogger(__name__)
 DIRECT_ACCESS_BLOCK_DEVICE = 0
 STORAGE_ARRAY_CONTROLLER_DEVICE = 12
 
+class SkipLunTypeException(Exception):
+    pass
+
 @func_logger
 def get_luns_from_report_luns(host, channel, target):
     for lun in sorted(get_luns(host, channel, target).union(set([0]))):
@@ -24,7 +27,7 @@ def get_luns_from_report_luns(host, channel, target):
     first_lun = lun
     if lun_type not in (DIRECT_ACCESS_BLOCK_DEVICE, STORAGE_ARRAY_CONTROLLER_DEVICE):
         logger.debug("{} Skipping lun type {}".format(getpid(), lun_type))
-        return set()
+        raise SkipLunTypeException
     controller_lun_set = set([first_lun]) # some devices, like IBM FlashSystem, does not return LUN0 in the list
     sg_device = get_scsi_generic_device(host, channel, target, first_lun)
     reported_luns = set(do_report_luns(sg_device).lun_list)
@@ -80,7 +83,7 @@ def target_scan(host, channel, target):
     except ScsiCommandFailed:
         logger.debug("report luns failed, ignoring target {}:{}:{}".format(host, channel, target))
         return
-    if not expected_luns:
+    except SkipLunTypeException:
         logger.info("No luns found for {}:{}:{}, ignoring target.".format(host, channel, target))
         return
     actual_luns = get_luns(host, channel, target)
