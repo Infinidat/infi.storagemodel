@@ -1,5 +1,7 @@
+from infi.storagemodel.errors import check_for_insufficient_resources
 from infi.exceptools import InfiException, chain
 from infi.pyutils.lazy import cached_method
+from contextlib import contextmanager
 import binascii
 import infi.instruct
 from logging import getLogger
@@ -91,6 +93,7 @@ class InfiniBoxInquiryMixin(object):
         return InfinidatFiberChannelPort(self.get_relative_target_port_group(),
                                          self.get_target_port_group())
 
+    @check_for_insufficient_resources
     def _get_json_inquiry_page(self, page=0xc5):
         from infi.asi import AsiCheckConditionError
         from infi.storagemodel.vendor.infinidat.infinibox.json_page import JSONInquiryPageBuffer
@@ -104,6 +107,7 @@ class InfiniBoxInquiryMixin(object):
                 raise chain(InquiryException("JSON Inquiry command error"))
             raise
 
+    @check_for_insufficient_resources
     def _get_string_inquiry_page(self, page):
         from infi.asi import AsiCheckConditionError
         from infi.storagemodel.vendor.infinidat.infinibox.string_page import StringInquiryPageBuffer

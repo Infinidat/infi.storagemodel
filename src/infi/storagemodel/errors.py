@@ -32,6 +32,9 @@ class RescanError(StorageModelError):
 class DeviceIsBusy(StorageModelError):
     pass
 
+class InsufficientResourcesError(StorageModelError):
+    pass
+
 
 class UnmountFailedDeviceIsBusy(DeviceIsBusy):
     def __init__(self, block_access_path, mount_point):
@@ -139,3 +142,31 @@ def check_for_scsi_errors(func):
             logger.error(msg, exc_info=exc_info())
             raise chain(DeviceError(msg))
     return callable
+
+def check_for_insufficient_resources(func):
+    """
+    A decorator for retrying on insufficient resources error (management unavailable)
+    """
+    from infi.asi.errors import AsiCheckConditionError
+    from sys import exc_info
+    from time import sleep
+    @wraps(func)
+    def decorator(*args, **kwargs):
+        counter = 10
+        while counter > 0:
+            try:
+                msg = "attempting to call {}, {} more retries"
+                logger.debug(msg.format(func.__name__, counter))
+                return func(*args, **kwargs)
+            except AsiCheckConditionError as e:
+                (key, code) = (e.sense_obj.sense_key, e.sense_obj.additional_sense_code.code_name)
+                msg = "got {} {}".format(key, code)
+                if (key, code) != ('ILLEGAL_REQUEST', 'INSUFFICIENT RESOURCES'):
+                    logger.error(msg, exc_info=exc_info())
+                    raise
+                counter -= 1
+                if counter == 0:
+                    logger.error(msg, exc_info=exc_info())
+                    raise chain(InsufficientResourcesError())
+                sleep(1)
+    return decorator
