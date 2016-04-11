@@ -575,6 +575,12 @@ def veritas_multipathing_context(output):
 
 
 class VeritasMultipathingTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import sys
+        if sys.platform == "darwin":
+            raise SkipTest()
+
     def test_vxdmpadm_output(self):
         vxdmpadm_output = VXDMPADM_OUTPUT_TEMPLATE.format(paths=SIX_PATHS, vid="NFINIDAT", pid="InfiniBox")
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
