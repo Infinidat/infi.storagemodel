@@ -19,4 +19,4 @@ def is_iscsiadm_installed():
 
 def iscsi_rescan():
     if is_iscsiadm_installed():
-        execute_assert_success(['iscsiadm', '-m', 'session', '--rescan'])
+        execute(['iscsiadm', '-m', 'session', '--rescan'])
