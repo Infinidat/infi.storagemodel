@@ -53,7 +53,7 @@ class LinuxDiskDrive(disk.DiskDrive):
     @cached_method
     def get_block_access_paths_for_partitions(self):
         from glob import glob
-        return [item for item in glob('%s*' % self._scsi_disk_path) if item != self._scsi_disk_path]
+        return [item for item in glob('%s[-p]*' % self._scsi_disk_path) if item != self._scsi_disk_path]
 
 
 class LinuxDiskModel(disk.DiskModel):
