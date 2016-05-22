@@ -53,7 +53,13 @@ class LinuxDiskDrive(disk.DiskDrive):
     @cached_method
     def get_block_access_paths_for_partitions(self):
         from glob import glob
-        return [item for item in glob('%s[-p]*' % self._scsi_disk_path) if item != self._scsi_disk_path]
+        if self._scsi_disk_path[-1].isalpha():
+            # disk path is like 'sda' or 'mpathc', expect number to indicate partition
+            glob_pattern = '%s[0-9]*'
+        else:
+            # disk path is like 'mpath3', expect '-part' or 'p' followed by a number to indicate partition
+            glob_pattern = '%s[-p]*'
+        return [item for item in glob(glob_pattern % self._scsi_disk_path)]
 
 
 class LinuxDiskModel(disk.DiskModel):
