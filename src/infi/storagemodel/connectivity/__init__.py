@@ -89,6 +89,10 @@ class ConnectivityFactoryImpl(object):
     def get_iscsi_hctl_mappings(elf):
         from infi.iscsiapi import get_iscsiapi
         result =  {}
+        try:
+            iscsiapi = get_iscsiapi()
+        except ImportError:
+            return result
         for session in get_iscsiapi().get_sessions():
             hct = (session.get_hct().get_host(), session.get_hct().get_channel(), session.get_hct().get_target())
             result[hct] = (session.get_source_iqn(), session.get_target().get_iqn())
