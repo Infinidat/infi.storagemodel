@@ -53,7 +53,20 @@ class LinuxDiskDrive(disk.DiskDrive):
     @cached_method
     def get_block_access_paths_for_partitions(self):
         from glob import glob
-        return [item for item in glob('%s*' % self._scsi_disk_path) if item != self._scsi_disk_path]
+        if self._scsi_disk_path[-1].isalpha():
+            # disk path is like 'sda' or 'mpathc'
+            glob_patterns = ['%s_part[0-9]*',   # e.g. SuSE 12
+                             '%s-part[0-9]*',   # e.g. SuSE 12
+                             '%sp[0-9]*',       # e.g. CentOS 6
+                             '%s[0-9]*']        # e.g. CentOS/RHEL/Oracle 7
+        else:
+            # disk path is like 'mpath3'
+            glob_patterns = ['%s-part[0-9]*',   # e.g. Ubuntu-14.04
+                             '%sp[0-9]*']       # e.g. Ubuntu-14.04
+        res = []
+        for glob_pattern in glob_patterns:
+            res.extend([item for item in glob(glob_pattern % self._scsi_disk_path)])
+        return res
 
 
 class LinuxDiskModel(disk.DiskModel):

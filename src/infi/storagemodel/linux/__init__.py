@@ -34,5 +34,7 @@ class LinuxStorageModel(UnixStorageModel):
 
     def rescan_method(self):
         from .rescan_scsi_bus import main
+        from .iscsi import iscsi_rescan
+        iscsi_rescan()
         return main()
 

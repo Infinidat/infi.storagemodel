@@ -1,7 +1,8 @@
-
 from infi.pyutils.lazy import cached_method
 from infi.dtypes.wwn import WWN
+from infi.dtypes.iqn import IQN
 from infi.hbaapi import Port
+
 
 class FCConnectivity(object):
     """Fibre Channel Connectivity Information """
@@ -41,8 +42,40 @@ class FCConnectivity(object):
         return "<{}: Initiator {} <--> Target {}>".format(self.__class__.__name__,
             self.get_initiator_wwn(), self.get_target_wwn())
 
+
 class LocalConnectivity(object):
     pass
+
+
+class ISCSIConnectivity(object):
+    def __init__(self, device, source_iqn, target_iqn):
+        super(ISCSIConnectivity, self).__init__()
+        self._device = device
+        self._source_iqn = source_iqn
+        self._target_iqn = target_iqn
+
+    def get_source_iqn(self):
+        if isinstance(self._source_iqn, basestring):
+            return IQN(self._source_iqn)
+        return self._source_iqn
+
+    def get_target_iqn(self):
+        if isinstance(self._target_iqn, basestring):
+            return IQN(self._target_iqn)
+        return self._target_iqn
+
+    def __eq__(self, obj):
+        return isinstance(obj, ISCSIConnectivity) and \
+             self.get_source_iqn() == obj.get_source_iqn() and \
+             self.get_target_iqn() == obj.get_target_iqn()
+
+    def __ne__(self, obj):
+        return not self.__eq__(obj)
+
+    def __repr__(self):
+        return "<{}: Source {} <--> Target {}>".format(self.__class__.__name__,
+            self.get_source_iqn(), self.get_target_iqn())
+
 
 class ConnectivityFactoryImpl(object):
     def get_fc_hctl_mappings(self):
@@ -53,20 +86,38 @@ class ConnectivityFactoryImpl(object):
                 result[remote_port.hct] = (local_port, remote_port,)
         return result
 
+    def get_iscsi_hctl_mappings(elf):
+        from infi.iscsiapi import get_iscsiapi
+        result =  {}
+        try:
+            iscsiapi = get_iscsiapi()
+        except ImportError:
+            return result
+        for session in get_iscsiapi().get_sessions():
+            hct = (session.get_hct().get_host(), session.get_hct().get_channel(), session.get_hct().get_target())
+            result[hct] = (session.get_source_iqn(), session.get_target().get_iqn())
+        return result
+
     def get_by_device_with_hctl(self, device):
         hct = (device.get_hctl().get_host(),
                device.get_hctl().get_channel(),
                device.get_hctl().get_target())
         fc_mapping = self.get_fc_hctl_mappings().get(hct, None)
+        iscsi_mapping = self.get_iscsi_hctl_mappings().get(hct, None)
+
         if fc_mapping is not None:
             local_port, remote_port = fc_mapping
             return FCConnectivity(device, local_port, remote_port)
-        # TODO add iSCSI support
+        if iscsi_mapping is not None:
+            local_iqn, remote_iqn = iscsi_mapping
+            return ISCSIConnectivity(device, local_iqn, remote_iqn)
         return LocalConnectivity()
+
 
 class CachedConnectivityFactoryImpl(ConnectivityFactoryImpl):
     @cached_method
     def get_fc_hctl_mappings(self):
         return super(CachedConnectivityFactoryImpl, self).get_fc_hctl_mappings()
+
 
 ConnectivityFactory = CachedConnectivityFactoryImpl()
