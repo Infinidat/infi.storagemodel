@@ -64,6 +64,7 @@ def start_process(target, *args, **kwargs):
 def get_timeout(seconds):
     """ Returns the timeout object and exception class"""
     try:  # gipc-based implementation
+        from gipc import gipc
         from gevent import Timeout
         return Timeout(seconds), Timeout
     except ImportError:
