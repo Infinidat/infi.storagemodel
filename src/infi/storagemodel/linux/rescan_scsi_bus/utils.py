@@ -93,3 +93,59 @@ def check_for_scsi_errors(func):
 
 def format_hctl(host, channel, target, lun):
     return "{}:{}:{}:{}".format(host, channel, target, lun)
+
+def read_from_queue(reader, subprocess):
+    from infi.storagemodel.base.gevent_wrapper import get_timeout
+    timeout, timeout_exception = get_timeout(TIMEOUT_IN_SEC)
+    while True:
+        try:
+            return reader.get(timeout=timeout)
+        except IOError as error:
+            from errno import EINTR
+            # stackoverflow.com/questions/14136195/what-is-the-proper-way-to-handle-in-python-ioerror-errno-4-interrupted-syst
+            if error.errno != EINTR:
+                return ScsiCommandFailed()
+            logger.debug("multiprocessing.Queue.get caught IOError: interrupted system call")
+        except timeout_exception:
+            msg = "{} multiprocessing {} did not return within {} seconds timeout"
+            logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
+            return ScsiCommandFailed()
+        except:
+            msg = "{} multiprocessing {} error"
+            logger.exception(msg.format(getpid(), subprocess.pid))
+            return ScsiCommandFailed()
+
+def ensure_subprocess_dead(subprocess):
+    from os import kill
+    pid = subprocess.pid
+    if subprocess.is_alive() and pid:
+        logger.debug("{} terminating multiprocessing {}".format(getpid(), pid))
+        try:
+            kill(pid, 9)
+        except:
+            logger.debug("{} failed to terminate multiprocessing {}".format(getpid(), pid))
+    subprocess.join()
+
+def put_result_in_queue(func):
+    @wraps(func)
+    def inner_func(queue, *args, **kwargs):
+        try:
+            queue.put(func(*args, **kwargs))
+        except Exception, error:
+            try:
+                queue.put(error)
+            except:
+                queue.ScsiCommandFailed()
+    return inner_func
+
+def call_in_subprocess(func, *args, **kwargs):
+    from infi.storagemodel.base.gevent_wrapper import start_process, get_pipe_context
+    pipe_context = get_pipe_context()
+    with pipe_context as (reader, writer):
+        logger.debug("{} calling {}(args={!r}, kwargs={!r}) on with multiprocessing".format(getpid(), func, args, kwargs))
+        subprocess = start_process(put_result_in_queue(func), writer, *args, **kwargs)
+        logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
+        return_value = read_from_queue(reader, subprocess)
+        logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
+        ensure_subprocess_dead(subprocess)
+    return return_value
