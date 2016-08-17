@@ -19,14 +19,17 @@ def write_to_proc_scsi_scsi(line):
 
 @func_logger
 def scsi_add_single_device(host, channel, target, lun):
-    return write_to_proc_scsi_scsi("scsi add-single-device {} {} {} {}".format(host, channel, target, lun))
+    return call_in_subprocess(write_to_proc_scsi_scsi, "scsi add-single-device {} {} {} {}".format(host, channel, target, lun))
 
 @func_logger
 def scsi_remove_single_device(host, channel, target, lun):
-    return write_to_proc_scsi_scsi("scsi remove-single-device {} {} {} {}".format(host, channel, target, lun))
+    return call_in_subprocess(write_to_proc_scsi_scsi, "scsi remove-single-device {} {} {} {}".format(host, channel, target, lun))
 
 @func_logger
 def scsi_host_scan(host):
+    return call_in_subprocess(write_to_scsi_host, host)
+
+def write_to_scsi_host(host):
     scan_file = "/sys/class/scsi_host/host{}/scan".format(host)
     if path.exists(scan_file):
         try:
@@ -41,6 +44,9 @@ def scsi_host_scan(host):
 
 @func_logger
 def remove_device_via_sysfs(host, channel, target, lun):
+    return call_in_subprocess(write_to_scsi_device, host, channel, target, lun)
+
+def write_to_scsi_device(host, channel, target, lun):
     hctl = "{}:{}:{}:{}".format(host, channel, target, lun)
     delete_file = "/sys/class/scsi_device/{}/device/delete".format(hctl)
     if not path.exists(delete_file):
