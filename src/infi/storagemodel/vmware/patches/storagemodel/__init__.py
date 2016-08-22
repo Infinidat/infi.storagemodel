@@ -129,7 +129,6 @@ class VMwareHostStorageModel(StorageModel):
         # we've seen several time in the tests that host.configManager is a list; how weird is that?
         # according to the API documntation, this is not a list; not sure how how to deal with this case
         # so for debugging, we do this:
-        summary = host.summary
         config_manager = host.configManager
         storage_system = config_manager.storageSystem
         if self._refresh_thread is not None and is_thread_alive(self._refresh_thread):
