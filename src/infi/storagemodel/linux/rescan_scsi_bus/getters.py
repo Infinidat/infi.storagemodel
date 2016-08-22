@@ -76,6 +76,8 @@ def get_scsi_generic_device(host, channel, target, lun):
     return sg_x
 
 def is_there_a_bug_in_target_removal():
+    # HOSTDEV-2432 we see stack traces in all distros
+    return True
     from platform import linux_distribution
     # In this case, the target was removed and the SCSI mid-layer will delete the devices
     # once the FC driver deletes the remote port
@@ -84,6 +86,8 @@ def is_there_a_bug_in_target_removal():
     return distname in ["Ubuntu"]
 
 def is_there_a_bug_in_sysfs_async_scanning():
+    # HOSTDEV-2432 we see stack traces in all distros
+    return True
     from platform import linux_distribution
     # http://lkml.indiana.edu/hypermail/linux/kernel/0704.2/1108.html
     distname, version, _ = linux_distribution()
