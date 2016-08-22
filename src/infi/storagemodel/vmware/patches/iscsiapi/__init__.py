@@ -44,6 +44,9 @@ class ConnectionManager(base.ConnectionManager):
     def _install_property_collector(self):
         install_property_collectors_on_client(self._client)
 
+    def get_sessions(self, target=None):
+        return []
+
 
 class ConnectionManagerFactory(object):
     models_by_host_value = {}
