@@ -131,7 +131,7 @@ def put_result_in_queue(func):
     def inner_func(queue, *args, **kwargs):
         try:
             queue.put(func(*args, **kwargs))
-        except Exception, error:
+        except Exception as error:
             try:
                 queue.put(error)
             except:
