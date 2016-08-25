@@ -166,6 +166,9 @@ class WindowsPath(multipath.Path):
         device_wmi_path = self._multipath_object.InstanceName
         all_performance_counters = get_device_performance(wmi_client)
         all_devices = get_multipath_devices(wmi_client)
+        if device_wmi_path not in all_performance_counters:
+            logger.warn('no perfomance countrs for device {}'.format(device_wmi_path), exc_info=1)
+            return multipath.PathStatistics(0, 0, 0, 0)
         device_performance = all_performance_counters[device_wmi_path]
         path_perfromance = device_performance.PerfInfo[self.get_path_id()]
         return multipath.PathStatistics(path_perfromance.BytesRead,
