@@ -161,10 +161,12 @@ class WindowsPath(multipath.Path):
         return "%x" % self.get_path_id()
 
     def get_io_statistics(self):
-        from infi.wmpio import get_device_performance, WmiClient
+        from infi.wmpio import get_device_performance, get_multipath_devices, WmiClient
         wmi_client = WmiClient()
         device_wmi_path = self._multipath_object.InstanceName
-        device_performance = get_device_performance(wmi_client)[device_wmi_path]
+        all_performance_counters = get_device_performance(wmi_client)
+        all_devices = get_multipath_devices(wmi_client)
+        device_performance = all_performance_counters[device_wmi_path]
         path_perfromance = device_performance.PerfInfo[self.get_path_id()]
         return multipath.PathStatistics(path_perfromance.BytesRead,
                                         path_perfromance.BytesWritten,
