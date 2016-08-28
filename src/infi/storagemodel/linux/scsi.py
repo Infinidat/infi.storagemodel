@@ -4,14 +4,20 @@ from ..errors import StorageModelFindError
 from infi.pyutils.lazy import cached_method
 from .block import LinuxBlockDeviceMixin
 from infi.storagemodel.base.scsi import SCSIBlockDevice
+from infi.storagemodel.base.inquiry import InquiryInformationMixin
 from infi.exceptools import chain
 from infi.pyutils.decorators import wraps
 from .rescan_scsi_bus.getters import is_sg_module_loaded
 from .rescan_scsi_bus.scsi import execute_modprobe_sg
+from logging import getLogger
+
 
 MS = 1000
 SG_TIMEOUT_IN_SEC = 3
 SG_TIMEOUT_IN_MS = SG_TIMEOUT_IN_SEC * MS
+
+
+logger = getLogger(__name__)
 
 
 class LinuxSCSIDeviceMixin(object):
@@ -45,15 +51,27 @@ class LinuxSCSIDeviceMixin(object):
 
     @cached_method
     def get_scsi_vendor_id(self):
-        return self.sysfs_device.get_vendor().strip()
+        try:
+            return self.sysfs_device.get_vendor().strip()
+        except IOError:
+            logger.exception("failed to get vendor from sysfs, trying to send a CDB")
+            return InquiryInformationMixin.get_scsi_vendor_id(self)
 
     @cached_method
     def get_scsi_revision(self):
-        return self.sysfs_device.get_revision().strip()
+        try:
+            return self.sysfs_device.get_revision().strip()
+        except IOError:
+            logger.exception("failed to get scsi revision from sysfs, trying to send a CDB")
+            return InquiryInformationMixin.get_scsi_revision(self)
 
     @cached_method
     def get_scsi_product_id(self):
-        return self.sysfs_device.get_model().strip()
+        try:
+            return self.sysfs_device.get_model().strip()
+        except IOError:
+            logger.exception("failed to get production from sysfs, trying to send a CDB")
+            return InquiryInformationMixin.get_scsi_product_id(self)
 
 
 class LinuxSCSIBlockDeviceMixin(LinuxSCSIDeviceMixin, LinuxBlockDeviceMixin):
