@@ -68,7 +68,10 @@ def get_timeout(seconds):
         from gevent import Timeout
         return Timeout(seconds), Timeout
     except ImportError:
-        from Queue import Empty
+        try:
+            from Queue import Empty
+        except ImportError:
+            from queue import Empty
         return seconds, Empty
 
 

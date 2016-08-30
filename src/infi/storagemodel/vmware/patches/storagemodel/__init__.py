@@ -93,7 +93,10 @@ class VMwareHostStorageModel(StorageModel):
         logger.debug("{!r}: {}".format(self, message))
 
     def _refresh_host_storage(self, storage_system, reattach_luns=True, do_rescan=True, do_refresh=False):
-        from urllib2 import URLError
+        try:
+            from urllib2 import URLError
+        except ImportError:
+            from urllib.error import URLError
         self._debug("_refresh_host_storage started, do_rescan={}, do_refresh={}".format(do_rescan, do_refresh))
         try:
             if do_rescan:
@@ -298,8 +301,7 @@ class VMwarePath(multipath.Path):
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
         # adapter.key is key-vim.host.ScsiTopology.Interface-vmhba0
         # path_data_object.adapter is key-vim.host.FibreChannelHba-vmhba2
-        for adapter in filter(lambda adapter: adapter.key.split('-')[-1] == expected_vmhba,
-                              scsi_topology.adapter):
+        for adapter in [adapter for adapter in scsi_topology.adapter if adapter.key.split('-')[-1] == expected_vmhba]:
             for target in adapter.target:
                 if self._path_data_object.transport.portWorldWideName == target.transport.portWorldWideName:
                     for lun in target.lun:

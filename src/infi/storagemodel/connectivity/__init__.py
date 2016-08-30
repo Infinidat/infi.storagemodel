@@ -55,12 +55,12 @@ class ISCSIConnectivity(object):
         self._target_iqn = target_iqn
 
     def get_source_iqn(self):
-        if isinstance(self._source_iqn, basestring):
+        if isinstance(self._source_iqn, str):
             return IQN(self._source_iqn)
         return self._source_iqn
 
     def get_target_iqn(self):
-        if isinstance(self._target_iqn, basestring):
+        if isinstance(self._target_iqn, str):
             return IQN(self._target_iqn)
         return self._target_iqn
 

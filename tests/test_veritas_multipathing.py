@@ -585,28 +585,28 @@ class VeritasMultipathingTestCase(TestCase):
         vxdmpadm_output = VXDMPADM_OUTPUT_TEMPLATE.format(paths=SIX_PATHS, vid="NFINIDAT", pid="InfiniBox")
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = veritas_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 1)
-            self.assertEquals(len(block_devices[0].get_paths()), 6)
+            self.assertEqual(len(block_devices), 1)
+            self.assertEqual(len(block_devices[0].get_paths()), 6)
 
     def test_vxdmpadm_output_no_paths(self):
         vxdmpadm_output = VXDMPADM_OUTPUT_TEMPLATE.format(paths="", vid="NFINIDAT", pid="InfiniBox")
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = veritas_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 0)
+            self.assertEqual(len(block_devices), 0)
 
     def test_vxdmpadm_output_all_paths_disabled(self):
         vxdmpadm_output = VXDMPADM_OUTPUT_TEMPLATE.format(paths=ALL_DISABLED, vid="NFINIDAT", pid="InfiniBox")
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = veritas_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 0)
+            self.assertEqual(len(block_devices), 0)
 
     def test_vxdmpadm_output_one_path_enabled(self):
         vxdmpadm_output = VXDMPADM_OUTPUT_TEMPLATE.format(paths=ONE_ENABLED, vid="NFINIDAT", pid="InfiniBox")
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = veritas_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 1)
-            self.assertEquals(len(block_devices[0].get_paths()), 6)
-            self.assertEquals(len([p for p in block_devices[0].get_paths() if p.get_state() == "up"]), 1)
+            self.assertEqual(len(block_devices), 1)
+            self.assertEqual(len(block_devices[0].get_paths()), 6)
+            self.assertEqual(len([p for p in block_devices[0].get_paths() if p.get_state() == "up"]), 1)
 
     @patch('infi.storagemodel.base.inquiry.InquiryInformationMixin.get_scsi_vendor_id_or_unknown_on_error')
     def test_vxdmpadm_output_bad_vid(self, get_scsi_vendor_id_or_unknown_on_error):
@@ -616,7 +616,7 @@ class VeritasMultipathingTestCase(TestCase):
         get_scsi_vendor_id_or_unknown_on_error.return_value = vid, pid
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = get_infinidat_veritas_multipath_block_devices()
-            self.assertEquals(len(block_devices), 0)
+            self.assertEqual(len(block_devices), 0)
 
     @patch('infi.storagemodel.base.inquiry.InquiryInformationMixin.get_scsi_vendor_id_or_unknown_on_error')
     def test_vxdmpadm_output_bad_pid(self, get_scsi_vendor_id_or_unknown_on_error):
@@ -626,19 +626,19 @@ class VeritasMultipathingTestCase(TestCase):
         get_scsi_vendor_id_or_unknown_on_error.return_value = (vid, pid)
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = get_infinidat_veritas_multipath_block_devices()
-            self.assertEquals(len(block_devices), 0)
+            self.assertEqual(len(block_devices), 0)
 
     def test_vxdmpadm_output_other_vendor(self):
         vxdmpadm_output = OTHER_VENDOR_OUTPUT
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = veritas_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 16)
-            self.assertEquals(len(block_devices[0].get_paths()), 6)
-            self.assertEquals(len(block_devices[-1].get_paths()), 2)
+            self.assertEqual(len(block_devices), 16)
+            self.assertEqual(len(block_devices[0].get_paths()), 6)
+            self.assertEqual(len(block_devices[-1].get_paths()), 2)
 
     def test_storagemodel_360_output(self):
         vxdmpadm_output = STORAGEMODEL_360_VERITAS_OUTPUT
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = veritas_multipath.get_all_multipath_block_devices()
             # there are 5 devices in the output but only one is multipathed
-            self.assertEquals(len(block_devices), 1)
+            self.assertEqual(len(block_devices), 1)

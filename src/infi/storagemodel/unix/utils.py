@@ -22,7 +22,7 @@ def execute_command(cmd, check_returncode=True, timeout=WAIT_TIME):  # pragma: n
     logger.debug("stdout: {}".format(process.get_stdout()))
     logger.debug("stderr: {}".format(process.get_stderr()))
     if check_returncode and process.get_returncode() != 0:
-        formatted_cmd = cmd if isinstance(cmd, basestring) else repr(' '.join(cmd))
+        formatted_cmd = cmd if isinstance(cmd, str) else repr(' '.join(cmd))
         raise ExecutionError(process)
     return process
 

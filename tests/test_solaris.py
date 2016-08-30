@@ -199,9 +199,9 @@ class SolarisMultipathingTestCase(TestCase):
         showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths=THREE_PATHS, vid=vid, pid=pid)
         with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
             block_devices = solaris_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 1)
-            self.assertEquals(len(block_devices[0].get_paths()), 3)
-            self.assertEquals(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 1)
+            self.assertEqual(len(block_devices), 1)
+            self.assertEqual(len(block_devices[0].get_paths()), 3)
+            self.assertEqual(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 1)
 
     def test_mpathadm_output_storage_ctrl(self):
         vid, pid = ("NFINIDAT", "InfiniBox")
@@ -209,9 +209,9 @@ class SolarisMultipathingTestCase(TestCase):
         showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths=THREE_PATHS, vid=vid, pid=pid)
         with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
             storage_controllers = solaris_multipath.get_all_multipath_storage_controller_devices()
-            self.assertEquals(len(storage_controllers), 1)
-            self.assertEquals(len(storage_controllers[0].get_paths()), 1)
-            self.assertEquals(len(solaris_multipath.filter_vendor_specific_devices(storage_controllers, vid_pid)), 1)
+            self.assertEqual(len(storage_controllers), 1)
+            self.assertEqual(len(storage_controllers[0].get_paths()), 1)
+            self.assertEqual(len(solaris_multipath.filter_vendor_specific_devices(storage_controllers, vid_pid)), 1)
 
     def test_mpathadm_output_no_paths(self):
         vid, pid = ("NFINIDAT", "InfiniBox")
@@ -219,7 +219,7 @@ class SolarisMultipathingTestCase(TestCase):
         showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths="", vid=vid, pid=pid)
         with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
             block_devices = solaris_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 0)
+            self.assertEqual(len(block_devices), 0)
 
     def test_mpathadm_output_all_paths_disabled(self):
         vid, pid = ("NFINIDAT", "InfiniBox")
@@ -227,7 +227,7 @@ class SolarisMultipathingTestCase(TestCase):
         showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths=ALL_DISABLED, vid=vid, pid=pid)
         with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
             block_devices = solaris_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 0)
+            self.assertEqual(len(block_devices), 0)
 
     def test_mpathadm_output_all_paths_incative(self):
         vid, pid = ("NFINIDAT", "InfiniBox")
@@ -235,7 +235,7 @@ class SolarisMultipathingTestCase(TestCase):
         showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths=ALL_INACTIVE, vid=vid, pid=pid)
         with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
             block_devices = solaris_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 0)
+            self.assertEqual(len(block_devices), 0)
 
     def test_mpathadm_output_one_path_enabled(self):
         vid, pid = ("NFINIDAT", "InfiniBox")
@@ -243,9 +243,9 @@ class SolarisMultipathingTestCase(TestCase):
         showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths=ONE_ENABLED, vid=vid, pid=pid)
         with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
             block_devices = solaris_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 1)
-            self.assertEquals(len(block_devices[0].get_paths()), 3)
-            self.assertEquals(len([p for p in block_devices[0].get_paths() if p.get_state() == "up"]), 1)
+            self.assertEqual(len(block_devices), 1)
+            self.assertEqual(len(block_devices[0].get_paths()), 3)
+            self.assertEqual(len([p for p in block_devices[0].get_paths() if p.get_state() == "up"]), 1)
 
     def test_mpathadm_output_bad_hctl(self):
         vid, pid = ("NFINIDAT", "InfiniBox")
@@ -263,9 +263,9 @@ class SolarisMultipathingTestCase(TestCase):
 
                 get_hctl.side_effect = get_hctl_side_effect
                 block_devices = solaris_multipath.get_all_multipath_block_devices()
-                self.assertEquals(len(block_devices), 1)
-                self.assertEquals(len(block_devices[0].get_paths()), 2)
-                self.assertEquals(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 1)
+                self.assertEqual(len(block_devices), 1)
+                self.assertEqual(len(block_devices[0].get_paths()), 2)
+                self.assertEqual(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 1)
 
     def test_mpathadm_output_bad_vid(self):
         vid, pid = ("NFINIDAS", "InfiniBox")
@@ -273,8 +273,8 @@ class SolarisMultipathingTestCase(TestCase):
         showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths=ONE_ENABLED, vid=vid, pid=pid)
         with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
             block_devices = solaris_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 1)
-            self.assertEquals(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 0)
+            self.assertEqual(len(block_devices), 1)
+            self.assertEqual(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 0)
 
     def test_mpathadm_output_bad_pid(self):
         vid, pid = ("NFINIDAT", "InfiniBot")
@@ -282,8 +282,8 @@ class SolarisMultipathingTestCase(TestCase):
         showlu_output[MPATH_DEVICE_PATH] = showlu_output[MPATH_DEVICE_PATH].format(paths=ONE_ENABLED, vid=vid, pid=pid)
         with solaris_multipathing_context(MPATHADM_LISTLU_OUTPUT_TEMPLATE, showlu_output) as solaris_multipath:
             block_devices = solaris_multipath.get_all_multipath_block_devices()
-            self.assertEquals(len(block_devices), 1)
-            self.assertEquals(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 0)
+            self.assertEqual(len(block_devices), 1)
+            self.assertEqual(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 0)
 
 
 
@@ -1339,6 +1339,6 @@ class SolarisSCSITestCase(TestCase):
             scsi_model = get_storage_model().get_scsi()
             block_devices = scsi_model.get_all_scsi_block_devices()
             infinidat_block_devices = scsi_model.filter_vendor_specific_devices(block_devices, vid_pid)
-            self.assertEquals(len(infinidat_block_devices), 20)
+            self.assertEqual(len(infinidat_block_devices), 20)
 
         _inner_test_func()

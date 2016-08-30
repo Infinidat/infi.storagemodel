@@ -22,7 +22,7 @@ class SupportedSesPagesDict(LazyImmutableDict):
             return sync_wait(diagnostic_command.execute(asi))
 
     def __repr__(self):
-        return "<Supported SES Pages for {!r}: {!r}>".format(self.device, self.keys())
+        return "<Supported SES Pages for {!r}: {!r}>".format(self.device, list(self.keys()))
 
 
 class SesInformationMixin(object):

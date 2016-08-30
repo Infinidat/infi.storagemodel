@@ -153,7 +153,7 @@ class InsufficientResourcesTestCase(unittest.TestCase):
                 self._count += 1
                 raise self._check_condition_exception
             return 'asd'
-        self.assertEquals(func(), 'asd')
+        self.assertEqual(func(), 'asd')
 
     def test_infinite(self):
         from infi.storagemodel.errors import InsufficientResourcesError
