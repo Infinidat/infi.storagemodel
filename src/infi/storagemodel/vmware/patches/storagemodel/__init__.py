@@ -250,7 +250,7 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
         def _filter(durable_name):
             return durable_name.namespace == 'GENERIC_VPD' and durable_name.namespaceId == 5 and \
                 durable_name.data[1] == 0
-        byte_array = filter(_filter, self._scsi_lun_data_object.alternateName)[0].data
+        byte_array = list(filter(_filter, self._scsi_lun_data_object.alternateName)[0].data)
         page_buffer = SupportedVPDPagesBuffer()
         page_buffer.unpack(byte_array_to_string(byte_array))
         return page_buffer
@@ -414,12 +414,10 @@ class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
         return operating_luns
 
     def _filter_array_controller_luns(self):
-        return filter(lambda lun: lun.deviceType == 'array controller',
-                      self._filter_operating_luns())
+        return [lun for lun in self._filter_operating_luns() if lun.deviceType == 'array controller']
 
     def _filter_disk_luns(self):
-        return filter(lambda lun: lun.deviceType == 'disk',
-                      self._filter_operating_luns())
+        return [lun for lun in self._filter_operating_luns() if lun.deviceType == 'disk']
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):

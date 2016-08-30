@@ -15,7 +15,7 @@ class AixRescan(AixModelMixin):
         multipath_devices = self._get_multipath_devices()
         filter_in = lambda dev: dev.get_display_name() in multipath_devices
         filter_out = lambda dev: dev.get_display_name() not in multipath_devices
-        return filter(filter_in if multipath else filter_out, devices)
+        return list(filter(filter_in if multipath else filter_out, devices))
 
     def _do_report_luns(self, device_name):
         from infi.asi.executers import aix as aix_executer

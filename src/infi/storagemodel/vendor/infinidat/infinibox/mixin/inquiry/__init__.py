@@ -19,7 +19,7 @@ class DeviceIdentificationPage(object):
         return isinstance(designator, VendorSpecificDesignator)
 
     def filter_vendor_specific_designators(self):
-        return filter(self.is_designator_vendor_specific, self._page.designators_list)
+        return list(filter(self.is_designator_vendor_specific, self._page.designators_list))
 
     @cached_method
     def get_vendor_specific_dict(self):

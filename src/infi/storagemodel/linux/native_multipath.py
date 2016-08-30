@@ -30,7 +30,7 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
             handle.close()
 
     def _is_there_atleast_one_path_up(self):
-        return bool(filter(lambda path: path.get_state() == "up", self.get_paths()))
+        return any(path.get_state() == "up" for path in self.get_paths())
 
     @cached_method
     def get_display_name(self):
@@ -166,7 +166,7 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
             block_dev = self.sysfs.find_block_device_by_devno(mpath_device.major_minor)
             if block_dev is not None:
                 result.append(LinuxNativeMultipathBlockDevice(self.sysfs, block_dev, mpath_device))
-        living_devices = filter(lambda device: device._is_there_atleast_one_path_up(), result)
+        living_devices = [device for device in result if device._is_there_atleast_one_path_up()]
         return living_devices
 
     @cached_method

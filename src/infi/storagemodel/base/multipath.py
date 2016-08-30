@@ -9,19 +9,19 @@ class MultipathFrameworkModel(object):
         """Returns items from the list that are not part of multipath devices claimed by this framework"""
         hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()
                                                                      for multipath in self.get_all_multipath_block_devices())]
-        return filter(lambda device: device.get_hctl() not in hctl_list, scsi_block_devices)
+        return [device for device in scsi_block_devices if device.get_hctl() not in hctl_list]
 
     def filter_non_multipath_scsi_storage_controller_devices(self, scsi_controller_devices):
         """Returns items from the list that are not part of multipath devices claimed by this framework"""
         hctl_list = [path.get_hctl() for path in chain.from_iterable(multipath.get_paths()
                                                                      for multipath in self.get_all_multipath_storage_controller_devices())]
-        return filter(lambda device: device.get_hctl() not in hctl_list, scsi_controller_devices)
+        return [device for device in scsi_controller_devices if device.get_hctl() not in hctl_list]
 
     def filter_vendor_specific_devices(self, devices, vid_pid_tuple):
         """Returns only the items from the devices list that are of the specific type"""
         from infi.storagemodel.base.gevent_wrapper import run_together
         run_together(device.get_scsi_vendor_id_or_unknown_on_error for device in devices)
-        return filter(lambda device: device.get_scsi_vendor_id_or_unknown_on_error() == vid_pid_tuple, devices)
+        return [device for device in devices if device.get_scsi_vendor_id_or_unknown_on_error() == vid_pid_tuple]
 
     def find_multipath_device_by_block_access_path(self, path):
         """

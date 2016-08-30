@@ -87,7 +87,7 @@ class WindowsRoundRobin(multipath.RoundRobin):
 
 class WindowsRoundRobinWithSubset(multipath.RoundRobinWithSubset):
     def __init__(self, policy):
-        active_paths = filter(lambda path: path.PrimaryPath == 1, policy.DSM_Paths)
+        active_paths = [path for path in policy.DSM_Paths if path.PrimaryPath == 1]
         active_path_ids = [path.DsmPathId for path in active_paths]
         super(WindowsRoundRobinWithSubset, self).__init__(active_path_ids)
 
