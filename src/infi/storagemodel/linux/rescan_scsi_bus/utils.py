@@ -28,8 +28,8 @@ class ScsiCheckConditionError(ScsiCommandFailed):
 def func_logger(func):
     @wraps(func)
     def decorator(*args, **kwargs):
-        format_args = ', '.join([str(item) for item in args])
-        format_kwargs = ', '.join(["{}={!r}".format(str(key), str(value)) for key, value in kwargs.items()])
+        format_args = ', '.join([repr(item) for item in args])
+        format_kwargs = ', '.join(["{}={!r}".format(repr(key), repr(value)) for key, value in kwargs.items()])
         logger.debug("{} --> {}({}, {})".format(getpid(), func.__name__, format_args, format_kwargs))
         result = func(*args, **kwargs)
         try:

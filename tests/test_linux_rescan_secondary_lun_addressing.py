@@ -30,7 +30,7 @@ def test():
         with patch.object(logic, 'get_lun_type') as get_lun_type:
             with patch.object(logic, 'is_there_a_bug_in_sysfs_async_scanning', new=lambda: False):
                 with patch.object(scsi, 'asi_context', new=asi_context):
-                    with patch.object(logic, 'get_luns', new=lambda h,c,t: set([(0, 0, 0, 1)])):
+                    with patch.object(logic, 'get_luns', return_value={1}):
                         with patch.object(logic, 'handle_add_devices') as handle_add_devices:
                             with patch.object(logic, 'handle_device_removal') as handle_device_removal:
                                 get_lun_type.return_value = logic.STORAGE_ARRAY_CONTROLLER_DEVICE
