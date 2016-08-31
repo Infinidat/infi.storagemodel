@@ -1,6 +1,7 @@
 
 import unittest
 import mock
+import six
 
 try:
     from contextlib import ExitStack
@@ -34,13 +35,13 @@ class ModelTestCase(unittest.TestCase):
         self.assertGreater(device.get_size_in_bytes(), 0)
         self.assertIsInstance(device.get_hctl(), HCTL)
         self.assertTrue(device.get_display_name().startswith("PHYSICALDRIVE"))
-        self.assertIsInstance(device.get_block_access_path(), basestring)
-        self.assertIsInstance(device.get_scsi_access_path(), basestring)
-        self.assertIsInstance(device.get_scsi_vendor_id(), basestring)
-        self.assertIsInstance(device.get_scsi_product_id(), basestring)
+        self.assertIsInstance(device.get_block_access_path(), six.string_types)
+        self.assertIsInstance(device.get_scsi_access_path(), six.string_types)
+        self.assertIsInstance(device.get_scsi_vendor_id(), six.string_types)
+        self.assertIsInstance(device.get_scsi_product_id(), six.string_types)
         self.assertEqual(device.get_scsi_vid_pid(), (device.get_scsi_vendor_id(), device.get_scsi_product_id()))
         device.get_scsi_inquiry_pages()
-        self.assertIsInstance(device.get_scsi_serial_number(), basestring)
+        self.assertIsInstance(device.get_scsi_serial_number(), six.string_types)
         device.get_scsi_standard_inquiry()
         self._assert_connectivity(device)
 
@@ -69,12 +70,12 @@ class ModelTestCase(unittest.TestCase):
     def _assert_multipath_device(self, device):
         self.assertGreater(device.get_size_in_bytes(), 0)
         self.assertTrue(device.get_display_name().startswith("PHYSICALDRIVE"))
-        self.assertIsInstance(device.get_block_access_path(), basestring)
-        self.assertIsInstance(device.get_scsi_vendor_id(), basestring)
-        self.assertIsInstance(device.get_scsi_product_id(), basestring)
+        self.assertIsInstance(device.get_block_access_path(), six.string_types)
+        self.assertIsInstance(device.get_scsi_vendor_id(), six.string_types)
+        self.assertIsInstance(device.get_scsi_product_id(), six.string_types)
         self.assertEqual(device.get_scsi_vid_pid(), (device.get_scsi_vendor_id(), device.get_scsi_product_id()))
         device.get_scsi_inquiry_pages()
-        self.assertIsInstance(device.get_scsi_serial_number(), basestring)
+        self.assertIsInstance(device.get_scsi_serial_number(), six.string_types)
         device.get_scsi_standard_inquiry()
         from infi.dtypes.hctl import HCTL
         for path in device.get_paths():
