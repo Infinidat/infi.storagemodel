@@ -116,8 +116,8 @@ class SolarisMultipathClient(object):
             res = list(compile(EXTRA_INFO_PATTERN, MULTILINE | DOTALL).finditer(paths_list_output))
             return res[0].groupdict() if res else None
         def get_paths():
-            PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\w+)\s*" + \
-                           r"^\s*Target Port Name:\s*(?P<target_port_name>\w+)\s*" + \
+            PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*" + \
+                           r"^\s*Target Port Name:\s*(?P<target_port_name>\S+)\s*" + \
                            r"^\s*Override Path:\s*(?P<override_path>\w+)\s*" + \
                            r"^\s*Path State:\s*(?P<state>\w+)\s*" + \
                            r"^\s*Disabled:\s*(?P<disabled>\w+)\s*$"
