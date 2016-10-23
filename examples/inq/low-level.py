@@ -63,13 +63,12 @@ def get_devices():
 
     def linux():
         from glob import glob
-        from os import name
         sd = sorted(dev for dev in glob("/dev/sd*") if not dev[-1].isdigit())
         dm = sorted(glob("/dev/dm*"))
         return sd + dm
 
-    from platform import System
-    return dict(Windows=windows, Linux=linux).get(System(), lambda: [])()
+    from platform import system
+    return dict(Windows=windows, Linux=linux).get(system(), lambda: [])()
 
 
 def main():
