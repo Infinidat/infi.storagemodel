@@ -40,7 +40,7 @@ def get_scsi_serial(access_path):
 
 def get_capacity_in_bytes(access_path):
     from infi.asi.coroutines.sync_adapter import sync_wait
-    from infi.asi.cdb.read_capacity import ReadCapacity10Command, ReadCapacity16Command
+    from infi.asi.cdb.read_capacity import ReadCapacity16Command
 
     with asi_context(access_path) as asi:
         command = ReadCapacity16Command()
