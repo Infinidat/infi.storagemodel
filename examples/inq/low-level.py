@@ -5,17 +5,23 @@ from infi.pyutils.contexts import contextmanager
 @contextmanager
 def asi_context(access_path):
     import os
-    from infi.asi.unix import OSFile
-    from infi.asi.linux import LinuxIoctlCommandExecuter
-    from infi.asi.solaris import SolarisCommandExecuter
 
-    handle = OSFile(os.open(access_path, os.O_RDWR))
+    operating_system = system()
 
-    running_system = system()
-    if running_system == 'SunOS':
-        executer = SolarisCommandExecuter(handle)
-    elif running_system == 'linux':
-        executer = LinuxIoctlCommandExecuter(handle)
+    if operating_system == 'Windows':
+        from infi.asi.win32 import OSFile, Win32CommandExecuter
+        handle = OSFile(access_path)
+        executer = Win32CommandExecuter(handle)
+    else:
+        from infi.asi.unix import OSFile
+        handle = OSFile(os.open(access_path, os.O_RDWR))
+
+        if operating_system == 'SunOS':
+            from infi.asi.solaris import SolarisCommandExecuter
+            executer = SolarisCommandExecuter(handle)
+        elif operating_system == 'linux':
+            from infi.asi.linux import LinuxIoctlCommandExecuter
+            executer = LinuxIoctlCommandExecuter(handle)
 
     try:
         yield executer
