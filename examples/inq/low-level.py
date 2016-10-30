@@ -40,7 +40,7 @@ def get_scsi_serial(access_path):
 
 def get_capacity_in_bytes(access_path):
     from infi.asi.coroutines.sync_adapter import sync_wait
-    from infi.asi.cdb.read_capacity import ReadCapacity10Command, ReadCapacity16Command
+    from infi.asi.cdb.read_capacity import ReadCapacity16Command
 
     with asi_context(access_path) as asi:
         command = ReadCapacity16Command()
@@ -63,13 +63,12 @@ def get_devices():
 
     def linux():
         from glob import glob
-        from os import name
         sd = sorted(dev for dev in glob("/dev/sd*") if not dev[-1].isdigit())
         dm = sorted(glob("/dev/dm*"))
         return sd + dm
 
-    from platform import System
-    return dict(Windows=windows, Linux=linux).get(System(), lambda: [])()
+    from platform import system
+    return dict(Windows=windows, Linux=linux).get(system(), lambda: [])()
 
 
 def main():

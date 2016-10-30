@@ -20,11 +20,12 @@ class SolarisMultipathEntry(Munch):
 
 
 class SolarisSinglePathEntry(Munch):
-    def __init__(self, initiator_port_name, target_port_name, state, disabled, mpath_dev_path):
+    def __init__(self, initiator_port_name, target_port_name, state, disabled, mpath_dev_path, ports):
         self.initiator_port_name = initiator_port_name
         self.target_port_name = target_port_name
         self.state = state
         self.disabled = disabled
+        self.ports = ports
         self.hctl = self._get_hctl(mpath_dev_path)
 
     def _get_hctl(self, mpath_dev_path):
@@ -39,9 +40,8 @@ class SolarisSinglePathEntry(Munch):
                     return lun
 
         def get_hct(hba_port_wwn, remote_port_wwn):
-            from infi.hbaapi import get_ports_generator
             port_hct = (-1, 0, -1)
-            for hba_port in get_ports_generator().iter_ports():
+            for hba_port in self.ports:
                 if not (hba_port.port_wwn == hba_port_wwn):
                     continue
                 for remote_port in hba_port.discovered_ports:
@@ -64,6 +64,9 @@ class SolarisSinglePathEntry(Munch):
 
 class SolarisMultipathClient(object):
     def get_list_of_multipath_devices(self):
+        from infi.hbaapi import get_ports_generator
+        ports = list(get_ports_generator().iter_ports())
+
         multipaths = []
         multipath_device_paths = self.parse_paths_list(self.read_multipaths_list())
         for mpath_dev_path in multipath_device_paths:
@@ -71,8 +74,10 @@ class SolarisMultipathClient(object):
             if info is None:
                 continue
             vendor_id, product_id, load_balance = info['vendor_id'], info['product_id'], info['load_balance']
-            paths = [SolarisSinglePathEntry(p['initiator_port_name'], p['target_port_name'], p['state'], p['disabled'], mpath_dev_path) for p in info['paths']]
-            mpath_dev_path = path.join('/devices', mpath_dev_path.lstrip('/')) if 'array-controller' in mpath_dev_path else mpath_dev_path
+            paths = [SolarisSinglePathEntry(p['initiator_port_name'], p['target_port_name'], p['state'],
+                                            p['disabled'], mpath_dev_path, ports) for p in info['paths']]
+            mpath_dev_path = path.join('/devices', mpath_dev_path.lstrip('/')) if \
+                'array-controller' in mpath_dev_path else mpath_dev_path
             multipaths.append(SolarisMultipathEntry(mpath_dev_path, vendor_id, product_id, load_balance, paths))
         return multipaths
 
@@ -111,8 +116,8 @@ class SolarisMultipathClient(object):
             res = list(compile(EXTRA_INFO_PATTERN, MULTILINE | DOTALL).finditer(paths_list_output))
             return res[0].groupdict() if res else None
         def get_paths():
-            PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\w+)\s*" + \
-                           r"^\s*Target Port Name:\s*(?P<target_port_name>\w+)\s*" + \
+            PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*" + \
+                           r"^\s*Target Port Name:\s*(?P<target_port_name>\S+)\s*" + \
                            r"^\s*Override Path:\s*(?P<override_path>\w+)\s*" + \
                            r"^\s*Path State:\s*(?P<state>\w+)\s*" + \
                            r"^\s*Disabled:\s*(?P<disabled>\w+)\s*$"

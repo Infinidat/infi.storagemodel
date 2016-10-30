@@ -1,4 +1,5 @@
 from infi.storagemodel.base.utils import Utils
+import six
 
 import logging  # pylint: disable=W0403
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ def execute_command(cmd, check_returncode=True, timeout=WAIT_TIME):  # pragma: n
     logger.debug("stdout: {}".format(process.get_stdout()))
     logger.debug("stderr: {}".format(process.get_stderr()))
     if check_returncode and process.get_returncode() != 0:
-        formatted_cmd = cmd if isinstance(cmd, basestring) else repr(' '.join(cmd))
+        formatted_cmd = cmd if isinstance(cmd, six.string_types) else repr(' '.join(cmd))
         raise ExecutionError(process)
     return process
 

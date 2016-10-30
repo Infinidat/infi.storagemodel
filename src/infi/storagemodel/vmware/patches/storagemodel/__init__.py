@@ -93,7 +93,10 @@ class VMwareHostStorageModel(StorageModel):
         logger.debug("{!r}: {}".format(self, message))
 
     def _refresh_host_storage(self, storage_system, reattach_luns=True, do_rescan=True, do_refresh=False):
-        from urllib2 import URLError
+        try:
+            from urllib2 import URLError
+        except ImportError:
+            from urllib.error import URLError
         self._debug("_refresh_host_storage started, do_rescan={}, do_refresh={}".format(do_rescan, do_refresh))
         try:
             if do_rescan:
@@ -129,7 +132,6 @@ class VMwareHostStorageModel(StorageModel):
         # we've seen several time in the tests that host.configManager is a list; how weird is that?
         # according to the API documntation, this is not a list; not sure how how to deal with this case
         # so for debugging, we do this:
-        summary = host.summary
         config_manager = host.configManager
         storage_system = config_manager.storageSystem
         if self._refresh_thread is not None and is_thread_alive(self._refresh_thread):
@@ -251,7 +253,7 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
         def _filter(durable_name):
             return durable_name.namespace == 'GENERIC_VPD' and durable_name.namespaceId == 5 and \
                 durable_name.data[1] == 0
-        byte_array = filter(_filter, self._scsi_lun_data_object.alternateName)[0].data
+        byte_array = list(filter(_filter, self._scsi_lun_data_object.alternateName)[0].data)
         page_buffer = SupportedVPDPagesBuffer()
         page_buffer.unpack(byte_array_to_string(byte_array))
         return page_buffer
@@ -299,8 +301,7 @@ class VMwarePath(multipath.Path):
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
         # adapter.key is key-vim.host.ScsiTopology.Interface-vmhba0
         # path_data_object.adapter is key-vim.host.FibreChannelHba-vmhba2
-        for adapter in filter(lambda adapter: adapter.key.split('-')[-1] == expected_vmhba,
-                              scsi_topology.adapter):
+        for adapter in [adapter for adapter in scsi_topology.adapter if adapter.key.split('-')[-1] == expected_vmhba]:
             for target in adapter.target:
                 if self._path_data_object.transport.portWorldWideName == target.transport.portWorldWideName:
                     for lun in target.lun:
@@ -415,12 +416,10 @@ class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
         return operating_luns
 
     def _filter_array_controller_luns(self):
-        return filter(lambda lun: lun.deviceType == 'array controller',
-                      self._filter_operating_luns())
+        return [lun for lun in self._filter_operating_luns() if lun.deviceType == 'array controller']
 
     def _filter_disk_luns(self):
-        return filter(lambda lun: lun.deviceType == 'disk',
-                      self._filter_operating_luns())
+        return [lun for lun in self._filter_operating_luns() if lun.deviceType == 'disk']
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):

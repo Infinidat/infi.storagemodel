@@ -103,6 +103,9 @@ def target_scan(host, channel, target):
         handle_add_devices(host, channel, target, missing_luns)
     for lun in unmapped_luns:
         handle_device_removal(host, channel, target, lun)
+    if not array_luns:
+        # STORAGEMODEL-371 for cases where the kernel gets stuck and doesn't create the devices for lun 0
+        return
     first_lun = sorted(array_luns)[0]
     for lun in existing_luns:
         if lun == first_lun:

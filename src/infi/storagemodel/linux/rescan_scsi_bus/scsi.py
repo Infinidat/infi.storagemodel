@@ -3,6 +3,7 @@ from os import path, getpid
 from infi.pyutils.contexts import contextmanager
 
 from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute, TIMEOUT_IN_SEC
+from .utils import call_in_subprocess, put_result_in_queue
 from .utils import ScsiCommandFailed, ScsiCheckConditionError
 
 logger = getLogger(__name__)
@@ -18,14 +19,17 @@ def write_to_proc_scsi_scsi(line):
 
 @func_logger
 def scsi_add_single_device(host, channel, target, lun):
-    return write_to_proc_scsi_scsi("scsi add-single-device {} {} {} {}".format(host, channel, target, lun))
+    return call_in_subprocess(write_to_proc_scsi_scsi, "scsi add-single-device {} {} {} {}".format(host, channel, target, lun))
 
 @func_logger
 def scsi_remove_single_device(host, channel, target, lun):
-    return write_to_proc_scsi_scsi("scsi remove-single-device {} {} {} {}".format(host, channel, target, lun))
+    return call_in_subprocess(write_to_proc_scsi_scsi, "scsi remove-single-device {} {} {} {}".format(host, channel, target, lun))
 
 @func_logger
 def scsi_host_scan(host):
+    return call_in_subprocess(write_to_scsi_host, host)
+
+def write_to_scsi_host(host):
     scan_file = "/sys/class/scsi_host/host{}/scan".format(host)
     if path.exists(scan_file):
         try:
@@ -40,6 +44,9 @@ def scsi_host_scan(host):
 
 @func_logger
 def remove_device_via_sysfs(host, channel, target, lun):
+    return call_in_subprocess(write_to_scsi_device, host, channel, target, lun)
+
+def write_to_scsi_device(host, channel, target, lun):
     hctl = "{}:{}:{}:{}".format(host, channel, target, lun)
     delete_file = "/sys/class/scsi_device/{}/device/delete".format(hctl)
     if not path.exists(delete_file):
@@ -53,69 +60,21 @@ def remove_device_via_sysfs(host, channel, target, lun):
         return False
     return True
 
-def do_scsi_cdb_with_in_process(queue, sg_device, cdb):
+def do_scsi_cdb_with_in_process(sg_device, cdb):
     """ **queue** - either a gipc pipe or a multiprocessing queue """
     from infi.asi.coroutines.sync_adapter import sync_wait
 
     @check_for_scsi_errors
     def func(sg_device, cdb):
         with asi_context(sg_device) as executer:
-            queue.put(sync_wait(cdb.execute(executer)))
+            return sync_wait(cdb.execute(executer))
 
-    try:
-        func(sg_device, cdb)
-    except ScsiCommandFailed as error:  # HIP-672 can't use logger in the child process
-        try:  # HIP-673 in case we failed to contact the parent process
-            queue.put(error)
-        except:  # there's no point in raising exception or silencing it because it won't get logged
-            try:
-                queue.put(ScsiCommandFailed())
-            except:
-                pass
+    return func(sg_device, cdb)
 
-def read_from_queue(reader, subprocess):
-    from infi.storagemodel.base.gevent_wrapper import get_timeout
-    timeout, timeout_exception = get_timeout(TIMEOUT_IN_SEC)
-    while True:
-        try:
-            return reader.get(timeout=timeout)
-        except IOError as error:
-            from errno import EINTR
-            # stackoverflow.com/questions/14136195/what-is-the-proper-way-to-handle-in-python-ioerror-errno-4-interrupted-syst
-            if error.errno != EINTR:
-                return ScsiCommandFailed()
-            logger.debug("multiprocessing.Queue.get caught IOError: interrupted system call")
-        except timeout_exception:
-            msg = "{} multiprocessing {} did not return within {} seconds timeout"
-            logger.error(msg.format(getpid(), subprocess.pid, TIMEOUT_IN_SEC))
-            return ScsiCommandFailed()
-        except:
-            msg = "{} multiprocessing {} error"
-            logger.exception(msg.format(getpid(), subprocess.pid))
-            return ScsiCommandFailed()
-
-def ensure_subprocess_dead(subprocess):
-    from os import kill
-    pid = subprocess.pid
-    if subprocess.is_alive() and pid:
-        logger.debug("{} terminating multiprocessing {}".format(getpid(), pid))
-        try:
-            kill(pid, 9)
-        except:
-            logger.debug("{} failed to terminate multiprocessing {}".format(getpid(), pid))
-    subprocess.join()
 
 @func_logger
 def do_scsi_cdb(sg_device, cdb):
-    from infi.storagemodel.base.gevent_wrapper import start_process, get_pipe_context
-    pipe_context = get_pipe_context()
-    with pipe_context as (reader, writer):
-        logger.debug("{} issuing cdb {!r} on {} with multiprocessing".format(getpid(), cdb, sg_device))
-        subprocess = start_process(do_scsi_cdb_with_in_process, writer, sg_device, cdb)
-        logger.debug("{} multiprocessing pid is {}".format(getpid(), subprocess.pid))
-        return_value = read_from_queue(reader, subprocess)
-        logger.debug("{} multiprocessing {} returned {!r}".format(getpid(), subprocess.pid, return_value))
-        ensure_subprocess_dead(subprocess)
+    return_value = call_in_subprocess(do_scsi_cdb_with_in_process, sg_device, cdb)
     if isinstance(return_value, ScsiCheckConditionError):
         raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
     if isinstance(return_value, ScsiCommandFailed):

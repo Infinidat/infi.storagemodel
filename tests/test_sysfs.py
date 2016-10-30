@@ -148,13 +148,13 @@ class SysfsTestCase(TestCase):
         sysfs = Sysfs()
 
         disks = sysfs.get_all_sd_disks()
-        self.assertEquals(7, len(disks))
+        self.assertEqual(7, len(disks))
 
         for disk in disks:
             block_dev = disk.get_block_device_name()
             self.assertTrue(block_dev in disk_properties)
 
-            self.assertEquals(HCTL.from_string(disk_properties[block_dev]['hctl']), disk.get_hctl())
-            self.assertEquals(disk_properties[block_dev]['queue_depth'], disk.get_queue_depth())
-            self.assertEquals(disk_properties[block_dev]['sysfs_size'] * 512, disk.get_size_in_bytes())
-            self.assertEquals(disk_properties[block_dev]['vendor'], disk.get_vendor())
+            self.assertEqual(HCTL.from_string(disk_properties[block_dev]['hctl']), disk.get_hctl())
+            self.assertEqual(disk_properties[block_dev]['queue_depth'], disk.get_queue_depth())
+            self.assertEqual(disk_properties[block_dev]['sysfs_size'] * 512, disk.get_size_in_bytes())
+            self.assertEqual(disk_properties[block_dev]['vendor'], disk.get_vendor())

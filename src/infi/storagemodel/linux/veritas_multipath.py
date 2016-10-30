@@ -15,7 +15,7 @@ class LinuxVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
         self._scsi = scsi
 
     def _is_there_atleast_one_path_up(self):
-        return bool(filter(lambda path: path.get_state() == "up", self.get_paths()))
+        return any(path.get_state() == "up" for path in self.get_paths())
 
     @cached_method
     def get_display_name(self):

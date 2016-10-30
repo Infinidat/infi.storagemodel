@@ -67,7 +67,7 @@ class HostSystemPortGenerator(Generator):
 
     def _populate_remote_ports(self, fc_hba):
         all_adapter_topologies = self._get_all_scsi_topologies()
-        adapter_topology = filter(lambda topology: topology.adapter == fc_hba.key, all_adapter_topologies)
+        adapter_topology = [topology for topology in all_adapter_topologies if topology.adapter == fc_hba.key]
         remote_ports = []
         for target in adapter_topology[0].target:
             if target.transport.portWorldWideName:  # If target in "dead or error" state, then portWorldWideName is 0

@@ -68,7 +68,7 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
         return list(physical_drives)
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
-        return filter(lambda device: not is_disk_drive_managed_by_windows_mpio(device._device_object), scsi_block_devices)
+        return [device for device in scsi_block_devices if not is_disk_drive_managed_by_windows_mpio(device._device_object)]
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
@@ -87,7 +87,7 @@ class WindowsRoundRobin(multipath.RoundRobin):
 
 class WindowsRoundRobinWithSubset(multipath.RoundRobinWithSubset):
     def __init__(self, policy):
-        active_paths = filter(lambda path: path.PrimaryPath == 1, policy.DSM_Paths)
+        active_paths = [path for path in policy.DSM_Paths if path.PrimaryPath == 1]
         active_path_ids = [path.DsmPathId for path in active_paths]
         super(WindowsRoundRobinWithSubset, self).__init__(active_path_ids)
 
@@ -161,10 +161,15 @@ class WindowsPath(multipath.Path):
         return "%x" % self.get_path_id()
 
     def get_io_statistics(self):
-        from infi.wmpio import get_device_performance, WmiClient
+        from infi.wmpio import get_device_performance, get_multipath_devices, WmiClient
         wmi_client = WmiClient()
         device_wmi_path = self._multipath_object.InstanceName
-        device_performance = get_device_performance(wmi_client)[device_wmi_path]
+        all_performance_counters = get_device_performance(wmi_client)
+        all_devices = get_multipath_devices(wmi_client)
+        if device_wmi_path not in all_performance_counters:
+            logger.warn('no perfomance countrs for device {}'.format(device_wmi_path), exc_info=1)
+            return multipath.PathStatistics(0, 0, 0, 0)
+        device_performance = all_performance_counters[device_wmi_path]
         path_perfromance = device_performance.PerfInfo[self.get_path_id()]
         return multipath.PathStatistics(path_perfromance.BytesRead,
                                         path_perfromance.BytesWritten,
