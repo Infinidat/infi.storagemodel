@@ -1,3 +1,4 @@
+from platform import system
 from infi.pyutils.contexts import contextmanager
 
 
@@ -6,9 +7,16 @@ def asi_context(access_path):
     import os
     from infi.asi.unix import OSFile
     from infi.asi.linux import LinuxIoctlCommandExecuter
+    from infi.asi.solaris import SolarisCommandExecuter
 
     handle = OSFile(os.open(access_path, os.O_RDWR))
-    executer = LinuxIoctlCommandExecuter(handle)
+
+    running_system = system()
+    if running_system == 'SunOS':
+        executer = SolarisCommandExecuter(handle)
+    elif running_system == 'linux':
+        executer = LinuxIoctlCommandExecuter(handle)
+
     try:
         yield executer
     finally:
@@ -52,6 +60,8 @@ def get_capacity_in_bytes(access_path):
 
 
 def get_devices():
+    from glob import glob
+
     def windows():
         from infi.devicemanager import DeviceManager
         from infi.devicemanager.ioctl import DeviceIoControl
@@ -62,13 +72,15 @@ def get_devices():
                 drive_number != -1]
 
     def linux():
-        from glob import glob
         sd = sorted(dev for dev in glob("/dev/sd*") if not dev[-1].isdigit())
         dm = sorted(glob("/dev/dm*"))
         return sd + dm
 
-    from platform import system
-    return dict(Windows=windows, Linux=linux).get(system(), lambda: [])()
+    def solaris():
+        rdsk = sorted(glob("/dev/rdsk/c*"))
+        return rdsk
+
+    return dict(Windows=windows, Linux=linux, SunOS=solaris).get(system(), lambda: [])()
 
 
 def main():
