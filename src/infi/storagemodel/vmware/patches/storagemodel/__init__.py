@@ -7,6 +7,7 @@ from infi.dtypes.hctl import HCTL
 from time import time
 from time import time
 from logging import getLogger
+from pyVmomi import vim
 import infi.storagemodel
 
 logger = getLogger(__name__)
@@ -295,7 +296,6 @@ class VMwarePath(multipath.Path):
 
     @cached_method
     def get_hctl(self):
-        from pyVmomi import vim
         from infi.storagemodel.errors import RescanIsNeeded
         scsi_topology = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, vim.HostScsiTopology())
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
@@ -303,7 +303,14 @@ class VMwarePath(multipath.Path):
         # path_data_object.adapter is key-vim.host.FibreChannelHba-vmhba2
         for adapter in [adapter for adapter in scsi_topology.adapter if adapter.key.split('-')[-1] == expected_vmhba]:
             for target in adapter.target:
-                if self._path_data_object.transport.portWorldWideName == target.transport.portWorldWideName:
+                our_transport = self._path_data_object.transport
+                target_transport = target.transport
+                if (isinstance(our_transport, vim.HostInternetScsiTargetTransport) and
+                    isinstance(target_transport, vim.HostInternetScsiTargetTransport) and
+                    our_transport.iScsiName == target_transport.iScsiName) or \
+                   (isinstance(our_transport, vim.HostFibreChannelTargetTransport) and
+                    isinstance(target_transport, vim.HostFibreChannelTargetTransport) and
+                    our_transport.portWorldWideName == target_transport.portWorldWideName):
                     for lun in target.lun:
                         # lun.scsiLun = "key-vim.host.ScsiLun-020c0000006742b0f000004e2b0000000000000000496e66696e69"
                         # self._lun_key = 'key-vim.host.ScsiDisk-02000200006742b0f000004e2b0000000000000069496e66696e69'
