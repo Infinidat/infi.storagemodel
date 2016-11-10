@@ -24,13 +24,14 @@ class PredicateList(object):
         self._list_of_predicates = list_of_predicates
 
     def __call__(self):
-        results = []
         for predicate in self._list_of_predicates:
             result = predicate()
             logger.debug("Predicate {!r} returned {}".format(predicate, result))
-            results.append(result)
-        logger.debug("Returning {}".format(all(results)))
-        return all(results)
+            if not result:
+                logger.debug("Returning False")
+                return False
+        logger.debug("Returning True")
+        return True
 
     def __repr__(self):
         return "<PredicateList: {!r}>".format(self._list_of_predicates)
