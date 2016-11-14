@@ -5,7 +5,6 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import cached_method
 from infi.pyutils.patch import monkey_patch
 from infi.dtypes.iqn import IQN
-from traceback import extract_stack
 from pyVmomi import vim
 from logging import getLogger
 
@@ -28,7 +27,6 @@ def install_property_collectors_on_client(client):
 
 @contextmanager
 def with_host(client, host):
-    from traceback import extract_stack
     from infi.pyvmomi_wrapper import get_reference_to_managed_object
     monkey_patch(infi.iscsiapi, "get_iscsiapi", ConnectionManagerFactory.get)
     previous = ConnectionManagerFactory.get()

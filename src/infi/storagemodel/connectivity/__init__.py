@@ -89,7 +89,7 @@ class ConnectivityFactoryImpl(object):
 
     def get_iscsi_hctl_mappings(elf):
         from infi.iscsiapi import get_iscsiapi
-        result =  {}
+        result = {}
         try:
             iscsiapi = get_iscsiapi()
         except ImportError:

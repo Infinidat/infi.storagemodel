@@ -28,11 +28,11 @@ def get_luns_from_report_luns(host, channel, target):
     if lun_type not in (DIRECT_ACCESS_BLOCK_DEVICE, STORAGE_ARRAY_CONTROLLER_DEVICE):
         logger.debug("{} Skipping lun type {}".format(getpid(), lun_type))
         raise SkipLunTypeException
-    controller_lun_set = set([first_lun]) # some devices, like IBM FlashSystem, does not return LUN0 in the list
+    controller_lun_set = set([first_lun])  # some devices, like IBM FlashSystem, does not return LUN0 in the list
     sg_device = get_scsi_generic_device(host, channel, target, first_lun)
     reported_luns = set(do_report_luns(sg_device).lun_list)
     if first_lun != 0:
-        reported_luns -= set([0]) # some devices, like EMC Symmetrix, may not have any device attached to LUN0 yet still report it
+        reported_luns -= set([0])  # some devices, like EMC Symmetrix, may not have any device attached to LUN0 yet still report it
     return controller_lun_set.union(reported_luns)
 
 @func_logger

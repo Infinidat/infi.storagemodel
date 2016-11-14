@@ -63,7 +63,6 @@ class WindowsNativeMultipathModel(multipath.NativeMultipathModel):
                     continue
                 yield WindowsNativeMultipathBlockDevice(disk_drive, multipath_object, policies_dict)
 
-
         run_together(partial(_is_physical_drive, drive) for drive in _iter_disk_drives())
         return list(physical_drives)
 

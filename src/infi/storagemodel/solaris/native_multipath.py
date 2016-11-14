@@ -49,7 +49,7 @@ class SolarisSinglePathEntry(Munch):
                         port_hct = remote_port.hct
             return port_hct
 
-        h,c,t = get_hct(self.initiator_port_name, self.target_port_name)
+        h, c, t = get_hct(self.initiator_port_name, self.target_port_name)
         if (h, c, t) == (-1, 0, -1):
             return None
         try:
@@ -87,7 +87,7 @@ class SolarisMultipathClient(object):
         try:
             return execute_command(cmd.split()).get_stdout()
         except OSError as e:
-            if e.errno not in (2, 20): # file not found, not a directory
+            if e.errno not in (2, 20):  # file not found, not a directory
                 logger.exception("{} failed with unknown reason".formart(cmd[0]))
             return ""
         except ExecutionError:

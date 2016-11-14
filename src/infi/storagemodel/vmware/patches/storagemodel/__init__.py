@@ -5,7 +5,6 @@ from infi.pyutils.patch import monkey_patch
 from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page_data
 from infi.dtypes.hctl import HCTL
 from time import time
-from time import time
 from logging import getLogger
 from pyVmomi import vim
 import infi.storagemodel
@@ -243,7 +242,6 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
     def get_scsi_standard_inquiry(self):  # pragma: no cover
         from infi.asi.cdb.inquiry.standard import StandardInquiryDataBuffer
         byte_array = self._scsi_lun_data_object.standardInquiry
-        buffer = byte_array_to_string(byte_array)
         inquiry_buffer = StandardInquiryDataBuffer()
         inquiry_buffer.unpack(byte_array_to_string(byte_array))
         return inquiry_buffer

@@ -91,4 +91,4 @@ def is_there_a_bug_in_sysfs_async_scanning():
 
 def is_sg_module_loaded():
     with open('/proc/modules') as fd:
-        return 'sg ' in fd.read() # sg 40721 0 - Live 0xffffffffa034f000
+        return 'sg ' in fd.read()  # sg 40721 0 - Live 0xffffffffa034f000
