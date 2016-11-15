@@ -2,7 +2,6 @@ import infi.iscsiapi
 from infi.iscsiapi import base
 from infi.iscsiapi import auth as iscsiapi_auth_module
 from infi.pyutils.contexts import contextmanager
-from infi.pyutils.lazy import cached_method
 from infi.pyutils.patch import monkey_patch
 from infi.dtypes.iqn import IQN
 from pyVmomi import vim
@@ -47,7 +46,6 @@ class ConnectionManager(base.ConnectionManager):
     def _install_property_collector(self):
         install_property_collectors_on_client(self._client)
 
-    @cached_method
     def _get_properties(self):
         properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties().get(self._moref, dict())
         return properties
