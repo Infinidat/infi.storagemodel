@@ -6,7 +6,6 @@ from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page_data
 from infi.dtypes.hctl import HCTL
 from time import time
 from logging import getLogger
-from pyVmomi import vim
 import infi.storagemodel
 
 logger = getLogger(__name__)
@@ -294,6 +293,7 @@ class VMwarePath(multipath.Path):
 
     @cached_method
     def get_hctl(self):
+        from pyVmomi import vim
         from infi.storagemodel.errors import RescanIsNeeded
         scsi_topology = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, vim.HostScsiTopology())
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]

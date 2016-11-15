@@ -4,7 +4,6 @@ from infi.iscsiapi import auth as iscsiapi_auth_module
 from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
 from infi.dtypes.iqn import IQN
-from pyVmomi import vim
 from logging import getLogger
 
 
@@ -54,6 +53,7 @@ class ConnectionManager(base.ConnectionManager):
         return self._get_properties().get(HBAAPI_PROPERTY_PATH, [])
 
     def _get_iscsi_host_bus_adapter(self):
+        from pyVmomi import vim
         ISCSI_HBA_CLASS = vim.HostInternetScsiHba
         adapters = [adapter for adapter in self._get_all_host_bus_adapters() if isinstance(adapter, ISCSI_HBA_CLASS)]
         return adapters[0]
@@ -80,6 +80,7 @@ class ConnectionManager(base.ConnectionManager):
         pass
 
     def _iscsiapi_auth_to_vmware_auth(self, iscsiapi_auth):
+        from pyVmomi import vim
         if isinstance(iscsiapi_auth, iscsiapi_auth_module.ChapAuth):
             return vim.HostInternetScsiHbaAuthenticationProperties(
                 chapAuthEnabled=True,
@@ -100,6 +101,7 @@ class ConnectionManager(base.ConnectionManager):
     def login_all(self, target, auth=None):
         # this function does "discover" too.
         # "target" is just the ip/port as returned by the fake "discover"
+        from pyVmomi import vim
         vmauth = self._iscsiapi_auth_to_vmware_auth(auth)
         iscsi_adapter = self._get_iscsi_host_bus_adapter()
         storage_system = self._get_host_storage_system()
@@ -108,6 +110,7 @@ class ConnectionManager(base.ConnectionManager):
         storage_system.AddInternetScsiSendTargets(iScsiHbaDevice=iscsi_adapter.device, targets=[send_target])
 
     def logout_all(self, target):
+        from pyVmomi import vim
         # this function does "undiscover" too.
         # "target" is an actual Target object as returned from get_discovered_targets
         iscsi_adapter = self._get_iscsi_host_bus_adapter()
@@ -138,6 +141,7 @@ class ConnectionManager(base.ConnectionManager):
     def get_sessions(self):
         # this returns very incomplete structures, enough to make get_iscsi_hctl_mappings (for get_connectivty) work
         from infi.dtypes.hctl import HCT
+        from pyVmomi import vim
         result = []
         scsi_topology = self._get_properties().get(TOPOLOGY_PROPERTY_PATH, vim.HostScsiTopology())
         for scsi_interface in scsi_topology:
