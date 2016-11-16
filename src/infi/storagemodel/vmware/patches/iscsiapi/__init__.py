@@ -167,10 +167,10 @@ class ConnectionManagerFactory(object):
     def create(cls, client, hostsystem):
         from infi.pyvmomi_wrapper import get_reference_to_managed_object
         key = get_reference_to_managed_object(hostsystem)
-        if key not in cls.models_by_host_value:
+        if (client, key) not in cls.models_by_host_value:
             value = ConnectionManager(client, key)
-            cls.models_by_host_value[key] = value
-        return cls.models_by_host_value[key]
+            cls.models_by_host_value[(client, key)] = value
+        return cls.models_by_host_value[(client, key)]
 
     @classmethod
     def get_id(cls):
