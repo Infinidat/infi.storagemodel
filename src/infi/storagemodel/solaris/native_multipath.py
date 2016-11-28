@@ -23,15 +23,26 @@ class SolarisSinglePathEntry(Munch):
     def __init__(self, initiator_port_name, target_port_name, state, disabled, mpath_dev_path, ports):
         self.initiator_port_name = initiator_port_name
         self.target_port_name = target_port_name
+        self.is_iscsi_session = False
+        if "iqn." in target_port_name:
+            self.is_iscsi_session = True
+            self.target_iqn, self.iscsi_session_uid = self._get_target_uid_and_iqn()
         self.state = state
         self.disabled = disabled
         self.ports = ports
         self.hctl = self._get_hctl(mpath_dev_path)
 
+    def _get_target_uid_and_iqn(self):
+        '''returns iscsi target iqn and session uid'''
+        from infi.dtypes.iqn import IQN
+        _ = IQN(self.target_port_name.split(',')[1])
+        iqn = self.target_port_name.split(',')[1]
+        uid = self.target_port_name.split(',')[2]
+        return iqn, uid
+
     def _get_hctl(self, mpath_dev_path):
         from infi.dtypes.hctl import HCTL
-
-        def get_path_lun():
+        def get_path_lun_fc():
             from infi.hbaapi.generators.hbaapi import HbaApi
             for device_name, host_wwn, target_wwn, lun in HbaApi().iter_port_mappings():
                 if mpath_dev_path in device_name and \
@@ -39,7 +50,7 @@ class SolarisSinglePathEntry(Munch):
                     str(target_wwn) == self.target_port_name:
                     return lun
 
-        def get_hct(hba_port_wwn, remote_port_wwn):
+        def get_hct_fc(hba_port_wwn, remote_port_wwn):
             port_hct = (-1, 0, -1)
             for hba_port in self.ports:
                 if not (hba_port.port_wwn == hba_port_wwn):
@@ -49,11 +60,51 @@ class SolarisSinglePathEntry(Munch):
                         port_hct = remote_port.hct
             return port_hct
 
-        h, c, t = get_hct(self.initiator_port_name, self.target_port_name)
+        def get_hct_iscsi():
+            from infi.iscsiapi import get_iscsiapi
+            iscsiapi = get_iscsiapi()
+            sessions = iscsiapi.get_sessions()
+            for session in sessions:
+                if session.get_uid() == self.iscsi_session_uid and \
+                str(session.get_target().get_iqn()) == self.target_iqn:
+                    return session.get_hct()
+            return (-1, 0, -1)
+
+        def get_path_lun_iscsi():
+            from infi.storagemodel.unix.utils import execute_command
+            from infi.dtypes.iqn import IQN
+            import re
+            process = execute_command(['iscsiadm', 'list', 'target', '-S'])
+            output = process.get_stdout().splitlines()
+            for line_number, line in enumerate(output):
+                if re.search(r'Target: ', line):
+                    result_iqn = line.split()[1]
+                    _ = IQN(result_iqn)  # make sure iqn is valid
+                    if result_iqn != self.target_iqn:
+                        continue
+                    for ident_line in range(1, len(output)):
+                        if re.search(r'TPGT:', output[line_number + ident_line]):
+                            uid = output[line_number + ident_line].split()[1]
+                            if uid != self.iscsi_session_uid:
+                                break
+                        if re.search(r'LUN:',output[line_number + ident_line]):
+                            lun = output[line_number + ident_line].split()[1]
+                            return lun
+                        if re.search('OS Device Name', output[line_number + ident_line]):
+                            # max search - no point searching after here, last line in this section
+                            break
+
+        if self.is_iscsi_session:
+            h, c, t = get_hct_iscsi()
+        else:
+            h, c, t = get_hct_fc(self.initiator_port_name, self.target_port_name)
         if (h, c, t) == (-1, 0, -1):
             return None
         try:
-            l = get_path_lun()
+            if self.is_iscsi_session:
+                l = get_path_lun_iscsi()
+            else:
+                l = get_path_lun_fc()
         except:
             return None
         return HCTL(h, c, t, l)
