@@ -30,6 +30,7 @@ class SolarisSinglePathEntry(Munch):
         self.state = state
         self.disabled = disabled
         self.ports = ports
+        self.mpath_dev_path = mpath_dev_path
         self.hctl = self._get_hctl(mpath_dev_path)
 
     def _get_target_uid_and_iqn(self):
@@ -43,7 +44,7 @@ class SolarisSinglePathEntry(Munch):
     def _get_path_lun_fc(self):
         from infi.hbaapi.generators.hbaapi import HbaApi
         for device_name, host_wwn, target_wwn, lun in HbaApi().iter_port_mappings():
-            if mpath_dev_path in device_name and \
+            if self.mpath_dev_path in device_name and \
                 str(host_wwn) == self.initiator_port_name and \
                 str(target_wwn) == self.target_port_name:
                 return lun
