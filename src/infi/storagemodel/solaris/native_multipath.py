@@ -81,34 +81,43 @@ class SolarisSinglePathEntry(Munch):
                 _ = IQN(result_iqn)  # make sure iqn is valid
                 if result_iqn != self.target_iqn:
                     continue
-                for ident_line in range(1, len(output)):
-                    if re.search(r'TPGT:', output[line_number + ident_line]):
-                        uid = output[line_number + ident_line].split()[1]
+                for indent_line in range(line_number + 1, len(output)):
+                    if re.search(r'TPGT:', output[indent_line]):
+                        uid = output[indent_line].split()[1]
                         if uid != self.iscsi_session_uid:
                             break
-                    if re.search(r'LUN:', output[line_number + ident_line]):
-                        lun = output[line_number + ident_line].split()[1]
-                        return int(lun)
-                    if re.search('OS Device Name', output[line_number + ident_line]):
-                        # max search - no point searching after here, last line in this section
-                        break
+                    if re.search(r'LUN:', output[indent_line]):
+                        lun = output[indent_line].split()[1]
+                    if re.search('OS Device Name', output[indent_line]):
+                        device_name = output[indent_line].split()[3]
+                        if device_name == self.mpath_dev_path:
+                            return int(lun)
+                        elif "array" in self.mpath_dev_path:
+                            if "array" in device_name or "Not" in device_name:
+                                msg = "correlating device {} <-> {}, both should be lun 0".format(output[indent_line],
+                                                                                                  self.mpath_dev_path)
+                                logger.debug(msg)
+                                return 0
+                        else:
+                            continue
+                    if re.search(r'Target: ', output[indent_line]):
+                        break  # We reached the next target no point searching forward
+
 
     def _get_hctl(self, mpath_dev_path):
         from infi.dtypes.hctl import HCTL
         if self.is_iscsi_session:
             h, c, t = self._get_hct_iscsi()
+            if (h, c, t) == (-1, 0, -1):
+                return None
+            else:
+                return HCTL(h, c, t, self._get_path_lun_iscsi())
         else:
             h, c, t = self._get_hct_fc(self.initiator_port_name, self.target_port_name)
-        if (h, c, t) == (-1, 0, -1):
-            return None
-        try:
-            if self.is_iscsi_session:
-                l = self._get_path_lun_iscsi()
+            if (h, c, t) == (-1, 0, -1):
+                return None
             else:
-                l = self._get_path_lun_fc()
-        except:
-            return None
-        return HCTL(h, c, t, l)
+                return HCTL(h, c, t, self._get_path_lun_fc())
 
     def get_hctl(self):
         return self.hctl
