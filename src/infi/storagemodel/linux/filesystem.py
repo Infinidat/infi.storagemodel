@@ -16,13 +16,12 @@ class LinuxFileSystem(filesystem.UnixFileSystem):
         return entry
 
     def format(self, block_device, *args, **kwargs):
-        """currently we ignore args and kwargs"""
         from .partition import LinuxPartition
         if isinstance(block_device, LinuxPartition):
             disk = block_device._containing_disk
             partition = block_device._parted_partition
             number = partition.get_number()
-            disk._format_partition(number, self.get_name())
+            disk._format_partition(number, self.get_name(), **kwargs)
         else:
             raise DeviceIsNotLinuxPartition(block_device.__str__())
 

@@ -47,8 +47,8 @@ class LinuxDiskDrive(disk.DiskDrive):
         from .partition import LinuxMBRPartitionTable
         return LinuxMBRPartitionTable.create_partition_table(self, alignment_in_bytes)
 
-    def _format_partition(self, number, filesystem_name):
-        self._get_parted_disk_drive().format_partition(number, filesystem_name)
+    def _format_partition(self, number, filesystem_name, **kwargs):
+        self._get_parted_disk_drive().format_partition(number, filesystem_name, **kwargs)
 
     @cached_method
     def get_block_access_paths_for_partitions(self):
