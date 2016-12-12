@@ -37,8 +37,7 @@ class WindowsStorageModel(StorageModel):
         from infi.devicemanager import DeviceManager
         from infi.storagemodel.base.gevent_wrapper import joinall, defer, spawn
         dm = DeviceManager()
-        rescan_callables = (defer(controller.rescan) for controller in dm.storage_controllers
-                            if controller.is_real_device())
+        rescan_callables = (defer(controller.rescan) for controller in dm.storage_controllers)
         greenlets = [spawn(item) for item in rescan_callables]
         if wait_for_completion:
             joinall(greenlets, raise_error=True)
