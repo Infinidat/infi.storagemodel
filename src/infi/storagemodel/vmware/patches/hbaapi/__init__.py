@@ -2,7 +2,6 @@ from infi.dtypes.wwn import WWN
 from infi.hbaapi import Port
 from infi.hbaapi.generators import Generator
 from infi.pyutils.contexts import contextmanager
-from infi.pyutils.lazy import cached_method
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -33,7 +32,6 @@ class HostSystemPortGenerator(Generator):
     def _install_property_collector(self):
         install_property_collectors_on_client(self._client)
 
-    @cached_method
     def _get_properties(self):
         properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties().get(self._moref, dict())
         return properties

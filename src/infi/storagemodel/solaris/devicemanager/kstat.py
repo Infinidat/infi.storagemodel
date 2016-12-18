@@ -109,7 +109,7 @@ class kstat_close(KStatFunction):
 
     @classmethod
     def get_parameters(cls):
-        return (kstat_ctl_t_p)
+        return ((kstat_ctl_t_p, IN),)
 
 class kstat_read(KStatFunction):
     return_value = c_kid_t

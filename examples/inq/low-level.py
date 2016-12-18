@@ -1,14 +1,28 @@
+from platform import system
 from infi.pyutils.contexts import contextmanager
 
 
 @contextmanager
 def asi_context(access_path):
     import os
-    from infi.asi.unix import OSFile
-    from infi.asi.linux import LinuxIoctlCommandExecuter
 
-    handle = OSFile(os.open(access_path, os.O_RDWR))
-    executer = LinuxIoctlCommandExecuter(handle)
+    operating_system = system()
+
+    if operating_system == 'Windows':
+        from infi.asi.win32 import OSFile, Win32CommandExecuter
+        handle = OSFile(access_path)
+        executer = Win32CommandExecuter(handle)
+    else:
+        from infi.asi.unix import OSFile
+        handle = OSFile(os.open(access_path, os.O_RDWR))
+
+        if operating_system == 'SunOS':
+            from infi.asi.solaris import SolarisCommandExecuter
+            executer = SolarisCommandExecuter(handle)
+        elif operating_system == 'linux':
+            from infi.asi.linux import LinuxIoctlCommandExecuter
+            executer = LinuxIoctlCommandExecuter(handle)
+
     try:
         yield executer
     finally:
@@ -52,6 +66,8 @@ def get_capacity_in_bytes(access_path):
 
 
 def get_devices():
+    from glob import glob
+
     def windows():
         from infi.devicemanager import DeviceManager
         from infi.devicemanager.ioctl import DeviceIoControl
@@ -62,13 +78,15 @@ def get_devices():
                 drive_number != -1]
 
     def linux():
-        from glob import glob
         sd = sorted(dev for dev in glob("/dev/sd*") if not dev[-1].isdigit())
         dm = sorted(glob("/dev/dm*"))
         return sd + dm
 
-    from platform import system
-    return dict(Windows=windows, Linux=linux).get(system(), lambda: [])()
+    def solaris():
+        rdsk = sorted(glob("/dev/rdsk/c*"))
+        return rdsk
+
+    return dict(Windows=windows, Linux=linux, SunOS=solaris).get(system(), lambda: [])()
 
 
 def main():

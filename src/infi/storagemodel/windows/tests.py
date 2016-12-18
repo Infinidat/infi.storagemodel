@@ -158,13 +158,12 @@ class MockModelTestCase(ModelTestCase):
         from munch import Munch
 
         def _build(managed_by_mpio, visible):
-            return Munch(parent=Munch(_instance_id=Munch(lower=lambda:MPIO_BUS_DRIVER_INSTANCE_ID if managed_by_mpio else self._raise())),
-                         is_hidden=lambda:False if visible else self._raise())
+            return Munch(parent=Munch(_instance_id=Munch(lower=lambda: MPIO_BUS_DRIVER_INSTANCE_ID if managed_by_mpio else self._raise())),
+                         is_hidden=lambda: False if visible else self._raise())
 
         device_manager = Munch(disk_drives=[])
         for managed_by_mpio in (True, False):
             device_manager.disk_drives.append(_build(managed_by_mpio, False))
-
 
         class MockWindowsSCSIModel(WindowsSCSIModel):
             def get_device_manager(self):

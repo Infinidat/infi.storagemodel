@@ -37,4 +37,3 @@ class LinuxStorageModel(UnixStorageModel):
         from .iscsi import iscsi_rescan
         iscsi_rescan()
         return main()
-

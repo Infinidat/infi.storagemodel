@@ -23,40 +23,101 @@ class SolarisSinglePathEntry(Munch):
     def __init__(self, initiator_port_name, target_port_name, state, disabled, mpath_dev_path, ports):
         self.initiator_port_name = initiator_port_name
         self.target_port_name = target_port_name
+        self.is_iscsi_session = False
+        if "iqn." in target_port_name:
+            self.is_iscsi_session = True
+            self.target_iqn, self.iscsi_session_uid = self._get_target_uid_and_iqn()
         self.state = state
         self.disabled = disabled
         self.ports = ports
+        self.mpath_dev_path = mpath_dev_path
         self.hctl = self._get_hctl(mpath_dev_path)
+
+    def _get_target_uid_and_iqn(self):
+        '''returns iscsi target iqn and session uid'''
+        from infi.dtypes.iqn import IQN
+        iqn = self.target_port_name.split(',')[1]
+        _ = IQN(iqn)
+        uid = self.target_port_name.split(',')[2]
+        return iqn, uid
+
+    def _get_path_lun_fc(self):
+        from infi.hbaapi.generators.hbaapi import HbaApi
+        for device_name, host_wwn, target_wwn, lun in HbaApi().iter_port_mappings():
+            if self.mpath_dev_path in device_name and \
+                str(host_wwn) == self.initiator_port_name and \
+                str(target_wwn) == self.target_port_name:
+                return lun
+
+    def _get_hct_fc(self, hba_port_wwn, remote_port_wwn):
+        port_hct = (-1, 0, -1)
+        for hba_port in self.ports:
+            if not (hba_port.port_wwn == hba_port_wwn):
+                continue
+            for remote_port in hba_port.discovered_ports:
+                if remote_port.port_wwn == remote_port_wwn:
+                    port_hct = remote_port.hct
+        return port_hct
+
+    def _get_hct_iscsi(self):
+        from infi.iscsiapi import get_iscsiapi
+        iscsiapi = get_iscsiapi()
+        sessions = iscsiapi.get_sessions()
+        for session in sessions:
+            if session.get_uid() == self.iscsi_session_uid and \
+            str(session.get_target().get_iqn()) == self.target_iqn:
+                return session.get_hct()
+        return (-1, 0, -1)
+
+    def _get_path_lun_iscsi(self):
+        from infi.storagemodel.unix.utils import execute_command
+        from infi.dtypes.iqn import IQN
+        import re
+        process = execute_command(['iscsiadm', 'list', 'target', '-S'])
+        output = process.get_stdout().splitlines()
+        for line_number, line in enumerate(output):
+            if re.search(r'Target: ', line):
+                result_iqn = line.split()[1]
+                _ = IQN(result_iqn)  # make sure iqn is valid
+                if result_iqn != self.target_iqn:
+                    continue
+                for indent_line in range(line_number + 1, len(output)):
+                    if re.search(r'TPGT:', output[indent_line]):
+                        uid = output[indent_line].split()[1]
+                        if uid != self.iscsi_session_uid:
+                            break
+                    if re.search(r'LUN:', output[indent_line]):
+                        lun = output[indent_line].split()[1]
+                    if re.search('OS Device Name', output[indent_line]):
+                        device_name = output[indent_line].split()[3]
+                        if device_name == self.mpath_dev_path:
+                            return int(lun)
+                        elif "array" in self.mpath_dev_path:
+                            if "array" in device_name or "Not" in device_name:
+                                msg = "correlating device {} <-> {}, both should be lun 0".format(output[indent_line],
+                                                                                                  self.mpath_dev_path)
+                                logger.debug(msg)
+                                return 0
+                        else:
+                            continue
+                    if re.search(r'Target: ', output[indent_line]):
+                        break  # We reached the next target no point searching forward
+
 
     def _get_hctl(self, mpath_dev_path):
         from infi.dtypes.hctl import HCTL
-
-        def get_path_lun():
-            from infi.hbaapi.generators.hbaapi import HbaApi
-            for device_name, host_wwn, target_wwn, lun in HbaApi().iter_port_mappings():
-                if mpath_dev_path in device_name and \
-                    str(host_wwn) == self.initiator_port_name and \
-                    str(target_wwn) == self.target_port_name:
-                    return lun
-
-        def get_hct(hba_port_wwn, remote_port_wwn):
-            port_hct = (-1, 0, -1)
-            for hba_port in self.ports:
-                if not (hba_port.port_wwn == hba_port_wwn):
-                    continue
-                for remote_port in hba_port.discovered_ports:
-                    if remote_port.port_wwn == remote_port_wwn:
-                        port_hct = remote_port.hct
-            return port_hct
-
-        h,c,t = get_hct(self.initiator_port_name, self.target_port_name)
-        if (h, c, t) == (-1, 0, -1):
-            return None
-        try:
-            l = get_path_lun()
-        except:
-            return None
-        return HCTL(h, c, t, l)
+        if self.is_iscsi_session:
+            h, c, t = self._get_hct_iscsi()
+            if (h, c, t) == (-1, 0, -1):
+                return None
+            else:
+                return HCTL(h, c, t, self._get_path_lun_iscsi())
+        else:
+            h, c, t = self._get_hct_fc(self.initiator_port_name, self.target_port_name)
+            if (h, c, t) == (-1, 0, -1):
+                return None
+            else:
+                return HCTL(h, c, t, self._get_path_lun_fc())
 
     def get_hctl(self):
         return self.hctl
@@ -87,7 +148,7 @@ class SolarisMultipathClient(object):
         try:
             return execute_command(cmd.split()).get_stdout()
         except OSError as e:
-            if e.errno not in (2, 20): # file not found, not a directory
+            if e.errno not in (2, 20):  # file not found, not a directory
                 logger.exception("{} failed with unknown reason".formart(cmd[0]))
             return ""
         except ExecutionError:
@@ -135,7 +196,7 @@ class SolarisRoundRobin(multipath.RoundRobin):
     pass
 
 
-QUERY_TIMEOUT = 3 # 3 seconds
+QUERY_TIMEOUT = 3  # 3 seconds
 
 class SolarisNativeMultipathDeviceMixin(object):
     @cached_method

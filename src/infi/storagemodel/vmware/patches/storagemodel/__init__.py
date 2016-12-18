@@ -5,7 +5,6 @@ from infi.pyutils.patch import monkey_patch
 from infi.asi.cdb.inquiry.vpd_pages import get_vpd_page_data
 from infi.dtypes.hctl import HCTL
 from time import time
-from time import time
 from logging import getLogger
 import infi.storagemodel
 
@@ -242,7 +241,6 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
     def get_scsi_standard_inquiry(self):  # pragma: no cover
         from infi.asi.cdb.inquiry.standard import StandardInquiryDataBuffer
         byte_array = self._scsi_lun_data_object.standardInquiry
-        buffer = byte_array_to_string(byte_array)
         inquiry_buffer = StandardInquiryDataBuffer()
         inquiry_buffer.unpack(byte_array_to_string(byte_array))
         return inquiry_buffer
@@ -303,7 +301,14 @@ class VMwarePath(multipath.Path):
         # path_data_object.adapter is key-vim.host.FibreChannelHba-vmhba2
         for adapter in [adapter for adapter in scsi_topology.adapter if adapter.key.split('-')[-1] == expected_vmhba]:
             for target in adapter.target:
-                if self._path_data_object.transport.portWorldWideName == target.transport.portWorldWideName:
+                our_transport = self._path_data_object.transport
+                target_transport = target.transport
+                if (isinstance(our_transport, vim.HostInternetScsiTargetTransport) and
+                    isinstance(target_transport, vim.HostInternetScsiTargetTransport) and
+                    our_transport.iScsiName == target_transport.iScsiName) or \
+                   (isinstance(our_transport, vim.HostFibreChannelTargetTransport) and
+                    isinstance(target_transport, vim.HostFibreChannelTargetTransport) and
+                    our_transport.portWorldWideName == target_transport.portWorldWideName):
                     for lun in target.lun:
                         # lun.scsiLun = "key-vim.host.ScsiLun-020c0000006742b0f000004e2b0000000000000000496e66696e69"
                         # self._lun_key = 'key-vim.host.ScsiDisk-02000200006742b0f000004e2b0000000000000069496e66696e69'
@@ -469,10 +474,10 @@ class StorageModelFactory(object):
     def create(cls, client, hostsystem):
         from infi.pyvmomi_wrapper import get_reference_to_managed_object
         key = get_reference_to_managed_object(hostsystem)
-        if key not in cls.models_by_host_value:
+        if (client, key) not in cls.models_by_host_value:
             value = VMwareHostStorageModel(client, key)
-            cls.models_by_host_value[key] = value
-        return cls.models_by_host_value[key]
+            cls.models_by_host_value[(client, key)] = value
+        return cls.models_by_host_value[(client, key)]
 
     @classmethod
     def get_id(cls):

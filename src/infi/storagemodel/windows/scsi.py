@@ -3,7 +3,7 @@ from infi.pyutils.lazy import cached_method
 from ..base import scsi
 from .device_mixin import WindowsDeviceMixin, WindowsDiskDeviceMixin
 from .device_helpers import is_disk_drive_managed_by_windows_mpio, safe_get_physical_drive_number
-from .device_helpers import is_disk_visible_in_device_manager
+from .device_helpers import is_disk_visible_in_device_manager, is_device_installed
 
 # pylint: disable=W0212,E1002
 
@@ -36,6 +36,8 @@ class WindowsSCSIModel(scsi.SCSIModel):
         for disk_drive in self.get_device_manager().disk_drives:
             if is_disk_drive_managed_by_windows_mpio(disk_drive):
                 continue
+            if not is_device_installed(disk_drive):
+                continue
             if not is_disk_visible_in_device_manager(disk_drive):
                 continue
             device = WindowsSCSIBlockDevice(disk_drive)
@@ -49,5 +51,8 @@ class WindowsSCSIModel(scsi.SCSIModel):
 
     @cached_method
     def get_all_storage_controller_devices(self):
-        devices = [WindowsSCSIStorageController(device) for device in self.get_device_manager().scsi_devices]
-        return [device for device in devices if u'ScsiArray' in device._device_object.hardware_ids]
+        controller_devices = []
+        for scsi_device in self.get_device_manager().scsi_devices:
+            if is_device_installed(scsi_device) and u'ScsiArray' in scsi_device.hardware_ids:
+                controller_devices.append(WindowsSCSIStorageController(scsi_device))
+        return controller_devices

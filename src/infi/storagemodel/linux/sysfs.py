@@ -166,14 +166,13 @@ class Sysfs(object):
             if not d.startswith("sd") or d[-1].isdigit():
                 continue
 
-            dev_path = os.path.join(SYSFS_CLASS_ALL_DEVICE_PATH,d)
+            dev_path = os.path.join(SYSFS_CLASS_ALL_DEVICE_PATH, d)
             try:
                 hctl = get_hctl_for_sd_device(dev_path)
             except (IOError, OSError):
                 log.debug("no hctl for sd device {}".format(dev_path))
                 continue
             self._sd_structures.setdefault(hctl, []).append(d)
-
 
         for hctl_str in os.listdir(SYSFS_CLASS_SCSI_DEVICE_PATH):
             dev_path = os.path.join(SYSFS_CLASS_SCSI_DEVICE_PATH, hctl_str, "device")
@@ -210,7 +209,6 @@ class Sysfs(object):
                 self.sg_disks.append(sd_disk)
                 self.block_devices.append(sd_disk)
                 self.block_devno_to_device[sd_disk.get_block_devno()] = sd_disk
-
 
     def _get_sysfs_block_devices_pathnames(self):
         """ Returns a dict of name:path """

@@ -25,3 +25,11 @@ def is_disk_visible_in_device_manager(disk_drive):
         return not disk_drive.is_hidden()
     except KeyError:
         return False
+
+
+def is_device_installed(device):
+    try:
+        device.hardware_ids
+        return True
+    except:
+        return False
