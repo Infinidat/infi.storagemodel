@@ -79,6 +79,12 @@ class ISCSIConnectivity(object):
 
 
 class ConnectivityFactoryImpl(object):
+    @cached_method
+    def get_iscsi_sessions(self):
+        from infi.iscsiapi import get_iscsiapi
+        iscsiapi = get_iscsiapi()
+        return get_iscsiapi().get_sessions()
+
     def get_fc_hctl_mappings(self):
         from infi.hbaapi import get_ports_generator
         result = {}
@@ -87,13 +93,11 @@ class ConnectivityFactoryImpl(object):
                 result[remote_port.hct] = (local_port, remote_port,)
         return result
 
-    def get_iscsi_hctl_mappings(elf):
-        from infi.iscsiapi import get_iscsiapi
+    def get_iscsi_hctl_mappings(self):
         from infi.iscsiapi.iscsi_exceptions import NotReadyException
         result = {}
         try:
-            iscsiapi = get_iscsiapi()
-            for session in get_iscsiapi().get_sessions():
+            for session in self.get_iscsi_sessions():
                 hct = (session.get_hct().get_host(), session.get_hct().get_channel(), session.get_hct().get_target())
                 result[hct] = (session.get_source_iqn(), session.get_target().get_iqn())
         except (ImportError, NotReadyException):
