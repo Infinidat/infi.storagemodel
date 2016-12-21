@@ -93,7 +93,7 @@ class ConnectivityFactoryImpl(object):
                 result[remote_port.hct] = (local_port, remote_port,)
         return result
 
-    def get_iscsi_hctl_mappings(elf):
+    def get_iscsi_hctl_mappings(self):
         from infi.iscsiapi.iscsi_exceptions import NotReadyException
         result = {}
         try:
