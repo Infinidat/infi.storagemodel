@@ -129,6 +129,9 @@ class ConnectionManager(base.ConnectionManager):
         iscsi_adapter = self._get_iscsi_host_bus_adapter()
         result = []
         for parent, targets in groupby(iscsi_adapter.configuredStaticTarget, lambda target: target.parent):
+            if parent == 'Orphaned':
+                logger.debug("orphaned parent found for targets: {}".format(targets))
+                continue
             discovery_endpoint_ip, discovery_endpoint_port = parent.split(":")
             discovery_endpoint = base.Endpoint(discovery_endpoint_ip, int(discovery_endpoint_port))
             endpoints = []
