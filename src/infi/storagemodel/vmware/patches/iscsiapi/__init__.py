@@ -125,12 +125,15 @@ class ConnectionManager(base.ConnectionManager):
         storage_system.RemoveInternetScsiSendTargets(iScsiHbaDevice=iscsi_adapter.device, targets=[send_target])
 
     def get_discovered_targets(self):
+        from pyVmomi import vim
         from itertools import groupby
         iscsi_adapter = self._get_iscsi_host_bus_adapter()
         result = []
         for parent, targets in groupby(iscsi_adapter.configuredStaticTarget, lambda target: target.parent):
-            if parent == 'Orphaned':
-                logger.debug("orphaned parent found for targets: {}".format(targets))
+            if parent.discoveryMethod != vim.HostInternetScsiHbaStaticTargetTargetDiscoveryMethod.sendTargetMethod:
+                continue
+            if ':' not in parent:
+                logger.debug("parent {!r} is not sendtarget for targets: {}".format(parent, targets))
                 continue
             discovery_endpoint_ip, discovery_endpoint_port = parent.split(":")
             discovery_endpoint = base.Endpoint(discovery_endpoint_ip, int(discovery_endpoint_port))
