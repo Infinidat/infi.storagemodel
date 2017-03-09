@@ -2,6 +2,16 @@ import struct
 from .....errors import StorageModelError
 from .. import NFINIDAT_IEEE
 from infi.asi.cdb.inquiry.vpd_pages import designators
+from infi.instruct.buffer import be_uint_field, bytes_ref
+
+
+class InfinidatDesignator(designators.Buffer):
+    naa = be_uint_field(where=(bytes_ref[0].bits[4:8]))
+    ieee_company_id = be_uint_field(where=(bytes_ref[1].bits[4:8] + bytes_ref[0].bits[0:4] +
+                                           bytes_ref[2].bits[4:8] + bytes_ref[1].bits[0:4] +
+                                           bytes_ref[3].bits[4:8] + bytes_ref[2].bits[0:4]))
+    system_serial = be_uint_field(where=(bytes_ref[6:8]))
+    volume_id = be_uint_field(where=bytes_ref[8:16])
 
 
 class InfinidatNAA(object):
@@ -9,7 +19,11 @@ class InfinidatNAA(object):
         super(InfinidatNAA, self).__init__()
         if isinstance(data, (str, bytes)):
             data = self._string_to_designator(data)
-        if not isinstance(data, designators.NAA_IEEE_Registered_Extended_Designator):
+        elif not isinstance(data, designators.NAA_IEEE_Registered_Extended_Designator):
+            data = self._string_to_designator(data.pack())[4:]
+        elif not isinstance(data, InfinidatDesignator):
+            pass
+        else:
             raise StorageModelError("Invalid argument type {!r}".format(data))
         self._data = data
 
@@ -19,17 +33,17 @@ class InfinidatNAA(object):
 
     def get_system_serial(self):
         """ Returns the system serial number """
-        return self._data.vendor_specific_identifier
+        return self._data.system_serial
 
     def get_volume_id(self):
         """ Returns the volume entity ID """
-        return self._data.vendor_specific_identifier_extension
+        return self._data.volume_id
 
     def __str__(self):
         # return format as defined by http://tools.ietf.org/html/rfc3980#ref-FC-FS
         # e.g. naa.6742b0f000004e2b000000000000018c
         import binascii
-        binary_without_header = binascii.hexlify(self._data.pack())[8:].decode('ASCII')
+        binary_without_header = binascii.hexlify(self._data.pack()).decode('ASCII')
         return "naa." + binary_without_header
 
     def __repr__(self):
@@ -40,9 +54,8 @@ class InfinidatNAA(object):
         # e.g. 6742b0f000004e2b000000000000018c (in hex)
         # we'll convert to NAA_IEEE_Registered_Extended_Designator and parse using create_from_string,
         # but we need to add DescriptorHeaderFields - we'll just add zeros
-        raw_data = b"\x00\x00\x00" + struct.pack('b', len(descriptor)) + descriptor
-        designator = designators.NAA_IEEE_Registered_Extended_Designator()
-        designator.unpack(raw_data)
+        designator = InfinidatDesignator()
+        designator.unpack(descriptor)
         return designator
 
     @classmethod
