@@ -121,9 +121,16 @@ def try_target_scan(host, channel, target):
         msg = "Failed to scan target: host={} channel={} target={}. Continuing"
         logger.exception(msg.format(host, channel, target))
 
+def block_target_scan(host, channel, target):
+    from infi.storagemodel.base.gevent_wrapper import make_blocking
+    try:
+        make_blocking(try_target_scan, timeout=None)(host, channel, target)
+    except:
+        logger.exception("worker had an exception, did not shut down properly")
+
 @func_logger
 def rescan_scsi_host(host):
-    from infi.storagemodel.base.gevent_wrapper import start_process
+    from infi.storagemodel.base.gevent_wrapper import spawn
     channels = get_channels(host)
     subprocesses = []
     if not is_there_a_bug_in_sysfs_async_scanning():
@@ -132,7 +139,7 @@ def rescan_scsi_host(host):
     for channel in channels:
         targets = get_targets(host, channel)
         for target in targets:
-            subprocesses.append(start_process(try_target_scan, host, channel, target))
+            subprocesses.append(spawn(block_target_scan, host, channel, target))
     return subprocesses
 
 @func_logger
