@@ -59,7 +59,7 @@ def write_to_scsi_device(host, channel, target, lun):
         return False
     return True
 
-def do_scsi_cdb_with_in_process(sg_device, cdb):
+def _do_scsi_cdb(sg_device, cdb):
     """ **queue** - either a gipc pipe or a multiprocessing queue """
     from infi.asi.coroutines.sync_adapter import sync_wait
 
@@ -73,7 +73,7 @@ def do_scsi_cdb_with_in_process(sg_device, cdb):
 
 @func_logger
 def do_scsi_cdb(sg_device, cdb):
-    return_value = call_in_subprocess(do_scsi_cdb_with_in_process, sg_device, cdb)
+    return_value = _do_scsi_cdb(sg_device, cdb)
     if isinstance(return_value, ScsiCheckConditionError):
         raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
     if isinstance(return_value, ScsiCommandFailed):

@@ -93,12 +93,3 @@ def check_for_scsi_errors(func):
 
 def format_hctl(host, channel, target, lun):
     return "{}:{}:{}:{}".format(host, channel, target, lun)
-
-
-def call_in_subprocess(func, *args, **kwargs):
-    from infi.storagemodel.base.gevent_wrapper import make_blocking
-    try:
-        return make_blocking(func, timeout=TIMEOUT_IN_SEC)(*args, **kwargs)
-    except:
-        logger.exception('blocking call failed')
-        return ScsiCommandFailed()
