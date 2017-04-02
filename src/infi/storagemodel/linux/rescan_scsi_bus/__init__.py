@@ -11,11 +11,11 @@ logger = getLogger(__name__)
 
 @traceback_decorator
 @func_logger
-def main():
+def main(timeout=None):
     from infi.storagemodel.base.gevent_wrapper import reinit
     reinit()
     try:
-        rescan_scsi_hosts()
+        rescan_scsi_hosts(timeout=timeout)
         return 0
     except Exception as err:
         logger.exception("{} Unhandled exception in rescan_scsi_bus: {}".format(getpid(), err))

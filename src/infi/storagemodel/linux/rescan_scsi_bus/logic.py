@@ -121,15 +121,15 @@ def try_target_scan(host, channel, target):
         msg = "Failed to scan target: host={} channel={} target={}. Continuing"
         logger.exception(msg.format(host, channel, target))
 
-def block_target_scan(host, channel, target):
+def block_target_scan(host, channel, target, timeout=None):
     from infi.storagemodel.base.gevent_wrapper import make_blocking
     try:
-        make_blocking(try_target_scan, timeout=None)(host, channel, target)
+        make_blocking(try_target_scan, timeout=timeout)(host, channel, target)
     except:
         logger.exception("worker had an exception, did not shut down properly")
 
 @func_logger
-def rescan_scsi_host(host):
+def rescan_scsi_host(host, timeout=None):
     from infi.storagemodel.base.gevent_wrapper import spawn
     channels = get_channels(host)
     subprocesses = []
@@ -139,11 +139,11 @@ def rescan_scsi_host(host):
     for channel in channels:
         targets = get_targets(host, channel)
         for target in targets:
-            subprocesses.append(spawn(block_target_scan, host, channel, target))
+            subprocesses.append(spawn(block_target_scan, host, channel, target, timeout))
     return subprocesses
 
 @func_logger
-def rescan_scsi_hosts():
+def rescan_scsi_hosts(timeout=None):
     if not is_sg_module_loaded():
         # our need the 'sg' module, which is no longer loaded during system boot on redhat-7.1
         # altough the module should've been loaded by LinuxScsiModel.__init__
@@ -155,7 +155,7 @@ def rescan_scsi_hosts():
         execute_modprobe_sg()
     subprocesses = []
     for host_number in get_hosts():
-        subprocesses.extend(rescan_scsi_host(host_number))
+        subprocesses.extend(rescan_scsi_host(host_number, timeout))
     for subprocess in subprocesses:
         subprocess.join()
 
