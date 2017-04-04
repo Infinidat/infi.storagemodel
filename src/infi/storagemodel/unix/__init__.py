@@ -42,7 +42,8 @@ class UnixStorageModel(StorageModel):
         from infi.storagemodel.base import gevent_wrapper
         try:
             with gevent_wrapper.blocking_context(None) as server_and_worker:
-                call_method, call_args = server_and_worker[1].prepare(self.rescan_method)
+                model_without_cache = self.__class__()
+                call_method, call_args = server_and_worker[1].prepare(model_without_cache.rescan_method)
                 self.server_and_worker = server_and_worker
                 event.set()
                 return server_and_worker[1].call(call_method, call_args, timeout=self.rescan_subprocess_timeout)
