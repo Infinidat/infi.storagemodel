@@ -39,10 +39,5 @@ class LinuxFileSystem(filesystem.UnixFileSystem):
         return self._e2label(block_access_path)
 
     def set_label(self, block_access_path, label):  # pragma: no cover
-        before = self.get_label(block_access_path)
+        # e2label truncates labels, keep that in mind
         self._e2label(block_access_path, label)
-        after = self.get_label(block_access_path)
-        if after != label:
-            # e2label truncates labels
-            self._e2label(block_access_path, before)
-            raise InvalidLabel()
