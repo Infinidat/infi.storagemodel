@@ -294,6 +294,7 @@ class VMwarePath(multipath.Path):
     @cached_method
     def get_hctl(self):
         from infi.storagemodel.errors import RescanIsNeeded
+        from pyVmomi import vim
         scsi_topology_adapters = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, [])
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
         # adapter.key is key-vim.host.ScsiTopology.Interface-vmhba0
