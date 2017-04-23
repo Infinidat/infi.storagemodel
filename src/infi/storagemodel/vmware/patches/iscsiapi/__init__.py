@@ -55,7 +55,7 @@ class ConnectionManager(base.ConnectionManager):
     def _get_iscsi_host_bus_adapter(self):
         from pyVmomi import vim
         adapters = [adapter for adapter in self._get_all_host_bus_adapters() if
-                    isinstance(adapter, vim.HostInternetScsiHba) and adapter.isSoftwareBased]
+                    adapter.driver == 'iscsi_vmk']
         return adapters[0]
 
     def _get_host_storage_system(self):
