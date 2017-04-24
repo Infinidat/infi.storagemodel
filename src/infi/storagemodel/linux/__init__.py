@@ -36,4 +36,4 @@ class LinuxStorageModel(UnixStorageModel):
         from .rescan_scsi_bus import main
         from .iscsi import iscsi_rescan
         iscsi_rescan()
-        return main()
+        return main(timeout=max(self.rescan_subprocess_timeout-10, 10))

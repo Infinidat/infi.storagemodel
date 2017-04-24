@@ -3,7 +3,6 @@ from os import path, getpid
 from infi.pyutils.contexts import contextmanager
 
 from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute, TIMEOUT_IN_SEC
-from .utils import call_in_subprocess, put_result_in_queue
 from .utils import ScsiCommandFailed, ScsiCheckConditionError
 
 logger = getLogger(__name__)
@@ -19,15 +18,15 @@ def write_to_proc_scsi_scsi(line):
 
 @func_logger
 def scsi_add_single_device(host, channel, target, lun):
-    return call_in_subprocess(write_to_proc_scsi_scsi, "scsi add-single-device {} {} {} {}".format(host, channel, target, lun))
+    return write_to_proc_scsi_scsi("scsi add-single-device {} {} {} {}".format(host, channel, target, lun))
 
 @func_logger
 def scsi_remove_single_device(host, channel, target, lun):
-    return call_in_subprocess(write_to_proc_scsi_scsi, "scsi remove-single-device {} {} {} {}".format(host, channel, target, lun))
+    return write_to_proc_scsi_scsi("scsi remove-single-device {} {} {} {}".format(host, channel, target, lun))
 
 @func_logger
 def scsi_host_scan(host):
-    return call_in_subprocess(write_to_scsi_host, host)
+    return write_to_scsi_host(host)
 
 def write_to_scsi_host(host):
     scan_file = "/sys/class/scsi_host/host{}/scan".format(host)
@@ -44,7 +43,7 @@ def write_to_scsi_host(host):
 
 @func_logger
 def remove_device_via_sysfs(host, channel, target, lun):
-    return call_in_subprocess(write_to_scsi_device, host, channel, target, lun)
+    return write_to_scsi_device(host, channel, target, lun)
 
 def write_to_scsi_device(host, channel, target, lun):
     hctl = "{}:{}:{}:{}".format(host, channel, target, lun)
@@ -60,7 +59,7 @@ def write_to_scsi_device(host, channel, target, lun):
         return False
     return True
 
-def do_scsi_cdb_with_in_process(sg_device, cdb):
+def _do_scsi_cdb(sg_device, cdb):
     """ **queue** - either a gipc pipe or a multiprocessing queue """
     from infi.asi.coroutines.sync_adapter import sync_wait
 
@@ -74,7 +73,7 @@ def do_scsi_cdb_with_in_process(sg_device, cdb):
 
 @func_logger
 def do_scsi_cdb(sg_device, cdb):
-    return_value = call_in_subprocess(do_scsi_cdb_with_in_process, sg_device, cdb)
+    return_value = _do_scsi_cdb(sg_device, cdb)
     if isinstance(return_value, ScsiCheckConditionError):
         raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
     if isinstance(return_value, ScsiCommandFailed):

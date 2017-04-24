@@ -11,9 +11,9 @@ import infi.storagemodel
 logger = getLogger(__name__)
 
 PROPERTY_COLLECTOR_KEY = "infi.storagemodel.vmware.native_multipath"
-SCSI_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology'
+SCSI_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology.adapter'
 SCSI_LUNS_PROPERTY_PATH = "config.storageDevice.scsiLun"
-MULTIPATH_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.multipathInfo'
+MULTIPATH_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.multipathInfo.lun'
 
 
 def install_property_collectors_on_client(client):
@@ -295,11 +295,12 @@ class VMwarePath(multipath.Path):
     def get_hctl(self):
         from pyVmomi import vim
         from infi.storagemodel.errors import RescanIsNeeded
-        scsi_topology = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, vim.HostScsiTopology())
+        from pyVmomi import vim
+        scsi_topology_adapters = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, [])
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
         # adapter.key is key-vim.host.ScsiTopology.Interface-vmhba0
         # path_data_object.adapter is key-vim.host.FibreChannelHba-vmhba2
-        for adapter in [adapter for adapter in scsi_topology.adapter if adapter.key.split('-')[-1] == expected_vmhba]:
+        for adapter in [adapter for adapter in scsi_topology_adapters if adapter.key.split('-')[-1] == expected_vmhba]:
             for target in adapter.target:
                 our_transport = self._path_data_object.transport
                 target_transport = target.transport
@@ -348,7 +349,7 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
     def _get_multipath_logical_unit(self):
         from pyVmomi import vim
         # scsiLun.key == HostMultipathInfoLogicalUnit.lun
-        host_luns = self._get_properties().get(MULTIPATH_TOPOLOGY_PROPERTY_PATH, vim.HostMultipathInfo()).lun
+        host_luns = self._get_properties().get(MULTIPATH_TOPOLOGY_PROPERTY_PATH, [])
         try:
             return [lun for lun in host_luns if lun.lun == self._scsi_lun_data_object.key][0]
         except IndexError:

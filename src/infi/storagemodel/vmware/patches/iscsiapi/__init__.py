@@ -12,14 +12,14 @@ logger = getLogger(__name__)
 
 PROPERTY_COLLECTOR_KEY = 'infi.iscsiapi'
 HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
-TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology.adapter'
+SCSI_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology.adapter'
 
 
 def install_property_collectors_on_client(client):
     from infi.pyvmomi_wrapper.property_collector import HostSystemCachedPropertyCollector
     if PROPERTY_COLLECTOR_KEY in client.property_collectors:
         return
-    collector = HostSystemCachedPropertyCollector(client, [HBAAPI_PROPERTY_PATH, TOPOLOGY_PROPERTY_PATH])
+    collector = HostSystemCachedPropertyCollector(client, [HBAAPI_PROPERTY_PATH, SCSI_TOPOLOGY_PROPERTY_PATH])
     client.property_collectors[PROPERTY_COLLECTOR_KEY] = collector
 
 
@@ -55,7 +55,7 @@ class ConnectionManager(base.ConnectionManager):
     def _get_iscsi_host_bus_adapter(self):
         from pyVmomi import vim
         adapters = [adapter for adapter in self._get_all_host_bus_adapters() if
-                    isinstance(adapter, vim.HostInternetScsiHba) and adapter.isSoftwareBased]
+                    adapter.driver == 'iscsi_vmk']
         return adapters[0]
 
     def _get_host_storage_system(self):
@@ -146,9 +146,9 @@ class ConnectionManager(base.ConnectionManager):
         from infi.dtypes.hctl import HCT
         from pyVmomi import vim
         result = []
-        scsi_topology = self._get_properties().get(TOPOLOGY_PROPERTY_PATH, vim.HostScsiTopology())
-        for scsi_interface in scsi_topology:
-            for scsi_target in scsi_interface.target:
+        scsi_topology_adapters = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, [])
+        for scsi_adapter in scsi_topology_adapters:
+            for scsi_target in scsi_adapter.target:
                 if isinstance(scsi_target.transport, vim.HostInternetScsiTargetTransport):
                     h, c, t = scsi_target.key.split("-")[-1].split(":")
                     hct = HCT(h, int(c), int(t))

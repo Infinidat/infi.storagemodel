@@ -8,15 +8,14 @@ logger = getLogger(__name__)
 
 PROPERTY_COLLECTOR_KEY = 'infi.hbaapi'
 HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
-TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology.adapter'
-TARGET_PROPERTY_PATH = TOPOLOGY_PROPERTY_PATH + '["{}"].target["{}"]'
+SCSI_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology.adapter'
 
 def install_property_collectors_on_client(client):
     from infi.pyvmomi_wrapper.property_collector import HostSystemCachedPropertyCollector
     if PROPERTY_COLLECTOR_KEY in client.property_collectors:
         return
     collector = HostSystemCachedPropertyCollector(client,
-                                                  [HBAAPI_PROPERTY_PATH, TOPOLOGY_PROPERTY_PATH])
+                                                  [HBAAPI_PROPERTY_PATH, SCSI_TOPOLOGY_PROPERTY_PATH])
     client.property_collectors[PROPERTY_COLLECTOR_KEY] = collector
 
 class HostSystemPortGenerator(Generator):
@@ -48,7 +47,7 @@ class HostSystemPortGenerator(Generator):
         return WWN(hex(wwn_long)[:-1])
 
     def _get_all_scsi_topologies(self):
-        return self._get_properties().get(TOPOLOGY_PROPERTY_PATH, [])
+        return self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, [])
 
     def _get_target_transport_properties(self, fc_hba, target):
         return target.transport
