@@ -1,5 +1,9 @@
 from logging import getLogger
-from os import path, getpid, readlink
+from os import path, getpid
+try:
+    from os import readlink
+except ImportError: # windows
+    readlink = None
 from re import search
 from glob import glob
 from .utils import func_logger
