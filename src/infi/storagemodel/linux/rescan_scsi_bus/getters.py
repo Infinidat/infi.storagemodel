@@ -37,7 +37,7 @@ def should_scan_scsi_host(dirpath):
 def get_hosts():
     return [int(search(r"host(\d+)", dirpath).group(1)) for
             dirpath in glob("/sys/class/scsi_host/host*") if
-            should_skip_scsi_host(dirpath)]
+            should_scan_scsi_host(dirpath)]
 
 @func_logger
 def get_channels(host):
