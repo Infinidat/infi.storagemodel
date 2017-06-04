@@ -28,7 +28,7 @@ def should_scan_scsi_host(dirpath):
         dst = readlink(dirpath)
     except:
         return True
-    if os.path.sep + 'ata' in dst:
+    if path.sep + 'ata' in dst:
         return False
     return True
 
