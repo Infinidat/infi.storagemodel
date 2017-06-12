@@ -9,7 +9,7 @@ from os import name
 from infi.os_info import get_platform_string
 
 VXDMPADM_OUTPUT_TEMPLATE = """dmpdev      = sda
-state       = enabled
+state       = disabled
 enclosure   = other_disks
 cab-sno     = OTHER_DISKS
 asl     = otherdisks
@@ -27,7 +27,7 @@ scsi3_vpd   = -
 replicated  = no
 num_paths   = 1
 ###path     = name state type transport ctlr hwpath aportID aportWWN attr
-path        = sda enabled(a) - SCSI c0 c0 - - -
+path        = sda disabled(a) - SCSI c0 c0 - - -
 
 dmpdev      = infinibox0_0ace
 state       = enabled
@@ -553,7 +553,48 @@ dev-attr    = -
 path        = c0t6742B0F0000004AA0000000000001B1Bd0s2 enabled(a) primary FC c0 /scsi_vhci - 57:42:b0:f0:00:04:aa:11 -
 """
 
+HPT_2110_VERITAS_OUTPUT = '''dmpdev       = sda
+state       = enabled
+enclosure   = other_disks
+cab-sno     = OTHER_DISKS
+asl     = otherdisks
+vid     = VMware
+pid     = Virtual disk
+array-name  = OTHER_DISKS
+array-type  = OTHER_DISKS
+iopolicy    = Balanced
+avid        = -
+lun-sno     =
+udid        = VMware%5FVirtual%20disk%5FOTHER%5FDISKS%5Fhost-ci097.lab.il.infinidat.com%5F%2Fdev%2Fsda
+dev-attr    = -
+lun_type    = -
+scsi3_vpd   = -
+replicated  = no
+num_paths   = 1
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = sda enabled(a) - SCSI c0 c0 - - -
 
+dmpdev      = infinibox0_4d0a
+state       = enabled
+enclosure   = infinibox0
+cab-sno     = 7555
+asl     = libvxinfinibox.so
+vid     = NFINIDAT
+pid     = InfiniBox
+array-name  = InfiniBox
+array-type  = A/A
+iopolicy    = MinimumQ
+avid        = 4d0a
+lun-sno     = 742b0f0000075550000000000004d0a
+udid        = NFINIDAT%5FInfiniBox%5F7555%5F742b0f0000075550000000000004d0a
+dev-attr    = tprclm
+lun_type    = std
+scsi3_vpd   = NAA:6742B0F0000075550000000000004D0A
+replicated  = no
+num_paths   = 1
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = sdb enabled(a) - FC c3 c3 1-1 - -
+'''
 class MockSCSIBlockDevice(LinuxSCSIBlockDevice):
     def get_hctl(self):
         return HCTL(1,2,3,4)

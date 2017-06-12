@@ -88,8 +88,7 @@ class VeritasMultipathClient(object):
             r"(?P<hwpath>[\w\/\@\,]+)\s*" + \
             r"(?P<aportID>[\w-]+)\s*" + \
             r"(?P<aportWWN>[\w:]+)\s*" + \
-            r"(?P<attr>[\w-]+)\s*" + \
-            r"\n"
+            r"(?P<attr>[\w-]+)\s*"
         pattern = compile(PATH_PATTERN, MULTILINE | DOTALL)
         matches = []
         for match in pattern.finditer(multipath_dict['paths']):
