@@ -604,24 +604,23 @@ class MockSCSIBlockDevice(LinuxSCSIBlockDevice):
 def veritas_multipathing_context(output):
     if "windows" in get_platform_string():
         raise SkipTest
+
     with patch('infi.storagemodel.unix.veritas_multipath.VeritasMultipathClient.read_paths_list') as read_paths_list:
         with patch('infi.storagemodel.linux.sysfs.Sysfs.find_scsi_disk_by_hctl') as find_scsi_disk_by_hctl:
             with patch('infi.storagemodel.base.scsi.SCSIModel.find_scsi_block_device_by_block_access_path') as find_func:
-                find_func.return_value = MockSCSIBlockDevice(None)
-                find_scsi_disk_by_hctl.return_value = None
-                read_paths_list.return_value = output
-                sm = get_storage_model()
-                clear_cache(sm)
-                yield sm.get_veritas_multipath()
+                with patch('infi.storagemodel.linux.scsi.is_sg_module_loaded') as is_sg_module_loaded:
+                        with patch("infi.storagemodel.get_storage_model") as get_storage_model:
+                            from infi.storagemodel.linux import LinuxStorageModel
+                            find_func.return_value = MockSCSIBlockDevice(None)
+                            find_scsi_disk_by_hctl.return_value = None
+                            read_paths_list.return_value = output
+                            is_sg_module_loaded.return_value = True
+                            sm = LinuxStorageModel()
+                            get_storage_model.return_value = sm
+                            yield sm.get_veritas_multipath()
 
 
 class VeritasMultipathingTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        import sys
-        if sys.platform == "darwin":
-            raise SkipTest()
-
     def test_vxdmpadm_output(self):
         vxdmpadm_output = VXDMPADM_OUTPUT_TEMPLATE.format(paths=SIX_PATHS, vid="NFINIDAT", pid="InfiniBox")
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
@@ -682,4 +681,11 @@ class VeritasMultipathingTestCase(TestCase):
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = veritas_multipath.get_all_multipath_block_devices()
             # there are 5 devices in the output but only one is multipathed
-            self.assertEqual(len(block_devices), 1)
+            self.assertEqual(len(block_devices), 5)
+
+    def test_hpt_2110_output(self):
+        vxdmpadm_output = HPT_2110_VERITAS_OUTPUT
+        with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
+            block_devices = veritas_multipath.get_all_multipath_block_devices()
+            self.assertEqual(len(block_devices), 2)
+            self.assertEqual(len(block_devices[-1].get_paths()), 1)
