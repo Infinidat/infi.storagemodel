@@ -162,7 +162,7 @@ class InquiryInformationMixin(object):
         """
         from infi.asi.cdb.tur import TestUnitReadyCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
-        from infi.asi import AsiCheckConditionError, AsiReservationConflictError
+        from infi.asi.errors import AsiCheckConditionError, AsiReservationConflictError
         with self.asi_context() as asi:
             try:
                 command = TestUnitReadyCommand()
