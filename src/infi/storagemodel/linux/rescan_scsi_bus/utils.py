@@ -19,6 +19,9 @@ logger = getLogger(__name__)
 class ScsiCommandFailed(Exception):
     pass
 
+class ScsiReservationConflictError(ScsiCommandFailed):
+    pass
+
 class ScsiCheckConditionError(ScsiCommandFailed):
     def __init__(self, sense_key, code_name):
         super(ScsiCheckConditionError, self).__init__(sense_key, code_name)
@@ -61,7 +64,7 @@ def asi_context(sg_device):
         handle.close()
 
 def check_for_scsi_errors(func):
-    from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError
+    from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError, AsiReservationConflictError
     from infi.asi.cdb.report_luns import UnsupportedReportLuns
     @wraps(func)
     def decorator(*args, **kwargs):
@@ -80,6 +83,10 @@ def check_for_scsi_errors(func):
                 counter -= 1
                 if (key, code) in CHECK_CONDITIONS_NOT_WORTH_RETRY or counter == 0:
                     raise ScsiCheckConditionError(key, code)
+            except AsiReservationConflictError as error:
+                msg = "{} sg device {} has unsupported luns report: {}"
+                logger.error(msg.format(getpid(), sg_device, error))
+                raise ScsiReservationConflictError()
             except (IOError, OSError, AsiOSError, AsiSCSIError) as error:
                 msg = "{} sg device {} got unrecoverable error {} during {}"
                 logger.error(msg.format(getpid(), sg_device, error, cdb))

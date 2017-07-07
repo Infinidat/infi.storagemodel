@@ -3,7 +3,7 @@ from os import path, getpid
 from infi.pyutils.contexts import contextmanager
 
 from .utils import func_logger, check_for_scsi_errors, asi_context, log_execute, TIMEOUT_IN_SEC
-from .utils import ScsiCommandFailed, ScsiCheckConditionError, AsiReservationConflictError
+from .utils import ScsiCommandFailed, ScsiCheckConditionError, ScsiReservationConflictError
 
 logger = getLogger(__name__)
 
@@ -76,10 +76,10 @@ def do_scsi_cdb(sg_device, cdb):
     return_value = _do_scsi_cdb(sg_device, cdb)
     if isinstance(return_value, ScsiCheckConditionError):
         raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
+    if isinstance(return_value, AsiScsiReservationConflictError):
+        raise AsiScsiReservationConflictError()
     if isinstance(return_value, ScsiCommandFailed):
         raise ScsiCommandFailed()
-    if isinstance(return_value, AsiReservationConflictError):
-        raise AsiReservationConflictError()
     return return_value
 
 @func_logger
