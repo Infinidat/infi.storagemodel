@@ -76,8 +76,8 @@ def do_scsi_cdb(sg_device, cdb):
     return_value = _do_scsi_cdb(sg_device, cdb)
     if isinstance(return_value, ScsiCheckConditionError):
         raise ScsiCheckConditionError(return_value.sense_key, return_value.code_name)
-    if isinstance(return_value, AsiScsiReservationConflictError):
-        raise AsiScsiReservationConflictError()
+    if isinstance(return_value, ScsiReservationConflictError):
+        raise ScsiReservationConflictError()
     if isinstance(return_value, ScsiCommandFailed):
         raise ScsiCommandFailed()
     return return_value
