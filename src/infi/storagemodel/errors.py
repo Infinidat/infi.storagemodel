@@ -108,7 +108,7 @@ def check_for_scsi_errors(func):
     """
     A decorator for catching SCSI errors from the `infi.asi` layer and converting them to storagemodel errors.
     """
-    from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError, AsiRequestQueueFullError
+    from infi.asi.errors import AsiOSError, AsiSCSIError, AsiCheckConditionError, AsiRequestQueueFullError, AsiReservationConflictError
     from sys import exc_info
     @wraps(func)
     def callable(*args, **kwargs):
@@ -133,6 +133,10 @@ def check_for_scsi_errors(func):
             msg = "got queue full from device {!r} during {!r}".format(_safe_repr(device), func)
             logger.debug(msg)
             raise chain(RescanIsNeeded(msg))
+        except AsiReservationConflictError as e:
+            msg = "got reservation conflict from device {!r} during {!r}".format(_safe_repr(device), func)
+            logger.debug(msg)
+            raise chain(DeviceError(msg))
         except AsiSCSIError as error:
             msg = "error with device {!r} during {!r}: {}".format(_safe_repr(device), func, error)
             logger.error(msg)

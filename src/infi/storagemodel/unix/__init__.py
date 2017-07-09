@@ -45,10 +45,11 @@ class UnixStorageModel(StorageModel):
                 model_without_cache = self.__class__()
                 call_method, call_args = server_and_worker[1].prepare(model_without_cache.rescan_method)
                 self.server_and_worker = server_and_worker
-                event.set()
                 return server_and_worker[1].call(call_method, call_args, timeout=self.rescan_subprocess_timeout)
         except:
             logger.exception('rescan method raised exception')
+        finally:
+            event.set()
 
     def join_on_rescan_process(self):
         logger.debug("waiting for rescan process completion")

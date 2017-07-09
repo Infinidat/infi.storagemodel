@@ -9,7 +9,7 @@ from os import name
 from infi.os_info import get_platform_string
 
 VXDMPADM_OUTPUT_TEMPLATE = """dmpdev      = sda
-state       = enabled
+state       = disabled
 enclosure   = other_disks
 cab-sno     = OTHER_DISKS
 asl     = otherdisks
@@ -27,7 +27,7 @@ scsi3_vpd   = -
 replicated  = no
 num_paths   = 1
 ###path     = name state type transport ctlr hwpath aportID aportWWN attr
-path        = sda enabled(a) - SCSI c0 c0 - - -
+path        = sda disabled(a) - SCSI c0 c0 - - -
 
 dmpdev      = infinibox0_0ace
 state       = enabled
@@ -553,7 +553,48 @@ dev-attr    = -
 path        = c0t6742B0F0000004AA0000000000001B1Bd0s2 enabled(a) primary FC c0 /scsi_vhci - 57:42:b0:f0:00:04:aa:11 -
 """
 
+HPT_2110_VERITAS_OUTPUT = '''dmpdev       = sda
+state       = enabled
+enclosure   = other_disks
+cab-sno     = OTHER_DISKS
+asl     = otherdisks
+vid     = VMware
+pid     = Virtual disk
+array-name  = OTHER_DISKS
+array-type  = OTHER_DISKS
+iopolicy    = Balanced
+avid        = -
+lun-sno     =
+udid        = VMware%5FVirtual%20disk%5FOTHER%5FDISKS%5Fhost-ci097.lab.il.infinidat.com%5F%2Fdev%2Fsda
+dev-attr    = -
+lun_type    = -
+scsi3_vpd   = -
+replicated  = no
+num_paths   = 1
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = sda enabled(a) - SCSI c0 c0 - - -
 
+dmpdev      = infinibox0_4d0a
+state       = enabled
+enclosure   = infinibox0
+cab-sno     = 7555
+asl     = libvxinfinibox.so
+vid     = NFINIDAT
+pid     = InfiniBox
+array-name  = InfiniBox
+array-type  = A/A
+iopolicy    = MinimumQ
+avid        = 4d0a
+lun-sno     = 742b0f0000075550000000000004d0a
+udid        = NFINIDAT%5FInfiniBox%5F7555%5F742b0f0000075550000000000004d0a
+dev-attr    = tprclm
+lun_type    = std
+scsi3_vpd   = NAA:6742B0F0000075550000000000004D0A
+replicated  = no
+num_paths   = 1
+###path     = name state type transport ctlr hwpath aportID aportWWN attr
+path        = sdb enabled(a) - FC c3 c3 1-1 - -
+'''
 class MockSCSIBlockDevice(LinuxSCSIBlockDevice):
     def get_hctl(self):
         return HCTL(1,2,3,4)
@@ -563,24 +604,23 @@ class MockSCSIBlockDevice(LinuxSCSIBlockDevice):
 def veritas_multipathing_context(output):
     if "windows" in get_platform_string():
         raise SkipTest
+
     with patch('infi.storagemodel.unix.veritas_multipath.VeritasMultipathClient.read_paths_list') as read_paths_list:
         with patch('infi.storagemodel.linux.sysfs.Sysfs.find_scsi_disk_by_hctl') as find_scsi_disk_by_hctl:
             with patch('infi.storagemodel.base.scsi.SCSIModel.find_scsi_block_device_by_block_access_path') as find_func:
-                find_func.return_value = MockSCSIBlockDevice(None)
-                find_scsi_disk_by_hctl.return_value = None
-                read_paths_list.return_value = output
-                sm = get_storage_model()
-                clear_cache(sm)
-                yield sm.get_veritas_multipath()
+                with patch('infi.storagemodel.linux.scsi.is_sg_module_loaded') as is_sg_module_loaded:
+                        with patch("infi.storagemodel.get_storage_model") as get_storage_model:
+                            from infi.storagemodel.linux import LinuxStorageModel
+                            find_func.return_value = MockSCSIBlockDevice(None)
+                            find_scsi_disk_by_hctl.return_value = None
+                            read_paths_list.return_value = output
+                            is_sg_module_loaded.return_value = True
+                            sm = LinuxStorageModel()
+                            get_storage_model.return_value = sm
+                            yield sm.get_veritas_multipath()
 
 
 class VeritasMultipathingTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        import sys
-        if sys.platform == "darwin":
-            raise SkipTest()
-
     def test_vxdmpadm_output(self):
         vxdmpadm_output = VXDMPADM_OUTPUT_TEMPLATE.format(paths=SIX_PATHS, vid="NFINIDAT", pid="InfiniBox")
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
@@ -641,4 +681,11 @@ class VeritasMultipathingTestCase(TestCase):
         with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
             block_devices = veritas_multipath.get_all_multipath_block_devices()
             # there are 5 devices in the output but only one is multipathed
-            self.assertEqual(len(block_devices), 1)
+            self.assertEqual(len(block_devices), 5)
+
+    def test_hpt_2110_output(self):
+        vxdmpadm_output = HPT_2110_VERITAS_OUTPUT
+        with veritas_multipathing_context(vxdmpadm_output) as veritas_multipath:
+            block_devices = veritas_multipath.get_all_multipath_block_devices()
+            self.assertEqual(len(block_devices), 2)
+            self.assertEqual(len(block_devices[-1].get_paths()), 1)

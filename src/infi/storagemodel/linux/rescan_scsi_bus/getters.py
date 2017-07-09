@@ -1,5 +1,9 @@
 from logging import getLogger
 from os import path, getpid
+try:
+    from os import readlink
+except ImportError: # windows
+    readlink = None
 from re import search
 from glob import glob
 from .utils import func_logger
@@ -18,9 +22,22 @@ def get_proc_scsi_scsi():
     with open("/proc/scsi/scsi") as fd:
         return fd.read()
 
+
+def should_scan_scsi_host(dirpath):
+    try:
+        dst = readlink(dirpath)
+    except:
+        return True
+    if path.sep + 'ata' in dst:
+        return False
+    return True
+
+
 @func_logger
 def get_hosts():
-    return [int(search(r"host(\d+)", dirpath).group(1)) for dirpath in glob("/sys/class/scsi_host/host*")]
+    return [int(search(r"host(\d+)", dirpath).group(1)) for
+            dirpath in glob("/sys/class/scsi_host/host*") if
+            should_scan_scsi_host(dirpath)]
 
 @func_logger
 def get_channels(host):

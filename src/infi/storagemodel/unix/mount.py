@@ -53,6 +53,9 @@ class UnixMount(mount.Mount):
     def get_filesystem(self):
         raise NotImplementedError()
 
+    def get_entry(self):
+        return self._entry
+
 class UnixPersistentMount(mount.PersistentMount):
     pass
 
