@@ -40,7 +40,12 @@ class ConnectionManager(base.ConnectionManager):
         super(ConnectionManager, self).__init__()
         self._moref = moref
         self._client = client
+        self._adapter = None
         self._install_property_collector()
+
+    def set_adapter(self, adapter):
+        # accepts a string matching the 'device' attribute of a HostInternetScsiHba, e.g. "vmhba35"
+        self._adapter = adapter
 
     def _install_property_collector(self):
         install_property_collectors_on_client(self._client)
@@ -52,23 +57,39 @@ class ConnectionManager(base.ConnectionManager):
     def _get_all_host_bus_adapters(self):
         return self._get_properties().get(HBAAPI_PROPERTY_PATH, [])
 
+    def _get_all_iscsi_host_bus_adapters(self):
+        from pyVmomi import vim
+        return [adapter for adapter in self._get_all_host_bus_adapters() if isinstance(adapter, vim.HostInternetScsiHba)]
+
     def _get_iscsi_host_bus_adapter(self):
         from pyVmomi import vim
-        adapters = [adapter for adapter in self._get_all_host_bus_adapters() if
-                    adapter.driver == 'iscsi_vmk']
+        adapters = self._get_all_host_bus_adapters()
+        if self._adapter:
+            adapters = [adapter for adapter in adapters if adapter.device == self._adapter]
+        else:
+            # default is "software adapter"
+            adapters = [adapter for adapter in adapters if adapter.driver == 'iscsi_vmk']
+        if len(adapters) == 0:
+            raise RuntimeError("No matching iSCSI adatpers found on host.")
         return adapters[0]
 
     def _get_host_storage_system(self):
         host = self._client.get_managed_object_by_reference(self._moref)
         return host.configManager.storageSystem
 
-    def get_source_iqn(self):
+    def _get_source_iqn(self):
+        # this get_source_iqn returns a single iqn for the currently used hba
+        # the external get_source_iqn returns all iqns (from all adapters), in order for 'register' to register all
+        # available iqns on host
         iscsi_adapter = self._get_iscsi_host_bus_adapter()
         return IQN(iscsi_adapter.iScsiName)
 
+    def get_source_iqn(self):
+        return [IQN(iscsi_adapter.iScsiName) for iscsi_adapter in self._get_all_iscsi_host_bus_adapters()]
+
     def set_source_iqn(self, iqn):
         _ = IQN(iqn)   # checks iqn is valid
-        self._get_host_storage_system().UpdateInternetScsiName(self.get_source_iqn(), iqn)
+        self._get_host_storage_system().UpdateInternetScsiName(self._get_source_iqn(), iqn)
 
     def discover(self, ip_address, port=3260):
         # ugly trick: in VMware discovery and login_all happen at once, so we don't do the login here
@@ -113,7 +134,7 @@ class ConnectionManager(base.ConnectionManager):
         from pyVmomi import vim
         # this function does "undiscover" too.
         # "target" is an actual Target object as returned from get_discovered_targets
-        iscsi_adapter = self._get_iscsi_host_bus_adapter()
+        iscsi_adapter = target.iscsi_adapter
         storage_system = self._get_host_storage_system()
         static_targets = [vim.HostInternetScsiHbaStaticTarget(address=endpoint.get_ip_address(),
                                                               port=endpoint.get_port(),
@@ -126,19 +147,22 @@ class ConnectionManager(base.ConnectionManager):
 
     def get_discovered_targets(self):
         from itertools import groupby
-        iscsi_adapter = self._get_iscsi_host_bus_adapter()
         result = []
-        for parent, targets in groupby(iscsi_adapter.configuredStaticTarget, lambda target: target.parent):
-            if ':' not in parent:
-                logger.debug("parent {!r} is not sendtarget for targets: {}".format(parent, targets))
-                continue
-            discovery_endpoint_ip, discovery_endpoint_port = parent.split(":")
-            discovery_endpoint = base.Endpoint(discovery_endpoint_ip, int(discovery_endpoint_port))
-            endpoints = []
-            for target in targets:
-                endpoints.append(base.Endpoint(target.address, target.port))
-            iqn = target.iScsiName
-            result.append(base.Target(endpoints, discovery_endpoint, iqn))
+        for iscsi_adapter in self._get_all_iscsi_host_bus_adapters():
+            for parent, targets in groupby(iscsi_adapter.configuredStaticTarget, lambda target: target.parent):
+                if ':' not in parent:
+                    logger.debug("parent {!r} is not sendtarget for targets: {}".format(parent, targets))
+                    continue
+                discovery_endpoint_ip, discovery_endpoint_port = parent.split(":")
+                discovery_endpoint = base.Endpoint(discovery_endpoint_ip, int(discovery_endpoint_port))
+                endpoints = []
+                for target in targets:
+                    endpoints.append(base.Endpoint(target.address, target.port))
+                iqn = target.iScsiName
+                target = base.Target(endpoints, discovery_endpoint, iqn)
+                # ugly trick to pass iscsi_adapter - just add this attribute to the target
+                target.iscsi_adapter = iscsi_adapter
+                result.append(target)
         return result
 
     def get_sessions(self):
@@ -153,7 +177,7 @@ class ConnectionManager(base.ConnectionManager):
                     h, c, t = scsi_target.key.split("-")[-1].split(":")
                     hct = HCT(h, int(c), int(t))
                     target = base.Target(None, None, scsi_target.transport.iScsiName)
-                    result.append(base.Session(target, None, None, self.get_source_iqn(), None, hct))
+                    result.append(base.Session(target, None, None, self._get_source_iqn(), None, hct))
         return result
 
 
