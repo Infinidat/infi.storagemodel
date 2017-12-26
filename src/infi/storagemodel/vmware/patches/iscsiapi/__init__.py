@@ -128,6 +128,8 @@ class ConnectionManager(base.ConnectionManager):
         storage_system = self._get_host_storage_system()
         send_target = vim.HostInternetScsiHbaSendTarget(address=target[0], port=target[1],
                                                         authenticationProperties=vmauth)
+        msg = "Adding iSCSI SendTarget. target={}:{}. hba adapter device={}"
+        logger.info(msg.format(target[0], target[1], iscsi_adapter.device))
         storage_system.AddInternetScsiSendTargets(iScsiHbaDevice=iscsi_adapter.device, targets=[send_target])
 
     def logout_all(self, target):
