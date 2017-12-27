@@ -47,6 +47,13 @@ class InfinidatNAA(object):
 
     @classmethod
     def from_volume_id_and_system_serial(cls, volume_id, system_serial):
-        # Concatenation of IEEE_company_id-24bit, reserved-20bit, system_id-16bit and volume_id-64bit
-        descriptor = "6{:06x}{:05x}{:04x}{:016x}".format(NFINIDAT_IEEE, 0, system_serial, volume_id)
-        return cls(descriptor.decode("hex"))
+        attributes = dict(protocol_identifier=0, piv=0, association=0, reserved=0,
+                          code_set=1,
+                          designator_type=3,
+                          designator_length=16,
+                          naa=6,
+                          ieee_company_id=NFINIDAT_IEEE,
+                          vendor_specific_identifier_extension=volume_id,
+                          vendor_specific_identifier=system_serial)
+        data = designators.NAA_IEEE_Registered_Extended_Designator(**attributes)
+        return cls(data)
