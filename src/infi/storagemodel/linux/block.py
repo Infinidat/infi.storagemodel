@@ -5,8 +5,6 @@ class LinuxBlockDeviceMixin(object):
     NAA_DESIGNATOR_TYPE = 0x03
     LOGICAL_UNIT_ASSOCIATION = 0x00
 
-    INQUIRY_IDENTIFICATION_PAGE_NUM = 0x83
-
     @cached_method
     def get_block_access_path(self):
         return "/dev/%s" % self.sysfs_device.get_block_device_name()
@@ -21,8 +19,9 @@ class LinuxBlockDeviceMixin(object):
 
     @cached_method
     def get_device_identification_page(self):
+        from infi.asi.cdb.inquiry.vpd_pages import INQUIRY_PAGE_DEVICE_IDENTIFICATION
         try:
-            device_identification_page = self.get_scsi_inquiry_pages()[self.INQUIRY_IDENTIFICATION_PAGE_NUM]
+            device_identification_page = self.get_scsi_inquiry_pages()[INQUIRY_PAGE_DEVICE_IDENTIFICATION]
             return device_identification_page
         except KeyError:    # Device does not support inquiry page 0x83
             return None
