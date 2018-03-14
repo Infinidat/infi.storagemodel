@@ -180,16 +180,12 @@ def solaris_multipathing_context(listlu_output, showlu_output):
     if "solaris" not in get_platform_string():
         raise SkipTest
     with patch('infi.storagemodel.solaris.native_multipath.SolarisMultipathClient.read_multipaths_list') as read_multipaths_list:
-        with patch('infi.storagemodel.solaris.native_multipath.SolarisMultipathClient.read_single_paths_list') as read_single_paths_list:
-            with patch('infi.storagemodel.solaris.native_multipath.SolarisSinglePathEntry.get_hctl') as get_hctl:
-                def side_effect(device):
-                    return showlu_output[device]
-                get_hctl.return_value = HCTL(1,2,3,4)
-                read_multipaths_list.return_value = listlu_output
-                read_single_paths_list.side_effect = side_effect
-                sm = get_storage_model()
-                clear_cache(sm)
-                yield sm.get_native_multipath()
+        with patch('infi.storagemodel.solaris.native_multipath.SolarisSinglePathEntry.get_hctl') as get_hctl:
+            get_hctl.return_value = HCTL(1,2,3,4)
+            read_multipaths_list.return_value = listlu_output
+            sm = get_storage_model()
+            clear_cache(sm)
+            yield sm.get_native_multipath()
 
 
 class SolarisMultipathingTestCase(TestCase):
