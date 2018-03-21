@@ -128,6 +128,7 @@ class SolarisSinglePathEntry(Munch):
 class SolarisMultipathClient(object):
 
     MULTIPATH_DEVICE_PATTERN = r'(?:/dev/rdsk/|/scsi_vhci/)[\w\@\-]+'
+    MULTIPATH_DEVICE_REGEXP = re.compile(MULTIPATH_DEVICE_PATTERN, re.MULTILINE)
 
     # The regular expression used to "slice" the output of "mpathadm show" - a detailed list of all the multipaths we
     # have on the current host, into logical units, each with its list of paths:
@@ -184,7 +185,16 @@ class SolarisMultipathClient(object):
             return ""
 
     def read_multipaths_list(self):
-        return self._run_command("mpathadm show lu")
+        # On Solaris 11, "mpathadm show lu" shows details for all LUNs, so listing them first ("mpathadm list lu") is
+        # redundant. On Solaris 10, "mpathadm show lu" expects a LUN operand, therefore we need to list the LUNs first.
+        # Listing all LUNs is run-time heavy, we'd like to avoid that if possible:
+        from infi.os_info import get_platform_string
+        if 'solaris-11' in get_platform_string():
+            # For Solaris 11:
+            return self._run_command("mpathadm show lu")
+        device_list = self._run_command("mpathadm list lu")
+        device_paths = self.MULTIPATH_DEVICE_REGEXP.findall(device_list)
+        return self._run_command("mpathadm show lu {}".format(" ".join(device_paths)))
 
     def get_paths(self, logical_unit_dict):
         paths = []
