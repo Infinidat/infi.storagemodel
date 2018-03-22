@@ -98,6 +98,10 @@ class HostSystemPortGeneratorFactory(object):
     patches_by_greenlet = {}
 
     @classmethod
+    def clear(cls):
+        cls.patches_by_greenlet.clear()
+
+    @classmethod
     def create(cls, client, hostsystem):
         from infi.pyvmomi_wrapper import get_reference_to_managed_object
         key = get_reference_to_managed_object(hostsystem)
