@@ -265,12 +265,13 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
 
 
 class VMwarePath(multipath.Path):
-    def __init__(self, client, host_moref, lun_key, path_data_object):
+    def __init__(self, client, host_moref, lun_key, path_data_object, properties):
         super(VMwarePath, self).__init__()
         self._client = client
         self._host_moref = host_moref
         self._lun_key = lun_key
         self._path_data_object = path_data_object
+        self._properties = properties
 
     @cached_method
     def get_connectivity(self):
@@ -285,18 +286,11 @@ class VMwarePath(multipath.Path):
         return self._path_data_object.name
 
     @cached_method
-    def _get_properties(self):
-        # We want to use the data the entire model uses, so we read from cache
-        install_property_collectors_on_client(self._client)
-        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties().get(self._host_moref, dict())
-        return properties
-
-    @cached_method
     def get_hctl(self):
         from pyVmomi import vim
         from infi.storagemodel.errors import RescanIsNeeded
         from pyVmomi import vim
-        scsi_topology_adapters = self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, [])
+        scsi_topology_adapters = self._properties.get(SCSI_TOPOLOGY_PROPERTY_PATH, [])
         expected_vmhba = self._path_data_object.adapter.split('-')[-1]
         # adapter.key is key-vim.host.ScsiTopology.Interface-vmhba0
         # path_data_object.adapter is key-vim.host.FibreChannelHba-vmhba2
@@ -324,11 +318,12 @@ class VMwarePath(multipath.Path):
 
 
 class VMwareMultipathDevice(VMwareInquiryInformationMixin):
-    def __init__(self, client, host_moref, scsi_lun_data_object):
+    def __init__(self, client, host_moref, scsi_lun_data_object, properties):
         super(VMwareMultipathDevice, self).__init__()
         self._client = client
         self._host_moref = host_moref
         self._scsi_lun_data_object = scsi_lun_data_object
+        self._properties = properties
         logger.debug("Created {!r}".format(self))
 
     @cached_method
@@ -339,17 +334,10 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
     def get_size_in_bytes(self):
         return self._scsi_lun_data_object.capacity.block * self._scsi_lun_data_object.capacity.blockSize
 
-    @cached_method
-    def _get_properties(self):
-        # We want to use the data the entire model uses, so we read from cache
-        install_property_collectors_on_client(self._client)
-        properties = self._client.property_collectors[PROPERTY_COLLECTOR_KEY].get_properties().get(self._host_moref, dict())
-        return properties
-
     def _get_multipath_logical_unit(self):
         from pyVmomi import vim
         # scsiLun.key == HostMultipathInfoLogicalUnit.lun
-        host_luns = self._get_properties().get(MULTIPATH_TOPOLOGY_PROPERTY_PATH, [])
+        host_luns = self._properties.get(MULTIPATH_TOPOLOGY_PROPERTY_PATH, [])
         try:
             return [lun for lun in host_luns if lun.lun == self._scsi_lun_data_object.key][0]
         except IndexError:
@@ -362,7 +350,8 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
         logical_unit = self._get_multipath_logical_unit()
         if logical_unit is None:
             return []
-        return [VMwarePath(self._client, self._host_moref, self._scsi_lun_data_object.key, path_data_object)
+        return [VMwarePath(self._client, self._host_moref, self._scsi_lun_data_object.key,
+                           path_data_object, self._properties)
                 for path_data_object in logical_unit.path]
 
     @cached_method
@@ -429,13 +418,15 @@ class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
-        return [VMwareMultipathStorageController(self._client, self._moref, scsi_lun_data_object)
+        return [VMwareMultipathStorageController(self._client, self._moref,
+                                                 scsi_lun_data_object, self._get_properties())
                 for scsi_lun_data_object in self._filter_array_controller_luns()
                 if scsi_lun_data_object.alternateName]
 
     @cached_method
     def get_all_multipath_block_devices(self):
-        return [VMwareMultipathBlockDevice(self._client, self._moref, scsi_lun_data_object)
+        return [VMwareMultipathBlockDevice(self._client, self._moref,
+                                           scsi_lun_data_object, self._get_properties())
                 for scsi_lun_data_object in self._filter_disk_luns()
                 if scsi_lun_data_object.alternateName]
 

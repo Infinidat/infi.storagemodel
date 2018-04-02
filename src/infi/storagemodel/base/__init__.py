@@ -110,6 +110,7 @@ class StorageModel(object):
             logger.debug("Trying predicate: {!r}".format(predicate))
             result = self._try_predicate(predicate)
             if result is True:
+                self.refresh()
                 logger.debug("Predicate returned True, finished rescanning")
                 break
             elif time() - start_time >= timeout_in_seconds:
