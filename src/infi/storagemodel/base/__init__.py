@@ -106,19 +106,18 @@ class StorageModel(object):
         start_time = time()
         logger.debug("Initiating rescan with keyword arguments {!r}".format(rescan_kwargs))
         self._initiate_rescan(**rescan_kwargs)
+        self.refresh()
         while True:
             logger.debug("Trying predicate: {!r}".format(predicate))
             result = self._try_predicate(predicate)
-            if result is True:
-                self.refresh()
+            if result:
                 logger.debug("Predicate returned True, finished rescanning")
                 break
-            elif time() - start_time >= timeout_in_seconds:
+            if time() - start_time >= timeout_in_seconds:
                 logger.debug("Rescan did not complete before timeout")
                 raise TimeoutError()  # pylint: disable=W0710
-            elif result in [False, None]:
-                logger.debug("Predicate returned False, will rescan again")
-                self.retry_rescan(**rescan_kwargs)
+            logger.debug("Predicate returned False, will rescan again")
+            self.retry_rescan(**rescan_kwargs)
             sleep(1)
             self.refresh()
 
