@@ -61,11 +61,17 @@ class ConnectionManager(base.ConnectionManager):
         from pyVmomi import vim
         return [adapter for adapter in self._get_all_host_bus_adapters() if isinstance(adapter, vim.HostInternetScsiHba)]
 
-    def _get_iscsi_host_bus_adapter(self):
+    def _get_iscsi_host_bus_adapter(self, adapter=None):
+        # the host bus adapter to retrieve can be either from parameter (specific adapter requested by caller, e.g. to
+        # get IQN of specific session where adapter is known) or from 'set_adapter' (default adapter that caller wants
+        # to work with - e.g. to login) or None for default behavior (use the software adapter)
+        # adapter
         from pyVmomi import vim
         adapters = self._get_all_host_bus_adapters()
-        if self._adapter:
-            adapters = [adapter for adapter in adapters if adapter.device == self._adapter]
+        to_match = adapter or self._adapter
+        if to_match:
+            # requested specific adapter - "to_match" is string like "vmhba33"
+            adapters = [adapter for adapter in adapters if adapter.device == to_match]
         else:
             # default is "software adapter"
             adapters = [adapter for adapter in adapters if adapter.driver == 'iscsi_vmk']
@@ -77,11 +83,11 @@ class ConnectionManager(base.ConnectionManager):
         host = self._client.get_managed_object_by_reference(self._moref)
         return host.configManager.storageSystem
 
-    def _get_source_iqn(self):
+    def _get_source_iqn(self, adapter=None):
         # this get_source_iqn returns a single iqn for the currently used hba
         # the external get_source_iqn returns all iqns (from all adapters), in order for 'register' to register all
         # available iqns on host
-        iscsi_adapter = self._get_iscsi_host_bus_adapter()
+        iscsi_adapter = self._get_iscsi_host_bus_adapter(adapter)
         return IQN(iscsi_adapter.iScsiName)
 
     def get_source_iqn(self):
@@ -179,7 +185,7 @@ class ConnectionManager(base.ConnectionManager):
                     h, c, t = scsi_target.key.split("-")[-1].split(":")
                     hct = HCT(h, int(c), int(t))
                     target = base.Target(None, None, scsi_target.transport.iScsiName)
-                    result.append(base.Session(target, None, None, self._get_source_iqn(), None, hct))
+                    result.append(base.Session(target, None, None, self._get_source_iqn(h), None, hct))
         return result
 
 

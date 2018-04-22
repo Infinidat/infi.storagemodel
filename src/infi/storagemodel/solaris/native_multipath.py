@@ -5,6 +5,7 @@ from infi.storagemodel.base import multipath, gevent_wrapper
 from contextlib import contextmanager
 from munch import Munch
 from os import path
+import re
 
 from logging import getLogger
 logger = getLogger(__name__)
@@ -20,7 +21,8 @@ class SolarisMultipathEntry(Munch):
 
 
 class SolarisSinglePathEntry(Munch):
-    def __init__(self, initiator_port_name, target_port_name, state, disabled, mpath_dev_path, ports):
+    def __init__(self, initiator_port_name, target_port_name, state, disabled, mpath_dev_path,
+                 ports, port_mappings):
         self.initiator_port_name = initiator_port_name
         self.target_port_name = target_port_name
         self.is_iscsi_session = False
@@ -30,6 +32,7 @@ class SolarisSinglePathEntry(Munch):
         self.state = state
         self.disabled = disabled
         self.ports = ports
+        self.port_mappings = port_mappings
         self.mpath_dev_path = mpath_dev_path
         self.hctl = self._get_hctl(mpath_dev_path)
 
@@ -42,8 +45,7 @@ class SolarisSinglePathEntry(Munch):
         return iqn, uid
 
     def _get_path_lun_fc(self):
-        from infi.hbaapi.generators.hbaapi import HbaApi
-        for device_name, host_wwn, target_wwn, lun in HbaApi().iter_port_mappings():
+        for device_name, host_wwn, target_wwn, lun in self.port_mappings:
             if self.mpath_dev_path in device_name and \
                 str(host_wwn) == self.initiator_port_name and \
                 str(target_wwn) == self.target_port_name:
@@ -124,22 +126,49 @@ class SolarisSinglePathEntry(Munch):
 
 
 class SolarisMultipathClient(object):
-    def get_list_of_multipath_devices(self):
-        from infi.hbaapi import get_ports_generator
-        ports = list(get_ports_generator().iter_ports())
 
+    MULTIPATH_DEVICE_PATTERN = r'(?:/dev/rdsk/|/scsi_vhci/)[\w\@\-]+'
+    MULTIPATH_DEVICE_REGEXP = re.compile(MULTIPATH_DEVICE_PATTERN, re.MULTILINE)
+
+    # The regular expression used to "slice" the output of "mpathadm show" - a detailed list of all the multipaths we
+    # have on the current host, into logical units, each with its list of paths:
+    MPATHADM_OUTPUT_PATTERN = r"\s*Logical Unit:\s*(?P<mpath_dev_path>{})\n".format(MULTIPATH_DEVICE_PATTERN) + \
+                              r".*?Vendor:\s*(?P<vendor_id>[\w]+)" + \
+                              r".*?Product:\s*(?P<product_id>[\w]+)" + \
+                              r".*?Current Load Balance:\s*(?P<load_balance>[\w\-]+)" + \
+                              r".*?(Paths:(?P<paths>.*?))?Target Port Groups:"
+    MPATHADM_OUTPUT_REGEXP = re.compile(MPATHADM_OUTPUT_PATTERN, re.MULTILINE | re.DOTALL)
+
+    PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*" + \
+                   r"^\s*Target Port Name:\s*(?P<target_port_name>\S+)\s*" + \
+                   r"^\s*Override Path:\s*(?P<override_path>\w+)\s*" + \
+                   r"^\s*Path State:\s*(?P<state>\w+)\s*" + \
+                   r"^\s*Disabled:\s*(?P<disabled>\w+)\s*$"
+    PATH_REGEXP = re.compile(PATH_PATTERN, re.MULTILINE | re.DOTALL)
+
+    def __init__(self):
+        from infi.hbaapi import get_ports_generator
+        from infi.hbaapi.generators.hbaapi import HbaApi
+        self._ports = list(get_ports_generator().iter_ports())
+        self._port_mappings = list(HbaApi().iter_port_mappings())
+
+    def get_list_of_multipath_devices(self):
         multipaths = []
-        multipath_device_paths = self.parse_paths_list(self.read_multipaths_list())
-        for mpath_dev_path in multipath_device_paths:
-            info = self.parse_single_paths_list(mpath_dev_path, self.read_single_paths_list(mpath_dev_path))
-            if info is None:
-                continue
-            vendor_id, product_id, load_balance = info['vendor_id'], info['product_id'], info['load_balance']
-            paths = [SolarisSinglePathEntry(p['initiator_port_name'], p['target_port_name'], p['state'],
-                                            p['disabled'], mpath_dev_path, ports) for p in info['paths']]
+
+        paths_list_output = self.read_multipaths_list()
+
+        for logical_unit_match in self.MPATHADM_OUTPUT_REGEXP.finditer(paths_list_output):
+            logical_unit_dict = logical_unit_match.groupdict()
+
+            paths = self.get_paths(logical_unit_dict)
+
+            mpath_dev_path = logical_unit_dict['mpath_dev_path']
             mpath_dev_path = path.join('/devices', mpath_dev_path.lstrip('/')) if \
-                'array-controller' in mpath_dev_path else mpath_dev_path
-            multipaths.append(SolarisMultipathEntry(mpath_dev_path, vendor_id, product_id, load_balance, paths))
+                'array-controller' in logical_unit_dict['mpath_dev_path'] else mpath_dev_path
+            multipaths.append(
+                SolarisMultipathEntry(mpath_dev_path,
+                                      logical_unit_dict['vendor_id'], logical_unit_dict['product_id'],
+                                      logical_unit_dict['load_balance'], paths))
         return multipaths
 
     def _run_command(self, cmd):
@@ -156,40 +185,27 @@ class SolarisMultipathClient(object):
             return ""
 
     def read_multipaths_list(self):
-        return self._run_command("mpathadm list lu")
+        # On Solaris 11, "mpathadm show lu" shows details for all LUNs, so listing them first ("mpathadm list lu") is
+        # redundant. On Solaris 10, "mpathadm show lu" expects a LUN operand, therefore we need to list the LUNs first.
+        # Listing all LUNs is run-time heavy, we'd like to avoid that if possible:
+        from infi.os_info import get_platform_string
+        if 'solaris-11' in get_platform_string():
+            # For Solaris 11:
+            return self._run_command("mpathadm show lu")
+        device_list = self._run_command("mpathadm list lu")
+        device_paths = self.MULTIPATH_DEVICE_REGEXP.findall(device_list)
+        return self._run_command("mpathadm show lu {}".format(" ".join(device_paths)))
 
-    def read_single_paths_list(self, device):
-        return self._run_command("mpathadm show lu {}".format(device))
-
-    def parse_paths_list(self, paths_list_output):
-        from re import compile, MULTILINE, DOTALL
-        MULTIPATH_PATTERN = r"^\s*(?P<device_path>(?:/dev/rdsk/|/scsi_vhci/)[\w\@\-]+)\s+Total Path Count:\s*[0-9]+\s*Operational Path Count:\s*[0-9]+\s*$"
-        pattern = compile(MULTIPATH_PATTERN, MULTILINE | DOTALL)
-        return pattern.findall(paths_list_output)
-
-    def parse_single_paths_list(self, mpath_dev_path, paths_list_output):
-        from re import compile, MULTILINE, DOTALL
-        def get_extra_info():
-            EXTRA_INFO_PATTERN = r"\s*Logical Unit:\s*{}".format(mpath_dev_path) + \
-                                 r".*Vendor:\s*(?P<vendor_id>[\w]+)" + \
-                                 r".*Product:\s*(?P<product_id>[\w]+)" + \
-                                 r".*Current Load Balance:\s*(?P<load_balance>[\w\-]+)"
-            res = list(compile(EXTRA_INFO_PATTERN, MULTILINE | DOTALL).finditer(paths_list_output))
-            return res[0].groupdict() if res else None
-        def get_paths():
-            PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*" + \
-                           r"^\s*Target Port Name:\s*(?P<target_port_name>\S+)\s*" + \
-                           r"^\s*Override Path:\s*(?P<override_path>\w+)\s*" + \
-                           r"^\s*Path State:\s*(?P<state>\w+)\s*" + \
-                           r"^\s*Disabled:\s*(?P<disabled>\w+)\s*$"
-            pattern = compile(PATH_PATTERN, MULTILINE | DOTALL)
-            matches = [m.groupdict() for m in pattern.finditer(paths_list_output)]
-            logger.debug("paths found: %s", matches)
-            return matches
-        info = get_extra_info()
-        if info is not None:
-            info['paths'] = get_paths()
-        return info
+    def get_paths(self, logical_unit_dict):
+        paths = []
+        mpath_dev_path = logical_unit_dict['mpath_dev_path']
+        for path_match in self.PATH_REGEXP.finditer(logical_unit_dict['paths']):
+            path_dict = path_match.groupdict()
+            paths.append(SolarisSinglePathEntry(
+                path_dict['initiator_port_name'], path_dict['target_port_name'], path_dict['state'],
+                path_dict['disabled'], mpath_dev_path, self._ports, self._port_mappings))
+        logger.debug("paths found: %s", paths)
+        return paths
 
 
 class SolarisRoundRobin(multipath.RoundRobin):
