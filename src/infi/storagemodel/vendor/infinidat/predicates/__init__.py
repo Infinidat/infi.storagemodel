@@ -19,21 +19,19 @@ class InfinidatVolumeExists(object):
         for device in devices_to_query:
             device.get_scsi_test_unit_ready()
             try:
-                if 0x83 not in device.get_scsi_inquiry_pages():
-                    log.debug("No inquiry page 0x83 for device {!r}, returning False now as this should be fixed by rescan".format(device))
+                # As some vendors seem to be inconsistent with the designators passed within the pages, using
+                # vendor-specifc pages seems more safe:
+                if 0xc6 not in device.get_scsi_inquiry_pages():
+                    log.debug("No vendor-specific page 0xc6 for device {!r}, returning False now as this should be fixed by rescan".format(device))
                     return False
-                if device.get_vendor().get_naa() is None:
-                    log.debug("NAA not found for device {!r}, returning False now as this should be fixed by rescan, next log message will be the EVPD '83h".format(device))
-                    log.debug(repr(device.get_scsi_inquiry_pages()[0x83]))
-                    return False
-                volume_id = device.get_vendor().get_naa().get_volume_id()
-                system_serial = device.get_vendor().get_naa().get_system_serial()
-                log.debug("Found Infinidat volume id {} from system id {}".format(volume_id, system_serial))
+                volume_id = device.get_vendor().get_volume_id()
+                system_serial = device.get_vendor().get_system_serial()
+                log.debug("Found INFINIDAT volume id {} from system id {}".format(volume_id, system_serial))
             except (AsiException, InstructError):
-                log.exception("failed to identify Infinidat volume, returning False now as this should be fixed by rescan")
+                log.exception("failed to identify INFINIDAT volume, returning False now as this should be fixed by rescan")
                 return False
-        return any(self.volume_id == device.get_vendor().get_naa().get_volume_id() and
-                   self.system_serial == device.get_vendor().get_naa().get_system_serial()
+        return any(self.volume_id == device.get_vendor().get_volume_id() and
+                   self.system_serial == device.get_vendor().get_system_serial()
                    for device in devices_to_query)
 
     def __repr__(self):
