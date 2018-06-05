@@ -106,7 +106,7 @@ class SolarisSinglePathEntry(Munch):
                         break  # We reached the next target no point searching forward
 
 
-    def _get_hctl():
+    def _get_hctl(self):
         from infi.dtypes.hctl import HCTL
         if self.is_iscsi_session:
             h, c, t = self._get_hct_iscsi()
