@@ -81,8 +81,11 @@ class SophisticatedMixin(object):
         except InquiryException:
             return self._get_key_from_json_page('pool_id')
 
-    def _get_system_serial_from_naa(self):
-        return self.get_naa().get_system_serial()
+    def _get_system_serial_from_json_page(self):
+        try:
+            return self._get_key_from_json_page('system_serial', 0xc6)
+        except InquiryException:
+            return self._get_key_from_json_page('system_serial')
 
     @cached_method
     def get_host_name(self):
@@ -94,7 +97,7 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_system_serial(self):
-        return self._get_system_serial_from_naa()
+        return self._get_system_serial_from_json_page()
 
     @cached_method
     def get_system_name(self):

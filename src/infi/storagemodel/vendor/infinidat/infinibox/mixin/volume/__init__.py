@@ -16,7 +16,10 @@ class InfiniBoxVolumeMixin(object):
     @cached_method
     def get_volume_id(self):
         """ Returns the volume id within the InfiniBox """
-        return self.get_naa().get_volume_id()
+        try:
+            return self._get_key_from_json_page('vol_entity_id', 0xc6)
+        except InquiryException:
+            return self._get_key_from_json_page('vol_entity_id')
 
     @cached_method
     def get_volume_name(self):

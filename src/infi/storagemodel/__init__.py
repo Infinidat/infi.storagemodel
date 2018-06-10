@@ -158,10 +158,10 @@ def get_platform_name():
 def _get_platform_specific_storagemodel_class():
     # do platform-specific magic here.
     from .base import StorageModel as PlatformStorageModel  # helps IDEs
-    from brownie.importing import import_string
+    from importlib import import_module
     plat = get_platform_name()
     platform_module_string = "{}.{}".format(__name__, plat)
-    platform_module = import_string(platform_module_string)
+    platform_module = import_module(platform_module_string)
     try:
         PlatformStorageModel = getattr(platform_module, "{}StorageModel".format(plat.capitalize()))
     except AttributeError:

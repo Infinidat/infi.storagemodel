@@ -34,7 +34,7 @@ class SolarisSinglePathEntry(Munch):
         self.ports = ports
         self.port_mappings = port_mappings
         self.mpath_dev_path = mpath_dev_path
-        self.hctl = self._get_hctl(mpath_dev_path)
+        self.hctl = self._get_hctl()
 
     def _get_target_uid_and_iqn(self):
         '''returns iscsi target iqn and session uid'''
@@ -106,7 +106,7 @@ class SolarisSinglePathEntry(Munch):
                         break  # We reached the next target no point searching forward
 
 
-    def _get_hctl(self, mpath_dev_path):
+    def _get_hctl(self):
         from infi.dtypes.hctl import HCTL
         if self.is_iscsi_session:
             h, c, t = self._get_hct_iscsi()
@@ -328,6 +328,7 @@ class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
     def _is_device_active(self, multipath_device):
         return any('OK' in path.state and 'no' in path.disabled for path in multipath_device.paths)
 
+    @cached_method
     def _get_list_of_active_devices(self, client):
         all_devices = client.get_list_of_multipath_devices()
         logger.debug("all multipath devices = {}".format(all_devices))
@@ -338,16 +339,20 @@ class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
     def get_all_multipath_block_devices(self):
         client = SolarisMultipathClient()
         devices = self._get_list_of_active_devices(client)
-        logger.debug("Got {} block devices from multipath client".format(len(devices)))
-        return [SolarisNativeMultipathBlockDevice(d) for d in devices if 'array-controller' not in d.device_path]
+        result = [SolarisNativeMultipathBlockDevice(d) for d in devices if 'array-controller' not in d.device_path]
+        msg = "Got {}  block devices from multipath client (out of {} total)"
+        logger.debug(msg.format(len(result), len(devices)))
+        return result
 
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
         # TODO get actual device path from device manager
         client = SolarisMultipathClient()
         devices = self._get_list_of_active_devices(client)
-        logger.debug("Got {} storage controller devices from multipath client".format(len(devices)))
-        return [SolarisNativeMultipathStorageController(d) for d in devices if 'array-controller' in d.device_path]
+        result = [SolarisNativeMultipathStorageController(d) for d in devices if 'array-controller' in d.device_path]
+        msg = "Got {} storage controller devices from multipath client (out of {} total)"
+        logger.debug(msg.format(len(result), len(devices)))
+        return result
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """Returns items from the list that are not part of multipath devices claimed by this framework"""
