@@ -126,7 +126,6 @@ class SolarisSinglePathEntry(Munch):
 
 
 class SolarisMultipathClient(object):
-
     MULTIPATH_DEVICE_PATTERN = r'(?:/dev/rdsk/|/scsi_vhci/)[\w\@\-]+'
     MULTIPATH_DEVICE_REGEXP = re.compile(MULTIPATH_DEVICE_PATTERN, re.MULTILINE)
 
@@ -136,7 +135,7 @@ class SolarisMultipathClient(object):
                               r".*?Vendor:\s*(?P<vendor_id>[\w]+)" + \
                               r".*?Product:\s*(?P<product_id>[\w]+)" + \
                               r".*?Current Load Balance:\s*(?P<load_balance>[\w\-]+)" + \
-                              r".*?(Paths:(?P<paths>.*?))?Target Port Groups:"
+                              r".*?(Paths:(?P<paths>.*?))?(?:Target Ports|Target Port Groups):"
     MPATHADM_OUTPUT_REGEXP = re.compile(MPATHADM_OUTPUT_PATTERN, re.MULTILINE | re.DOTALL)
 
     PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*" + \
