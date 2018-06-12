@@ -131,11 +131,11 @@ class SolarisMultipathClient(object):
 
     # The regular expression used to "slice" the output of "mpathadm show" - a detailed list of all the multipaths we
     # have on the current host, into logical units, each with its list of paths:
-    MPATHADM_OUTPUT_PATTERN = r"\s*Logical Unit:\s*(?P<mpath_dev_path>{})\n".format(MULTIPATH_DEVICE_PATTERN) + \
+    MPATHADM_OUTPUT_PATTERN = r"\s*(?P<mpath_dev_path>{})\n".format(MULTIPATH_DEVICE_PATTERN) + \
                               r".*?Vendor:\s*(?P<vendor_id>[\w]+)" + \
                               r".*?Product:\s*(?P<product_id>[\w]+)" + \
                               r".*?Current Load Balance:\s*(?P<load_balance>[\w\-]+)" + \
-                              r".*?(Paths:(?P<paths>.*?))?(?:Target Ports|Target Port Groups):"
+                              r".*?(?:Paths:)?(?P<paths>.*)"
     MPATHADM_OUTPUT_REGEXP = re.compile(MPATHADM_OUTPUT_PATTERN, re.MULTILINE | re.DOTALL)
 
     PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*" + \
@@ -144,6 +144,8 @@ class SolarisMultipathClient(object):
                    r"^\s*Path State:\s*(?P<state>\w+)\s*" + \
                    r"^\s*Disabled:\s*(?P<disabled>\w+)\s*$"
     PATH_REGEXP = re.compile(PATH_PATTERN, re.MULTILINE | re.DOTALL)
+
+    LOGICAL_UNIT_HEADER = 'Logical Unit:'    # Header for each logical unit entry in the output of mpathadm
 
     def __init__(self):
         from infi.hbaapi import get_ports_generator
@@ -155,8 +157,12 @@ class SolarisMultipathClient(object):
         multipaths = []
 
         paths_list_output = self.read_multipaths_list()
+        logical_units_list = paths_list_output.split(self.LOGICAL_UNIT_HEADER)
 
-        for logical_unit_match in self.MPATHADM_OUTPUT_REGEXP.finditer(paths_list_output):
+        for logical_unit in logical_units_list:
+            logical_unit_match = self.MPATHADM_OUTPUT_REGEXP.match(logical_unit)
+            if not logical_unit_match:
+                continue
             logical_unit_dict = logical_unit_match.groupdict()
 
             paths = self.get_paths(logical_unit_dict)
@@ -198,7 +204,10 @@ class SolarisMultipathClient(object):
     def get_paths(self, logical_unit_dict):
         paths = []
         mpath_dev_path = logical_unit_dict['mpath_dev_path']
-        for path_match in self.PATH_REGEXP.finditer(logical_unit_dict['paths']):
+        paths_string = logical_unit_dict['paths']
+        if not paths_string:
+            return paths
+        for path_match in self.PATH_REGEXP.finditer(paths_string):
             path_dict = path_match.groupdict()
             paths.append(SolarisSinglePathEntry(
                 path_dict['initiator_port_name'], path_dict['target_port_name'], path_dict['state'],
