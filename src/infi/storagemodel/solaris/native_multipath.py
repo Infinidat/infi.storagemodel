@@ -142,7 +142,7 @@ class SolarisMultipathClient(object):
                    r"^\s*Target Port Name:\s*(?P<target_port_name>\S+)\s*" + \
                    r"^\s*Override Path:\s*(?P<override_path>\w+)\s*" + \
                    r"^\s*Path State:\s*(?P<state>\w+)\s*" + \
-                   r"^\s*Disabled:\s*(?P<disabled>\w+)\s*$"
+                   r"^\s*Disabled:\s*(?P<disabled>\w+)"
     PATH_REGEXP = re.compile(PATH_PATTERN, re.MULTILINE | re.DOTALL)
 
     LOGICAL_UNIT_HEADER = 'Logical Unit:'    # Header for each logical unit entry in the output of mpathadm
@@ -205,8 +205,6 @@ class SolarisMultipathClient(object):
         paths = []
         mpath_dev_path = logical_unit_dict['mpath_dev_path']
         paths_string = logical_unit_dict['paths']
-        if not paths_string:
-            return paths
         for path_match in self.PATH_REGEXP.finditer(paths_string):
             path_dict = path_match.groupdict()
             paths.append(SolarisSinglePathEntry(
