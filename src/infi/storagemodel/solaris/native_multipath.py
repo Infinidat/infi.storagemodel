@@ -204,8 +204,7 @@ class SolarisMultipathClient(object):
     def get_paths(self, logical_unit_dict):
         paths = []
         mpath_dev_path = logical_unit_dict['mpath_dev_path']
-        paths_string = logical_unit_dict['paths']
-        for path_match in self.PATH_REGEXP.finditer(paths_string):
+        for path_match in self.PATH_REGEXP.finditer(logical_unit_dict['paths']):
             path_dict = path_match.groupdict()
             paths.append(SolarisSinglePathEntry(
                 path_dict['initiator_port_name'], path_dict['target_port_name'], path_dict['state'],
