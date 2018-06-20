@@ -160,8 +160,12 @@ class SolarisMultipathClient(object):
         logical_units_list = paths_list_output.split(self.LOGICAL_UNIT_HEADER)
 
         for logical_unit in logical_units_list:
+            if not logical_unit:
+                continue
             logical_unit_match = self.MPATHADM_OUTPUT_REGEXP.match(logical_unit)
             if not logical_unit_match:
+                logger.debug('MPATHADM_OUTPUT_REGEXP did not match logical_unit = {logical_unit}'.format(
+                    logical_unit=logical_unit))
                 continue
             logical_unit_dict = logical_unit_match.groupdict()
 
