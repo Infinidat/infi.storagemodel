@@ -83,12 +83,12 @@ class AixModelMixin(object):
         output = proc.get_stdout().strip()
         if not output:
             return []
-        return [line.strip() for line in output.split("\n") if line.split(',')[-1] == 'Available']
+        return [line.strip().split(',')[0] for line in output.split("\n") if line.split(',')[-1] == 'Available']
 
     def _get_multipath_devices(self):
         # STORAGEMODEL-410
         proc = execute_assert_success(["/usr/sbin/lspath", "-F", "name,status"])
-        return set(line for line in proc.get_stdout().strip().split("\n") if line.split(',')[-1] == 'Enabled')
+        return set(line.split(',')[0] for line in proc.get_stdout().strip().split("\n") if line.split(',')[-1] == 'Enabled')
 
     def _is_disk_a_controller(self, dev):
         # AIX sometimes returns controller devices in 'lsdev -c disk' (instead of in 'lsdev -c dac') if the DOM
