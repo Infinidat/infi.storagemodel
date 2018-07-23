@@ -203,6 +203,9 @@ class SolarisMultipathClient(object):
             return self._run_command("mpathadm show lu")
         device_list = self._run_command("mpathadm list lu")
         device_paths = self.MULTIPATH_DEVICE_REGEXP.findall(device_list)
+        if not device_paths:    # no devices
+            logger.debug("no device paths found")
+            return ''
         return self._run_command("mpathadm show lu {}".format(" ".join(device_paths)))
 
     def get_paths(self, logical_unit_dict):
