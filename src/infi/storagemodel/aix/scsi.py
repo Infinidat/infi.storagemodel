@@ -78,15 +78,16 @@ class AixSCSIStorageController(AixSCSIDevice, SCSIStorageController):
 
 class AixModelMixin(object):
     def _get_dev_by_class(self, cls_name):
-        proc = execute_assert_success(["/usr/sbin/lsdev", "-c", cls_name, "-F", "name"])
+        proc = execute_assert_success(["/usr/sbin/lsdev", "-c", cls_name, "-F", "name,status"])
         output = proc.get_stdout().strip()
         if not output:
             return []
-        return [line.strip() for line in output.split("\n")]
+        return [line.strip().split(',')[0] for line in output.split("\n") if line.split(',')[1] == 'Available']
 
     def _get_multipath_devices(self):
-        proc = execute_assert_success(["/usr/sbin/lspath", "-F", "name"])
-        return set(proc.get_stdout().strip().split("\n"))
+        proc = execute_assert_success(["/usr/sbin/lspath", "-F", "name,status"])
+        return set(line.split(',')[0] for line in proc.get_stdout().strip().split("\n")
+                   if line.split(',')[1] == 'Enabled')
 
     def _is_disk_a_controller(self, dev):
         # AIX sometimes returns controller devices in 'lsdev -c disk' (instead of in 'lsdev -c dac') if the DOM

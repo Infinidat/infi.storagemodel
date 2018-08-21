@@ -34,13 +34,7 @@ class SolarisDeviceManagerTestCase(TestCase):
         self.dm.get_all_multipathed_storage_controllers()
 
 
-MPATHADM_LISTLU_OUTPUT_TEMPLATE = """  /scsi_vhci/array-controller@g6742b0f0000075360000000000000000
-                Total Path Count: 1
-                Operational Path Count: 1
-        /dev/rdsk/c0t6742B0F000007536000000000000217Dd0s2
-                Total Path Count: 3
-                Operational Path Count: 3
-"""
+# The first entry is a local disk:
 
 MPATHADM_SHOWLU_OUTPUT_TEMPLATE = """
     Logical Unit:  /scsi_vhci/array-controller@g6742b0f0000075360000000000000000
@@ -95,6 +89,34 @@ MPATHADM_SHOWLU_OUTPUT_TEMPLATE = """
                         Name:  5742b0f000753611
                         Relative ID:  257
     """
+
+MPATHADM_SHOWLU_WITH_LOCAL_DRIVE_OUTPUT_TEMPLATE = """
+    Logical Unit:  /dev/rdsk/c0t5000CCA070A317C8d0s2
+        mpath-support:  libmpscsi_vhci.so
+        Vendor:  HITACHI
+        Product:  H109060SESUN600G
+        Revision:  A72A
+        Name Type:  unknown type
+        Name:  5000cca070a317c8
+        Asymmetric:  no
+        Current Load Balance:  round-robin
+        Logical Unit Group ID:  NA
+        Auto Failback:  on
+        Auto Probing:  NA
+
+        Paths:
+            Initiator Port Name:  w50800200020891d0
+            Target Port Name:  w5000cca070a317c9
+            Override Path:  NA
+            Path State:  OK
+            Disabled:  no
+
+        Target Ports:
+            Name:  w5000cca070a317c9
+            Relative ID:  0
+
+
+""" + MPATHADM_SHOWLU_OUTPUT_TEMPLATE
 
 MPATH_DEVICE_PATH = '/dev/rdsk/c0t6742B0F000007536000000000000217Dd0s2'
 
@@ -236,6 +258,17 @@ class SolarisMultipathingTestCase(TestCase):
             self.assertEqual(len(block_devices), 1)
             self.assertEqual(len(block_devices[0].get_paths()), 3)
             self.assertEqual(len([p for p in block_devices[0].get_paths() if p.get_state() == "up"]), 1)
+
+    def test_mpathadm_output_with_local_drive(self):
+        vid, pid = ("NFINIDAT", "InfiniBox")
+        showlu_output = MPATHADM_SHOWLU_WITH_LOCAL_DRIVE_OUTPUT_TEMPLATE.format(paths=THREE_PATHS, vid=vid, pid=pid)
+        with solaris_multipathing_context(showlu_output) as solaris_multipath:
+            block_devices = solaris_multipath.get_all_multipath_block_devices()
+            self.assertEqual(len(block_devices), 2)
+            self.assertEqual(len(block_devices[0].get_paths()), 1)
+            self.assertEqual('HITACHI', block_devices[0].get_scsi_vendor_id())
+            self.assertEqual(len(block_devices[1].get_paths()), 3)
+            self.assertEqual(len(solaris_multipath.filter_vendor_specific_devices(block_devices, vid_pid)), 1)
 
     def test_mpathadm_output_bad_hctl(self):
         vid, pid = ("NFINIDAT", "InfiniBox")
