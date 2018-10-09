@@ -49,6 +49,9 @@ class WindowsDiskDrive(disk.DiskDrive):
     def offline(self):
         return gevent_wrapper.defer(self._disk_object.offline)()
 
+    def is_dynamic(self):
+        return gevent_wrapper.defer(self._disk_object.is_dynamic)()
+
     def has_read_only_attribute(self):
         return gevent_wrapper.defer(self._disk_object.is_read_only)()
 
