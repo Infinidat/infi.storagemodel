@@ -91,6 +91,7 @@ def do_report_luns(sg_device):
 @func_logger
 def do_test_unit_ready(sg_device):
     from infi.asi.cdb.tur import TestUnitReadyCommand
+    from infi.asi.errors import AsiReservationConflictError
     try:
         cdb = TestUnitReadyCommand()
         return do_scsi_cdb(sg_device, cdb)
