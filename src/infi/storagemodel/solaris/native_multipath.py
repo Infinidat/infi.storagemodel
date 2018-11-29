@@ -184,7 +184,7 @@ class SolarisMultipathClient(object):
         from infi.execute import ExecutionError
         from infi.storagemodel.unix.utils import execute_command
         try:
-            return execute_command(cmd.split()).get_stdout()
+            return execute_command(cmd.split()).get_stdout().decode("ascii")
         except OSError as e:
             if e.errno not in (2, 20):  # file not found, not a directory
                 logger.exception("{} failed with unknown reason".formart(cmd[0]))

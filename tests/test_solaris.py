@@ -6,6 +6,7 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import clear_cache
 from unittest import TestCase, SkipTest
 from mock import Mock, patch
+from six.moves import builtins
 try:
     from os import name, readlink, listdir
 except ImportError:
@@ -322,7 +323,7 @@ class SolarisSCSITestCase(TestCase):
         @patch('os.path.exists')
         @patch('os.readlink')
         @patch('os.listdir')
-        @patch('__builtin__.open')
+        @patch.object(builtins, 'open')
         def _inner_test_func(open_mock, listdir_mock, readlink_mock, exists_mock, get_vid_mock, get_test_unit_mock):
             readlink_map = {'/dev/rdsk/c3t5742B0F000753611d10p0': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:q,raw',
                             '/dev/rdsk/c3t5742B0F000753611d10p1': '/devices/pci@0,0/pci15ad,7a0@15/pci10df,f121@0/fp@0,0/disk@w5742b0f000753611,a:r,raw',
