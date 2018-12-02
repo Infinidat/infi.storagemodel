@@ -53,7 +53,7 @@ class AixPath(Path):
     def get_io_statistics(self):
         """Returns a `infi.storagemodel.base.multipath.PathStatistics` instance """
         proc = execute_assert_success(["iostat", "-m", self._mpio_device_name])
-        lines = proc.get_stdout().strip().split("\n")
+        lines = proc.get_stdout().decode().strip().split("\n")
         path_line = [line for line in lines if line.startswith("Path{}".format(self._path_id))][0]
         path, tm_act, kbps, tps, kb_read, kb_wrtn = path_line.split()
         # iostat doesn't return the nubmer of reads/writes, but each read and write uses an entire block
@@ -85,7 +85,7 @@ class AixMultipathMixin(object):
     def get_paths(self):
         """Returns a list of `infi.storagemodel.base.multipath.Path` instances"""
         proc = execute_assert_success(["/usr/sbin/lspath", "-F", "path_id,parent,connection,status", "-l", self._name])
-        lines = proc.get_stdout().strip().split("\n")
+        lines = proc.get_stdout().decode().strip().split("\n")
         result = []
         for line in lines:
             if line.count(",") == 4:
@@ -104,7 +104,7 @@ class AixMultipathMixin(object):
     def get_policy(self):
         """Returns an instance of `infi.storagemodel.base.multipath.LoadBalancePolicy`"""
         proc = execute_assert_success(["/usr/sbin/lsattr", "-F", "value", "-a", "algorithm", "-l", self._name])
-        value = proc.get_stdout().strip()
+        value = proc.get_stdout().decode().strip()
         return next((policy for policy in (AixFailover, AixRoundRobin, AixShortestQueue) if policy.name == value))()
 
     def _get_access_path(self):
