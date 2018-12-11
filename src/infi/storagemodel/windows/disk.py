@@ -70,7 +70,7 @@ class WindowsDiskDrive(disk.DiskDrive):
             return []
 
     def get_volumes_cluster_sizes(self):
-        return gevent_wrapper.defer(self._disk_object._get_volumes_cluster_sizes())
+        return gevent_wrapper.defer(self._disk_object._get_volumes_cluster_sizes)()
 
 
 class WindowsDiskModel(disk.DiskModel):
