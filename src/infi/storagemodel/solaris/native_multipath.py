@@ -46,7 +46,7 @@ class SolarisSinglePathEntry(Munch):
 
     def _get_path_lun_fc(self):
         for device_name, host_wwn, target_wwn, lun in self.port_mappings:
-            if self.mpath_dev_path in device_name and \
+            if self.mpath_dev_path in device_name.decode() and \
                 str(host_wwn) == self.initiator_port_name and \
                 str(target_wwn) == self.target_port_name:
                 return lun
