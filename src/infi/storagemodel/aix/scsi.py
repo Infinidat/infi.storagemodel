@@ -29,7 +29,8 @@ class AixSCSIDevice(SCSIDevice):
     @classmethod
     @cached_method
     def _get_host_by_driver(cls, driver_name):
-        adapter = execute_assert_success(["/usr/sbin/lsdev", "-F", "parent", "-l", driver_name]).get_stdout().strip()
+        proc = execute_assert_success(["/usr/sbin/lsdev", "-F", "parent", "-l", driver_name])
+        adapter = proc.get_stdout().decode().strip()
         mapping = cls._get_adapter_to_host_mapping()
         return mapping.get(adapter, -1)
 
@@ -47,10 +48,12 @@ class AixSCSIDevice(SCSIDevice):
     @cached_method
     def get_hctl(self):
         """Returns a `infi.dtypes.hctl.HCTL` object"""
-        driver = execute_assert_success(["/usr/sbin/lsdev", "-F", "parent", "-l", self._name]).get_stdout().strip()
+        proc = execute_assert_success(["/usr/sbin/lsdev", "-F", "parent", "-l", self._name])
+        driver = proc.get_stdout().decode().strip()
         host = self._get_host_by_driver(driver)
-        target, lun = execute_assert_success(["/usr/sbin/lsattr", "-F", "value", "-a", "ww_name", "-a", "lun_id",
-            "-E", "-l", self._name]).get_stdout().strip().split("\n")
+        proc = execute_assert_success(["/usr/sbin/lsattr", "-F", "value", "-a", "ww_name", "-a", "lun_id",
+                                       "-E", "-l", self._name])
+        target, lun = proc.get_stdout().decode().strip().split("\n")
         target = int(target, 16)
         lun = int(lun, 16) >> 48
         return HCTL(host, 0, target, lun)
@@ -79,14 +82,14 @@ class AixSCSIStorageController(AixSCSIDevice, SCSIStorageController):
 class AixModelMixin(object):
     def _get_dev_by_class(self, cls_name):
         proc = execute_assert_success(["/usr/sbin/lsdev", "-c", cls_name, "-F", "name,status"])
-        output = proc.get_stdout().strip()
+        output = proc.get_stdout().decode().strip()
         if not output:
             return []
         return [line.strip().split(',')[0] for line in output.split("\n") if line.split(',')[1] == 'Available']
 
     def _get_multipath_devices(self):
         proc = execute_assert_success(["/usr/sbin/lspath", "-F", "name,status"])
-        return set(line.split(',')[0] for line in proc.get_stdout().strip().split("\n")
+        return set(line.split(',')[0] for line in proc.get_stdout().decode().strip().split("\n")
                    if line.split(',')[1] == 'Enabled')
 
     def _is_disk_a_controller(self, dev):

@@ -6,6 +6,7 @@ def devlist():
 
     from infi.storagemodel import get_storage_model
     from infi.storagemodel.vendor.infinidat.infinibox import vid_pid as infinibox_vid_pid
+    from infi.storagemodel.connectivity import FCConnectivity
     model = get_storage_model()
 
     scsi_block_devices = model.get_scsi().get_all_scsi_block_devices()
@@ -37,8 +38,9 @@ def devlist():
                 print("\t" + "Weight " + str(device.get_policy().weights[path.get_path_id()]))
             else:
                 print('')
-            print("\t\t\t{} <--> {}".format(path.get_connectivity().get_initiator_wwn(),
-                                          path.get_connectivity().get_target_wwn()))
+            if isinstance(path.get_connectivity(), FCConnectivity):
+                print("\t\t\t{} <--> {}".format(path.get_connectivity().get_initiator_wwn(),
+                                                path.get_connectivity().get_target_wwn()))
 
     for device in model.get_native_multipath().filter_vendor_specific_devices(mp_devices, infinibox_vid_pid):
         print_multipath_device(device)
@@ -49,7 +51,6 @@ def devlist():
         print_multipath_device(device)
 
     def print_non_multipath_device(device):
-        from infi.storagemodel.connectivity import FCConnectivity
         print("{name}\t{size}MB\t{vid}\t{pid}\t{hctl}".format(name=device.get_display_name(),
                     size=device.get_size_in_bytes() / 1024 / 1024,
                     vid=device.get_scsi_vendor_id(), pid=device.get_scsi_product_id(),
