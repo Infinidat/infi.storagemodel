@@ -58,7 +58,7 @@ pardir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 os.chdir(pardir)
 
 # Install requirements and build the project
-run("easy_install -U infi.projector argparse mako markdown")
+run("easy_install -U infi.projector")
 run("projector devenv build")
 
 # Clone our customized version of pdoc
