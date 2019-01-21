@@ -31,13 +31,13 @@ import sys, os
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = '.html'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = '_build/html/index'
 
 # General information about the project.
 project = u'infi.storagemodel'
