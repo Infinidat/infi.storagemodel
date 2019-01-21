@@ -226,7 +226,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'infistoragemodeldoc'
+#htmlhelp_basename = 'infistoragemodeldoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -239,10 +239,10 @@ htmlhelp_basename = 'infistoragemodeldoc'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
-latex_documents = [
-  ('index', 'infistoragemodel.tex', u'infi.storagemodel Documentation',
-   u'Guy Rozendorn', 'manual'),
-]
+#latex_documents = [
+#  ('index', 'infistoragemodel.tex', u'infi.storagemodel Documentation',
+#   u'Guy Rozendorn', 'manual'),
+#]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
@@ -272,11 +272,11 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'infistoragemodel', u'infi.storagemodel Documentation',
-     [u'Guy Rozendorn'], 1)
-]
+#man_pages = [
+#    ('index', 'infistoragemodel', u'infi.storagemodel Documentation',
+#     [u'Guy Rozendorn'], 1)
+#]
 
 # -- customized settings --------------------
 
-autodoc_default_flags = 'members'
+#autodoc_default_flags = 'members'
