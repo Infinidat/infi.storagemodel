@@ -33,7 +33,7 @@ class SophisticatedMixin(object):
         try:
             return self.get_json_data(page)[key]
         except KeyError:
-            logger.debug("key {} does not exists in JSON response".format(key))
+            logger.debug("key {} does not exist in JSON response".format(key))
             raise chain(InquiryException("KeyError: {}".format(key)))
 
     def _get_host_name_from_json_page(self):
