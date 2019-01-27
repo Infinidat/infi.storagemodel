@@ -141,5 +141,4 @@ class InfiniBoxInquiryMixin(object):
     @cached_method
     def get_string_data(self, page):
         """ Returns the string inquiry data from the system as a `dict` """
-        from json import loads
         return self._get_string_inquiry_data(page)
