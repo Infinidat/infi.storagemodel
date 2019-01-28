@@ -98,7 +98,9 @@ class InfiniBoxInquiryMixin(object):
         from infi.asi import AsiCheckConditionError
         from infi.storagemodel.vendor.infinidat.infinibox.json_page import JSONInquiryPageBuffer
         try:
-            unknown_page = self.device.get_scsi_inquiry_pages()[page]
+            # TODO: temporary support for additional pages which are not declared in the
+            # INQUIRY_PAGE_SUPPORTED_VPD_PAGES page:
+            unknown_page = self.device.get_scsi_inquiry_pages(additional_pages=[0xcc])[page]
             json_page = JSONInquiryPageBuffer()
             json_page.unpack(unknown_page.pack())
             return json_page
