@@ -6,6 +6,7 @@ from logging import getLogger
 logger = getLogger(__name__)
 DEFAULT_PORT = 80
 
+
 class SophisticatedMixin(object):
     @cached_method
     def get_management_address(self):
@@ -33,8 +34,11 @@ class SophisticatedMixin(object):
         try:
             return self.get_json_data(page)[key]
         except KeyError:
-            logger.debug("key {} does not exists in JSON response".format(key))
+            logger.debug("key {} does not exist in JSON response".format(key))
             raise chain(InquiryException("KeyError: {}".format(key)))
+
+    def _get_key_from_replication_json_page(self, key):
+        return self._get_key_from_json_page(key=key, page=0xcc)
 
     def _get_host_name_from_json_page(self):
         try:
@@ -122,3 +126,19 @@ class SophisticatedMixin(object):
     @cached_method
     def get_pool_name(self):
         return self.get_string_data(page=0xca)
+
+    # Active-Active and Mobility:
+    def get_replication_type(self):
+        return self._get_key_from_replication_json_page('rep_type')
+
+    def get_mobility_source(self):
+        return self._get_key_from_replication_json_page('mobility_src')
+
+    def get_replication_system_serials(self):
+        return self._get_key_from_replication_json_page('sys_serial')
+
+    def get_replication_volume_ids(self):
+        return self._get_key_from_replication_json_page('vol_id')
+
+    def get_replication_volume_names(self):
+        return self._get_key_from_replication_json_page('vol_name')

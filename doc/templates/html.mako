@@ -7,6 +7,7 @@
       import pygments
       import pygments.formatters
       import pygments.lexers
+      from markdown.extensions.codehilite import CodeHiliteExtension
       use_pygments = True
   except ImportError:
       use_pygments = False
@@ -65,7 +66,7 @@
 
       extensions = []
       if use_pygments:
-          extensions = ['codehilite(linenums=False)']
+          extensions = [CodeHiliteExtension(linenums=False)]
       s = markdown.markdown(s.strip(), extensions=extensions)
       return s
 
