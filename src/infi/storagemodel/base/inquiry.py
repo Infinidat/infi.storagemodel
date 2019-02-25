@@ -161,6 +161,9 @@ class InquiryInformationMixin(object):
         # then we fail-back to the safe way
         return _get_scsi_standard_inquiry_the_fastest_way() or _get_scsi_standard_inquiry_the_right_way()
 
+
+class SCSICommandInformationMixin(InquiryInformationMixin):
+
     @check_for_scsi_errors
     def get_scsi_test_unit_ready(self):
         """Returns True if the device is ready, False if got NOT_READY check condition
@@ -185,3 +188,11 @@ class InquiryInformationMixin(object):
                 raise
             except AsiReservationConflictError:
                 return True
+
+    @check_for_scsi_errors
+    def get_rtpg(self):
+        from infi.asi.cdb.rtpg import RTPGCommand
+        from infi.asi.coroutines.sync_adapter import sync_wait
+        command = RTPGCommand()
+        with self.asi_context() as asi:
+            return sync_wait(command.execute(asi))
