@@ -61,7 +61,7 @@ class InquiryInformationMixin(object):
 
     @cached_method
     @check_for_scsi_errors
-    def get_scsi_inquiry_pages(self, additional_pages=None):
+    def get_scsi_inquiry_pages(self):
         """Returns an immutable dict-like object of available inquiry pages from this device.
         For example:
 
@@ -88,11 +88,6 @@ class InquiryInformationMixin(object):
                 pass
             else:
                 raise
-        # TODO: temporary support for additional pages which are not declared in the
-        # INQUIRY_PAGE_SUPPORTED_VPD_PAGES page:
-        if additional_pages:
-            for page in additional_pages:
-                page_dict[page] = None
         return SupportedVPDPagesDict(page_dict, self)
 
     @cached_method
