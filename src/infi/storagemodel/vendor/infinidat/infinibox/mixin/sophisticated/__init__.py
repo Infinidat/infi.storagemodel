@@ -128,6 +128,20 @@ class SophisticatedMixin(object):
         return self.get_string_data(page=0xca)
 
     # Active-Active and Mobility:
+    def get_replication_mapping(self):
+        """Return a mapping of system_serial -> (volume_id, volume_name, mobility_source) parsed from page 0xcc"""
+        replication_page_data = self.get_json_data(0xcc)
+        system_serials = replication_page_data['sys_serial']
+        volume_ids = replication_page_data['vol_id']
+        volume_names = replication_page_data['vol_name']
+        if isinstance(replication_page_data['mobility_src'], bool):
+            mobilitiy_sources = [replication_page_data['mobility_src'], not replication_page_data['mobility_src']]
+        else:
+            mobilitiy_sources = [None, None]
+        return {system_serial: (volume_id, volume_name, mobility_source)
+                for system_serial, volume_id, volume_name, mobility_source in
+                zip(system_serials, volume_ids, volume_names, mobilitiy_sources)}
+
     def get_replication_type(self):
         return self._get_key_from_replication_json_page('rep_type')
 
