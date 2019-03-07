@@ -174,3 +174,11 @@ class WindowsPath(multipath.Path):
                                         path_perfromance.BytesWritten,
                                         path_perfromance.NumberReads,
                                         path_perfromance.NumberWrites)
+
+    def get_alua_state(self):
+        from infi.wmpio.wmi import WmiClient
+        from infi.wmpio.wmi import get_load_balace_policies
+        load_balance_policies = get_load_balace_policies(WmiClient())
+        for path in load_balance_policies[self._multipath_object.InstanceName].DSM_Paths:
+            if int(path.DsmPathId) == self.get_path_id():
+                return path.TargetPortGroup_State

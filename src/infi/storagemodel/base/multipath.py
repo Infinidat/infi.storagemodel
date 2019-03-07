@@ -335,3 +335,7 @@ class Path(object):
     def get_io_statistics(self):
         """Returns a `infi.storagemodel.base.multipath.PathStatistics` instance """
         raise NotImplementedError()
+
+    def get_alua_state(self):
+        """Returns the ALUA (Asymmetric Logical Unit Access) value"""
+        raise NotImplementedError()

@@ -3,6 +3,7 @@ from infi.pyutils.lazy import cached_method
 from infi.dtypes.hctl import HCTL
 from infi.storagemodel.base import gevent_wrapper
 from contextlib import contextmanager
+from infi.storagemodel.unix.multipath import UnixPathMixin
 from infi.storagemodel.base.multipath import MultipathFrameworkModel, MultipathStorageController, MultipathBlockDevice
 from infi.storagemodel.base.multipath import Path, PathStatistics, LeastQueueDepth, FailoverOnly, RoundRobin
 from .scsi import AixModelMixin, AixSCSIDevice
@@ -25,7 +26,7 @@ class AixShortestQueue(LeastQueueDepth):
     name = "shortest_queue"
 
 
-class AixPath(Path):
+class AixPath(UnixPathMixin, Path):
     def __init__(self, mpio_device_name, path_id, driver, target, lun, status):
         self._mpio_device_name = mpio_device_name
         self._path_id = path_id

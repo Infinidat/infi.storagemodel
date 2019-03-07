@@ -1,6 +1,7 @@
 from infi.pyutils.lazy import cached_method
 from infi.storagemodel.errors import ScsiGenericNotLoaded
 from infi.storagemodel.solaris.devicemanager import DeviceManager
+from infi.storagemodel.unix.multipath import UnixPathMixin
 from infi.storagemodel.base import multipath, gevent_wrapper
 from contextlib import contextmanager
 from munch import Munch
@@ -306,7 +307,7 @@ class SolarisNativeMultipathStorageController(SolarisNativeMultipathDeviceMixin,
             handle.close()
 
 
-class SolarisPath(multipath.Path):
+class SolarisPath(UnixPathMixin, multipath.Path):
     def __init__(self, multipath_object_path, device_path):
         self.multipath_object_path = multipath_object_path
         self.device_path = device_path
