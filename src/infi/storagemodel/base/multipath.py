@@ -339,3 +339,10 @@ class Path(object):
     def get_alua_state(self):
         """Returns the ALUA (Asymmetric Logical Unit Access) value"""
         raise NotImplementedError()
+
+class ALUAState(object):
+
+    ACTIVE_OPTIMIZED = 0
+    ACTIVE_NON_OPTIMIZED = 1
+    STANDBY = 2
+    UNAVAILABLE = 3
