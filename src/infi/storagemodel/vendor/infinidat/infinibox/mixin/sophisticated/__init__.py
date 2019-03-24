@@ -38,7 +38,8 @@ class SophisticatedMixin(object):
             raise chain(InquiryException("KeyError: {}".format(key)))
 
     def _get_key_from_replication_json_page(self, key):
-        return self._get_key_from_json_page(key=key, page=0xcc)
+        if 0xcc in self.device.get_scsi_inquiry_pages()[0x00].vpd_parameters:
+            return self._get_key_from_json_page(key=key, page=0xcc)
 
     def _get_host_name_from_json_page(self):
         try:
