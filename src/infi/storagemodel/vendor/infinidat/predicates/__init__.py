@@ -4,6 +4,29 @@ from logging import getLogger
 log = getLogger(__name__)
 
 
+def compare_device_system_and_id(device, system_serial, volume_id):
+    ''' checks if given device is from a specific volume from a specific system '''
+    from infi.storagemodel.base.multipath import MultipathBlockDevice
+    from infi.storagemodel.vendor.infinidat.infinibox.connectivity import get_system_serial_from_path
+    vendor = device.get_vendor()
+    log_msg = "checking if device {} from system serial {} and volume id {} is from system serial {} with volume id {}"
+    log.debug(log_msg.format(device.get_display_name(), vendor.get_system_serial(), vendor.get_volume_id(), system_serial, volume_id))
+    if vendor.get_replication_type() == 'ACTIVE_ACTIVE' and isinstance(device, MultipathBlockDevice):
+        replication_mapping = vendor.get_replication_mapping()
+        log.debug("device is A/A replicated. mapping={}".format(replication_mapping))
+        if (system_serial in replication_mapping and
+           replication_mapping[system_serial].id == volume_id):
+            # device is replicated to system_serial with volume_id but may not be mapped to the host
+            return any(get_system_serial_from_path(path) == system_serial
+                       for path in device.get_paths())
+    # if the device is single-path or not under A/A replication it's ok to check by SCSI inquiry
+    # because we'll always inquire the same, single system
+    elif (volume_id == vendor.get_volume_id() and
+         system_serial == vendor.get_system_serial()):
+        return True
+    return False
+
+
 class InfinidatVolumeExists(object):
     """A predicate that checks if an Infinidat volume exists"""
     def __init__(self, system_serial, volume_id):
@@ -24,14 +47,10 @@ class InfinidatVolumeExists(object):
                 if 0xc6 not in device.get_scsi_inquiry_pages():
                     log.debug("No vendor-specific page 0xc6 for device {!r}, returning False now as this should be fixed by rescan".format(device))
                     return False
-                volume_id = device.get_vendor().get_volume_id()
-                system_serial = device.get_vendor().get_system_serial()
-                log.debug("Found INFINIDAT volume id {} from system id {}".format(volume_id, system_serial))
             except (AsiException, InstructError):
                 log.exception("failed to identify INFINIDAT volume, returning False now as this should be fixed by rescan")
                 return False
-        return any(self.volume_id == device.get_vendor().get_volume_id() and
-                   self.system_serial == device.get_vendor().get_system_serial()
+        return any(compare_device_system_and_id(device, self.system_serial, self.volume_id)
                    for device in devices_to_query)
 
     def __repr__(self):
