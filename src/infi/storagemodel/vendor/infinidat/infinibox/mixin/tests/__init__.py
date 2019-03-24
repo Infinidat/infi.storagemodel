@@ -93,12 +93,17 @@ class MappedVolume(scsi_block_class):
 class Device(object):
     def get_scsi_inquiry_pages(self):
         from infi.asi.cdb.inquiry import PeripheralDeviceDataBuffer
+        from infi.asi.cdb.inquiry.vpd_pages.supported_pages import SupportedVPDPagesBuffer
         from infi.storagemodel.vendor.infinidat.infinibox.string_page import StringInquiryPageBuffer
         device = PeripheralDeviceDataBuffer(qualifier=0, type=0)
         volume_name = StringInquiryPageBuffer(peripheral_device=device, page_code=0xc7, string="volume_name")
         host_name = StringInquiryPageBuffer(peripheral_device=device, page_code=0xc8, string="host_name")
         cluster_name = StringInquiryPageBuffer(peripheral_device=device, page_code=0xc9, string="cluster_name")
+        supported_pages = [0x00, 0xc7, 0xc8, 0xc9, 0xcc]
+        supported_pages_page = SupportedVPDPagesBuffer(peripheral_device=device, page_code=0x00,
+                                                       page_length=len(supported_pages), vpd_parameters=supported_pages)
         return {
+            0x00: supported_pages_page,
             0xc7: volume_name,
             0xc8: host_name,
             0xc9: cluster_name,
