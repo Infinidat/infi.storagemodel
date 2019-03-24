@@ -4,6 +4,24 @@ from logging import getLogger
 log = getLogger(__name__)
 
 
+def compare_device_system_and_id(device, system_serial, volume_id):
+    ''' checks if given device is from a specific volume from a specific system '''
+    from infi.storagemodel.base.multipath import MultipathBlockDevice
+    from infi.storagemodel.vendor.infinidat.infinibox.connectivity import get_system_serial_from_path
+    if (volume_id == device.get_vendor().get_volume_id() and
+       system_serial == device.get_vendor().get_system_serial()):
+        return True
+    if device.get_vendor().get_replication_type() == 'ACTIVE_ACTIVE' and isinstance(device, MultipathBlockDevice):
+        replication_mapping = device.get_vendor().get_replication_mapping()
+        if (system_serial in replication_mapping and
+           replication_mapping[system_serial].id == volume_id):
+            # device is replicated to system_serial with volume_id but may not be mapped to the host
+            return any(get_system_serial_from_path(path) == system_serial
+                       for path in device.get_paths())
+            return True
+    return False
+
+
 class InfinidatVolumeExists(object):
     """A predicate that checks if an Infinidat volume exists"""
     def __init__(self, system_serial, volume_id):
@@ -27,11 +45,13 @@ class InfinidatVolumeExists(object):
                 volume_id = device.get_vendor().get_volume_id()
                 system_serial = device.get_vendor().get_system_serial()
                 log.debug("Found INFINIDAT volume id {} from system id {}".format(volume_id, system_serial))
+                if device.get_vendor().get_replication_type() == 'ACTIVE_ACTIVE':
+                    replication_mapping = device.get_vendor().get_replication_mapping()
+                    log.debug("This device is replicated. Mappings: {}".format(replication_mapping))
             except (AsiException, InstructError):
                 log.exception("failed to identify INFINIDAT volume, returning False now as this should be fixed by rescan")
                 return False
-        return any(self.volume_id == device.get_vendor().get_volume_id() and
-                   self.system_serial == device.get_vendor().get_system_serial()
+        return any(compare_device_system_and_id(device, self.system_serial, self.volume_id)
                    for device in devices_to_query)
 
     def __repr__(self):
