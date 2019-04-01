@@ -1,6 +1,8 @@
+from infi.storagemodel.errors import check_for_scsi_errors
 
 class UnixPathMixin(object):
 
+    @check_for_scsi_errors
     def get_alua_state(self):
         from infi.asi.cdb.rtpg import RTPGCommand
         from infi.asi.cdb.inquiry.vpd_pages.device_identification import DeviceIdentificationVPDPageCommand
