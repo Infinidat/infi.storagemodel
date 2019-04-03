@@ -184,12 +184,8 @@ class SCSICommandInformationMixin(InquiryInformationMixin):
             except AsiReservationConflictError:
                 return True
 
-    def get_rtpg(self, check_for_errors=True):
-        if check_for_errors:
-            return check_for_scsi_errors(self._get_rtpg)()
-        return self._get_rtpg()
-
-    def _get_rtpg(self):
+    @check_for_scsi_errors
+    def get_rtpg(self):
         from infi.asi.cdb.rtpg import RTPGCommand
         from infi.asi.coroutines.sync_adapter import sync_wait
         command = RTPGCommand()
