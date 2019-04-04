@@ -107,6 +107,7 @@ class Device(object):
             0xc7: volume_name,
             0xc8: host_name,
             0xc9: cluster_name,
+            0xcc: None,
         }
 
 
