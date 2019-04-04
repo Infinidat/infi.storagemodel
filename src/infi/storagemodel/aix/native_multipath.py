@@ -61,6 +61,17 @@ class AixPath(UnixPathMixin, Path):
         # (4k), so if we divide kb_read/kb_wrtn by 4 we'll get the number
         return PathStatistics(int(kb_read) * 1024, int(kb_wrtn) * 1024, int(kb_read) / 4, int(kb_wrtn) / 4)
 
+    @contextmanager
+    def asi_context(self):
+        from infi.asi import create_platform_command_executer, create_os_file
+        handle = create_os_file('/dev/' + self._mpio_device_name)
+        executer = create_platform_command_executer(handle)
+        executer.call = gevent_wrapper.defer(executer.call)
+        try:
+            yield executer
+        finally:
+            handle.close()
+
 
 class AixMultipathMixin(object):
     def __init__(self, name):

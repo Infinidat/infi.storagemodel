@@ -332,6 +332,19 @@ class SolarisPath(UnixPathMixin, multipath.Path):
         stats = all_stats[full_dev_path]['c{}'.format(self.get_hctl().get_host())][self.multipath_object_path.target_port_name]
         return multipath.PathStatistics(stats.bytes_read, stats.bytes_written, stats.read_io_count, stats.write_io_count)
 
+    @contextmanager
+    def asi_context(self):
+        import os
+        from infi.asi import create_platform_command_executer, create_os_file
+
+        handle = create_os_file(self.device_path)
+        executer = create_platform_command_executer(handle, timeout=QUERY_TIMEOUT)
+        executer.call = gevent_wrapper.defer(executer.call)
+        try:
+            yield executer
+        finally:
+            handle.close()
+
 
 class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
     def __init__(self, *args, **kwargs):
