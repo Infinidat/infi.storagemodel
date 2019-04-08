@@ -287,7 +287,6 @@ class VMwarePath(multipath.Path):
 
     @cached_method
     def get_hctl(self):
-        from pyVmomi import vim
         from infi.storagemodel.errors import RescanIsNeeded
         from pyVmomi import vim
         scsi_topology_adapters = self._properties.get(SCSI_TOPOLOGY_PROPERTY_PATH, [])
@@ -315,6 +314,17 @@ class VMwarePath(multipath.Path):
     @cached_method
     def get_state(self):
         return self._path_data_object.state
+
+    def get_alua_state(self):
+        from pyVmomi import vim
+        if self._path_data_object.state == vim.MultipathState.active:
+            if self._path_data_object.isWorkingPath:
+                return multipath.ALUAState.ACTIVE_OPTIMIZED
+            else:
+                return multipath.ALUAState.ACTIVE_NON_OPTIMIZED
+        if self._path_data_object.state == vim.MultipathState.standby:
+            return multipath.ALUAState.STANDBY
+        return multipath.ALUAState.UNAVAILABLE
 
 
 class VMwareMultipathDevice(VMwareInquiryInformationMixin):
