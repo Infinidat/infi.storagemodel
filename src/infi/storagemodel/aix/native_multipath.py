@@ -26,7 +26,7 @@ class AixShortestQueue(LeastQueueDepth):
     name = "shortest_queue"
 
 
-class AixPath(UnixPathMixin, Path):
+class AixPath(Path):
     def __init__(self, mpio_device_name, path_id, driver, target, lun, status):
         self._mpio_device_name = mpio_device_name
         self._path_id = path_id
@@ -71,6 +71,9 @@ class AixPath(UnixPathMixin, Path):
             yield executer
         finally:
             handle.close()
+
+    def get_alua_state(self):
+        raise NotImplementedError()
 
 
 class AixMultipathMixin(object):
