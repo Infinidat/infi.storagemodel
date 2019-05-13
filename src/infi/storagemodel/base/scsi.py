@@ -1,7 +1,7 @@
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
 
-from .inquiry import InquiryInformationMixin
+from .inquiry import SCSICommandInformationMixin
 from .diagnostic import SesInformationMixin
 from logging import getLogger
 
@@ -9,7 +9,7 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 
-class SCSIDevice(InquiryInformationMixin, object):
+class SCSIDevice(SCSICommandInformationMixin, object):
     @cached_method
     def get_connectivity(self):
         """Returns a `infi.storagemodel.connectivity.FCConnectivity` instance."""

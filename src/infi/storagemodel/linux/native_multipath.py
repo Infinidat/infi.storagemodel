@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from infi.storagemodel.unix.multipath import UnixPathMixin
 from infi.storagemodel.base import multipath, gevent_wrapper
 from infi.storagemodel.errors import StorageModelFindError, MultipathDaemonTimeoutError
 from infi.pyutils.lazy import cached_method
@@ -83,7 +84,7 @@ class LinuxNativeMultipathBlockDevice(LinuxBlockDeviceMixin, multipath.Multipath
 class LinuxRoundRobin(multipath.RoundRobin):
     pass
 
-class LinuxPath(multipath.Path):
+class LinuxPath(UnixPathMixin, multipath.Path):
     def __init__(self, sysfs, multipath_object_path):
         from infi.dtypes.hctl import HCTL
         self.multipath_object_path = multipath_object_path

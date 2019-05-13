@@ -318,7 +318,7 @@ class SolarisSCSITestCase(TestCase):
         if "solaris" not in get_platform_string():
             raise SkipTest
 
-        @patch('infi.storagemodel.base.inquiry.InquiryInformationMixin.get_scsi_test_unit_ready', autospec=True)
+        @patch('infi.storagemodel.base.inquiry.SCSICommandInformationMixin.get_scsi_test_unit_ready', autospec=True)
         @patch('infi.storagemodel.base.inquiry.InquiryInformationMixin.get_scsi_vendor_id_or_unknown_on_error', autospec=True)
         @patch('os.path.exists')
         @patch('os.readlink')

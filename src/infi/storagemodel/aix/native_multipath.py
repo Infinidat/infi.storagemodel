@@ -3,6 +3,7 @@ from infi.pyutils.lazy import cached_method
 from infi.dtypes.hctl import HCTL
 from infi.storagemodel.base import gevent_wrapper
 from contextlib import contextmanager
+from infi.storagemodel.unix.multipath import UnixPathMixin
 from infi.storagemodel.base.multipath import MultipathFrameworkModel, MultipathStorageController, MultipathBlockDevice
 from infi.storagemodel.base.multipath import Path, PathStatistics, LeastQueueDepth, FailoverOnly, RoundRobin
 from .scsi import AixModelMixin, AixSCSIDevice

@@ -1,7 +1,7 @@
 from itertools import chain
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
-from .inquiry import InquiryInformationMixin
+from .inquiry import SCSICommandInformationMixin
 
 
 class MultipathFrameworkModel(object):
@@ -75,7 +75,7 @@ class VeritasMultipathModel(MultipathFrameworkModel):
 class MultipathDevice(object):
     pass
 
-class MultipathStorageController(InquiryInformationMixin, MultipathDevice):
+class MultipathStorageController(SCSICommandInformationMixin, MultipathDevice):
     @cached_method
     def get_vendor(self):
         """Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
@@ -120,7 +120,7 @@ class MultipathStorageController(InquiryInformationMixin, MultipathDevice):
         return "<{} {} for {}>".format(self.__class__.__name__,
             self.get_multipath_access_path(), self.get_display_name())
 
-class MultipathBlockDevice(InquiryInformationMixin, MultipathDevice):
+class MultipathBlockDevice(SCSICommandInformationMixin, MultipathDevice):
     @cached_method
     def get_vendor(self):
         """Returns a get_vendor-specific implementation from the factory based on the device's SCSI vid and pid"""
@@ -335,3 +335,14 @@ class Path(object):
     def get_io_statistics(self):
         """Returns a `infi.storagemodel.base.multipath.PathStatistics` instance """
         raise NotImplementedError()
+
+    def get_alua_state(self):
+        """Returns the ALUA (Asymmetric Logical Unit Access) value"""
+        raise NotImplementedError()
+
+class ALUAState(object):
+
+    ACTIVE_OPTIMIZED = 0
+    ACTIVE_NON_OPTIMIZED = 1
+    STANDBY = 2
+    UNAVAILABLE = 3

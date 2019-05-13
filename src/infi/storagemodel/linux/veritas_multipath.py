@@ -1,4 +1,5 @@
 from infi.storagemodel.unix.veritas_multipath import VeritasMultipathClient
+from infi.storagemodel.unix.multipath import UnixPathMixin
 from infi.storagemodel.base import multipath, gevent_wrapper
 from infi.pyutils.lazy import cached_method
 from contextlib import contextmanager
@@ -88,7 +89,7 @@ class LinuxVeritasMultipathBlockDevice(multipath.MultipathBlockDevice):
         return unpack('L', size)[0]
 
 
-class VeritasPath(multipath.Path):
+class VeritasPath(UnixPathMixin, multipath.Path):
     def __init__(self, sysfs, scsi_model, multipath_object_path):
         self._sysfs = sysfs
         self._scsi_model = scsi_model
@@ -119,6 +120,20 @@ class VeritasPath(multipath.Path):
             bytes_read = read_sectors * 512
             bytes_written = write_sectors * 512
             return multipath.PathStatistics(bytes_read, bytes_written, read_ios, write_ios)
+
+    @contextmanager
+    def asi_context(self):
+        import os
+        from infi.asi import create_platform_command_executer, create_os_file
+        from .scsi import SG_TIMEOUT_IN_MS
+        path = os.path.join("/dev", self.sysfs_device.get_scsi_generic_device_name())
+        handle = create_os_file(path)
+        executer = create_platform_command_executer(handle, timeout=SG_TIMEOUT_IN_MS)
+        executer.call = gevent_wrapper.defer(executer.call)
+        try:
+            yield executer
+        finally:
+            handle.close()
 
 
 class LinuxVeritasMultipathModel(multipath.VeritasMultipathModel):
