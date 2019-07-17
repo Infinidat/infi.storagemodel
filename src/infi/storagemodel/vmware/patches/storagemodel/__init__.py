@@ -265,13 +265,14 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
 
 
 class VMwarePath(multipath.Path):
-    def __init__(self, client, host_moref, lun_key, path_data_object, properties):
+    def __init__(self, client, host_moref, lun_key, path_data_object, properties, native_multipath):
         super(VMwarePath, self).__init__()
         self._client = client
         self._host_moref = host_moref
         self._lun_key = lun_key
         self._path_data_object = path_data_object
         self._properties = properties
+        self._native_multipath = native_multipath
 
     @cached_method
     def get_connectivity(self):
@@ -279,7 +280,7 @@ class VMwarePath(multipath.Path):
         Returns an `infi.storagemodel.connectivity.FCConnectivity` instance.
         """
         from infi.storagemodel.connectivity import ConnectivityFactoryImpl
-        return ConnectivityFactoryImpl().get_by_device_with_hctl(self)
+        return self._native_multipath.get_connectivity_factory().get_by_device_with_hctl(self)
 
     @cached_method
     def get_path_id(self):
@@ -332,12 +333,13 @@ class VMwarePath(multipath.Path):
 
 
 class VMwareMultipathDevice(VMwareInquiryInformationMixin):
-    def __init__(self, client, host_moref, scsi_lun_data_object, properties):
+    def __init__(self, client, host_moref, scsi_lun_data_object, properties, native_multipath):
         super(VMwareMultipathDevice, self).__init__()
         self._client = client
         self._host_moref = host_moref
         self._scsi_lun_data_object = scsi_lun_data_object
         self._properties = properties
+        self._native_multipath = native_multipath
         logger.debug("Created {!r}".format(self))
 
     @cached_method
@@ -365,7 +367,7 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
         if logical_unit is None:
             return []
         return [VMwarePath(self._client, self._host_moref, self._scsi_lun_data_object.key,
-                           path_data_object, self._properties)
+                           path_data_object, self._properties, self._native_multipath)
                 for path_data_object in logical_unit.path]
 
     @cached_method
@@ -433,16 +435,21 @@ class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
         return [VMwareMultipathStorageController(self._client, self._moref,
-                                                 scsi_lun_data_object, self._get_properties())
+                                                 scsi_lun_data_object, self._get_properties(), self)
                 for scsi_lun_data_object in self._filter_array_controller_luns()
                 if scsi_lun_data_object.alternateName]
 
     @cached_method
     def get_all_multipath_block_devices(self):
         return [VMwareMultipathBlockDevice(self._client, self._moref,
-                                           scsi_lun_data_object, self._get_properties())
+                                           scsi_lun_data_object, self._get_properties(), self)
                 for scsi_lun_data_object in self._filter_disk_luns()
                 if scsi_lun_data_object.alternateName]
+
+    @cached_method
+    def get_connectivity_factory(self):
+        from infi.storagemodel.connectivity import CachedConnectivityFactoryImpl
+        return CachedConnectivityFactoryImpl()
 
     def filter_non_multipath_scsi_block_devices(self, scsi_block_devices):
         """ Returns an empty list since there no non-multipath devices on VMware """
