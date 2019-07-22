@@ -308,8 +308,8 @@ class VMwarePath(multipath.Path):
                         # lun.scsiLun = "key-vim.host.ScsiLun-020c0000006742b0f000004e2b0000000000000000496e66696e69"
                         # self._lun_key = 'key-vim.host.ScsiDisk-02000200006742b0f000004e2b0000000000000069496e66696e69'
                         if lun.scsiLun.rsplit('-', 1)[-1] == self._lun_key.rsplit('-', 1)[-1]:
-                            # path._path_data_object.key = "key-vim.host.MultipathInfo.Path-vmhba2:C0:T2:L16"
-                            channel = int(path._path_data_object.key.split(":")[1][1:])
+                            # self._path_data_object.key = "key-vim.host.MultipathInfo.Path-vmhba2:C0:T2:L16"
+                            channel = int(self._path_data_object.key.split(":")[1][1:])
                             hctl = HCTL(expected_vmhba, channel, target.target, lun.lun)
                             logger.debug("VMwarePath.get_hctl returns {}".format(hctl))
                             return hctl
