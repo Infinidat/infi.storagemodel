@@ -184,8 +184,12 @@ class ConnectionManager(base.ConnectionManager):
                 if isinstance(scsi_target.transport, vim.HostInternetScsiTargetTransport):
                     h, c, t = scsi_target.key.split("-")[-1].split(":")
                     hct = HCT(h, int(c), int(t))
-                    target = base.Target(None, None, scsi_target.transport.iScsiName)
-                    result.append(base.Session(target, None, None, self._get_source_iqn(h), None, hct))
+                    source_iqn = self._get_source_iqn(h)
+                    target_iqn = scsi_target.transport.iScsiName
+                    msg = "get_sessions: adding session for target with IQN {} from IQN {}. HCT {}"
+                    logger.debug(msg.format(target_iqn, source_iqn, hct))
+                    target = base.Target(None, None, target_iqn)
+                    result.append(base.Session(target, None, None, source_iqn, None, hct))
         return result
 
 

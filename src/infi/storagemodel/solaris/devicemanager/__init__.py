@@ -1,7 +1,6 @@
 from re import findall
 from infi.dtypes.hctl import HCTL
 from infi.pyutils.lazy import cached_method
-from infi.sgutils.sg_map import get_hctl_for_sd_device
 
 from logging import getLogger
 logger = getLogger(__name__)
