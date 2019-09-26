@@ -72,7 +72,7 @@ class WindowsDiskDrive(disk.DiskDrive):
     def get_partitions_cluster_sizes(self):
         volumes_cluster_sizes = gevent_wrapper.defer(self._disk_object._get_volumes_cluster_sizes)()
         return {key: val for key, val in volumes_cluster_sizes.items()
-                if key in self.get_block_access_paths_for_partitions()}
+                if key.rstrip('\\') in self.get_block_access_paths_for_partitions()}
 
 
 class WindowsDiskModel(disk.DiskModel):
