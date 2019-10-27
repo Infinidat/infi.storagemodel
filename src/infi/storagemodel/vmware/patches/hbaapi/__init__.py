@@ -46,7 +46,7 @@ class HostSystemPortGenerator(Generator):
         return [adapter for adapter in self._get_all_host_bus_adapters() if isinstance(adapter, FCHBA_CLASS)]
 
     def _translate_long_to_wwn(self, wwn_long):
-        return WWN(hex(wwn_long)[:-1])
+        return WWN(hex(wwn_long).rstrip("L"))
 
     def _get_all_scsi_topologies(self):
         return self._get_properties().get(SCSI_TOPOLOGY_PROPERTY_PATH, [])

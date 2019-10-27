@@ -194,9 +194,10 @@ class VMwareInquiryPagesDict(LazyImmutableDict):
 
     def _build_device_identification_buffer(self, designators_list):
         size = sum(map(len, designators_list))
-        return "{}\x83{}{}".format(self._get_peripheral_device(),
-                                   number_to_ubint16_buffer(size),
-                                   ''.join(designators_list))
+        return (self._get_peripheral_device() +
+                b'\x83' +
+                number_to_ubint16_buffer(size) +
+                b''.join(designators_list))
 
     @cached_method
     def _get_dict_of_vpd_pages_and_their_raw_buffer(self):
@@ -209,10 +210,11 @@ class VMwareInquiryPagesDict(LazyImmutableDict):
                 vpd = vpd if vpd >= 0 else vpd + 256
                 vpd_dict[vpd] = byte_array_to_string(durable_name.data)
             elif durable_name.namespace == 'SERIALNUM':
-                buffer = byte_array_to_string(durable_name.data).rstrip('\x00')
-                vpd_dict[0x80] = "{}\x80{}{}".format(self._get_peripheral_device(),
-                                                     number_to_ubint16_buffer(len(buffer)),
-                                                     buffer)
+                buffer = byte_array_to_string(durable_name.data).rstrip(b'\x00')
+                vpd_dict[0x80] = (self._get_peripheral_device() +
+                                  b"\x80" +
+                                  number_to_ubint16_buffer(len(buffer)) +
+                                  buffer)
             else:
                 designators_list.insert(-1, byte_array_to_string(durable_name.data))
         vpd_dict[0x83] = self._build_device_identification_buffer(designators_list)
@@ -251,7 +253,9 @@ class VMwareInquiryInformationMixin(inquiry.InquiryInformationMixin):
         def _filter(durable_name):
             return durable_name.namespace == 'GENERIC_VPD' and durable_name.namespaceId == 5 and \
                 durable_name.data[1] == 0
-        byte_array = list(filter(_filter, self._scsi_lun_data_object.alternateName)[0].data)
+        matches = filter(_filter, self._scsi_lun_data_object.alternateName)
+        first_match = next(iter(matches))
+        byte_array = list(first_match.data)
         page_buffer = SupportedVPDPagesBuffer()
         page_buffer.unpack(byte_array_to_string(byte_array))
         return page_buffer
