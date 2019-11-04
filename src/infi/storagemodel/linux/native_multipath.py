@@ -122,7 +122,7 @@ class LinuxPath(UnixPathMixin, multipath.Path):
         with open(stat_file_path, "rb") as fd:
             stat_data = fd.read()
             stat_values = [int(val) for val in stat_data.split()]
-            read_ios, _, read_sectors, _, write_ios, _, write_sectors, _, _, _, _ = stat_values
+            read_ios, _, read_sectors, _, write_ios, _, write_sectors = stat_values[:7]
             # sector = always 512 bytes, not disk-dependent
             bytes_read = read_sectors * 512
             bytes_written = write_sectors * 512
