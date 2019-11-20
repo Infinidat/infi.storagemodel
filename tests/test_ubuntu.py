@@ -12,9 +12,8 @@ class UbuntuTestCase(unittest.TestCase):
 
     @classmethod
     def _is_ubuntu(cls):
-        from platform import system
         import distro
-        return system() == "Linux" and distro.id() == "debian"
+        return distro.id() == "ubuntu"
 
     @classmethod
     def _is_root(cls):
