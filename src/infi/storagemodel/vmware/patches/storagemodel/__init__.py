@@ -313,7 +313,12 @@ class VMwarePath(multipath.Path):
                         # self._lun_key = 'key-vim.host.ScsiDisk-02000200006742b0f000004e2b0000000000000069496e66696e69'
                         if lun.scsiLun.rsplit('-', 1)[-1] == self._lun_key.rsplit('-', 1)[-1]:
                             # self._path_data_object.key = "key-vim.host.MultipathInfo.Path-vmhba2:C0:T2:L16"
-                            channel = int(self._path_data_object.key.split(":")[1][1:])
+                            try:
+                                channel = int(self._path_data_object.key.split(":")[1][1:])
+                            except ValueError:  # A temporarily fix for HPTVM-1472
+                                 logger.warning("Channel for HCTL could not be found. Setting channel to 0.\n"
+                                                "path_data_object={}".format(self._path_data_object))
+                                 channel = 0
                             hctl = HCTL(expected_vmhba, channel, target.target, lun.lun)
                             logger.debug("VMwarePath.get_hctl returns {}".format(hctl))
                             return hctl
