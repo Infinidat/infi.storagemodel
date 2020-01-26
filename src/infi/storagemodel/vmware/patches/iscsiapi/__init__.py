@@ -59,7 +59,9 @@ class ConnectionManager(base.ConnectionManager):
 
     def _get_all_iscsi_host_bus_adapters(self):
         from pyVmomi import vim
-        return [adapter for adapter in self._get_all_host_bus_adapters() if isinstance(adapter, vim.HostInternetScsiHba)]
+        all_host_bus_adapters = self._get_all_host_bus_adapters()
+        logger.debug("all_host_bus_adapters = {}".format(all_host_bus_adapters))
+        return [adapter for adapter in all_host_bus_adapters if isinstance(adapter, vim.HostInternetScsiHba)]
 
     def _get_iscsi_host_bus_adapter(self, adapter=None):
         # the host bus adapter to retrieve can be either from parameter (specific adapter requested by caller, e.g. to
