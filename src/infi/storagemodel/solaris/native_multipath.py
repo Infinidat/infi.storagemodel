@@ -77,7 +77,7 @@ class SolarisSinglePathEntry(Munch):
         from infi.dtypes.iqn import IQN
         import re
         process = execute_command(['iscsiadm', 'list', 'target', '-S'])
-        output = process.get_stdout().splitlines()
+        output = process.get_stdout().decode().splitlines()
         for line_number, line in enumerate(output):
             if re.search(r'Target: ', line):
                 result_iqn = line.split()[1]
