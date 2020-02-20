@@ -21,7 +21,7 @@ def get_system_serial_from_iqn(iqn_str):
         raise InvalidInfiniboxConnectivity("Invalid IQN {}".format(iqn_str))
     if last_iqn_field.startswith("infinibox-sn-"):
         try:
-            return int(last_iqn_field.split("-")[-2])
+            return int(last_iqn_field.split("-")[2])
         except ValueError:
             raise InvalidInfiniboxConnectivity("Invalid InfiniBox IQN {}".format(iqn_str))
     raise InvalidInfiniboxConnectivity("Could not get InfiniBox serial from IQN {}".format(iqn_str))
