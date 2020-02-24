@@ -10,6 +10,9 @@ class InfiniBoxConnectivityTestCase(unittest.TestCase):
         self.assertEqual(connectivity.get_system_serial_from_iqn('iqn.2009-11.com.infinidat:storage:infinibox-sn-2812'), 2812)
         # InfiniBox before v5.5
         self.assertEqual(connectivity.get_system_serial_from_iqn('iqn.2009-11.com.infinidat:storage:infinibox-sn-2812-1234'), 2812)
+        # Messed up IQN from infinisim - INFRADEV-13513
+        self.assertEqual(connectivity.get_system_serial_from_iqn('iqn.2009-11.com.infinidat:storage:infinibox-sn-<machine_serial_number>-2812-1234'), 2812)
+        self.assertEqual(connectivity.get_system_serial_from_iqn('iqn.2009-11.com.infinidat:storage:infinibox-sn-<machine_serial_number>-2812'), 2812)
         # Non-InfiniBox
         with self.assertRaises(connectivity.InvalidInfiniboxConnectivity):
             connectivity.get_system_serial_from_iqn('foo.bar')
