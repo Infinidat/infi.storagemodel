@@ -88,7 +88,7 @@ def check_for_scsi_errors(func):
                 logger.error(msg.format(getpid(), sg_device, error))
                 raise ScsiReservationConflictError()
             except (IOError, OSError, AsiOSError, AsiSCSIError) as error:
-                msg = "{} sg device {} got unrecoverable error {} during {}"
+                msg = "{} sg device {} got unrecoverable error {} during {!r}"
                 logger.error(msg.format(getpid(), sg_device, error, cdb))
                 counter = 0
             except UnsupportedReportLuns as error:
