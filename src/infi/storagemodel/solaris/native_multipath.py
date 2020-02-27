@@ -91,7 +91,7 @@ class SolarisSinglePathEntry(Munch):
                             break
                     if re.search(r'LUN:', output[indent_line]):
                         lun = output[indent_line].split()[1]
-                    if re.search('OS Device Name', output[indent_line]):
+                    if re.search(r'OS Device Name', output[indent_line]):
                         device_name = output[indent_line].split()[3]
                         if device_name == self.mpath_dev_path:
                             return int(lun)
