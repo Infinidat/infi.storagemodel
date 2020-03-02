@@ -24,7 +24,7 @@ class AixSCSIDevice(SCSIDevice):
     def _get_adapter_to_host_mapping(cls):
         from infi.hbaapi import get_ports
         ports = get_ports()
-        return {port.os_device_name: port.hct[0] for port in ports}
+        return {port.os_device_name.decode(): port.hct[0] for port in ports}
 
     @classmethod
     @cached_method
