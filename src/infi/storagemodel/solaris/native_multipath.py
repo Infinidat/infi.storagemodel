@@ -307,7 +307,7 @@ class SolarisNativeMultipathStorageController(SolarisNativeMultipathDeviceMixin,
             handle.close()
 
 
-class SolarisPath(UnixPathMixin, multipath.Path):
+class SolarisPath(multipath.Path):
     def __init__(self, multipath_object_path, device_path):
         self.multipath_object_path = multipath_object_path
         self.device_path = device_path
@@ -331,19 +331,6 @@ class SolarisPath(UnixPathMixin, multipath.Path):
         full_dev_path = '/scsi_vhci/' + readlink(self.device_path).split('/')[-1].split(':')[0]
         stats = all_stats[full_dev_path]['c{}'.format(self.get_hctl().get_host())][self.multipath_object_path.target_port_name]
         return multipath.PathStatistics(stats.bytes_read, stats.bytes_written, stats.read_io_count, stats.write_io_count)
-
-    @contextmanager
-    def asi_context(self):
-        import os
-        from infi.asi import create_platform_command_executer, create_os_file
-
-        handle = create_os_file(self.device_path)
-        executer = create_platform_command_executer(handle, timeout=QUERY_TIMEOUT)
-        executer.call = gevent_wrapper.defer(executer.call)
-        try:
-            yield executer
-        finally:
-            handle.close()
 
 
 class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
