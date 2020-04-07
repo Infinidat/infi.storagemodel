@@ -248,7 +248,7 @@ class SolarisMultipathClient(object):
             paths.append(SolarisSinglePathEntry(
                 path_dict['initiator_port_name'], path_dict['target_port_name'], path_dict['state'],
                 path_dict['disabled'], mpath_dev_path, self._ports, self._port_mappings,
-                port_access_states[path_dict['target_port_name']]))
+                port_access_states.get(path_dict.get('target_port_name'), '')))
         logger.debug("paths found: %s", paths)
         return paths
 
