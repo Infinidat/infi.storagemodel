@@ -13,17 +13,18 @@ logger = getLogger(__name__)
 
 
 class SolarisMultipathEntry(Munch):
-    def __init__(self, device_path, vendor_id, product_id, load_balance, paths):
+    def __init__(self, device_path, vendor_id, product_id, load_balance, paths, target_port_groups):
         self.device_path = device_path
         self.vendor_id = vendor_id
         self.product_id = product_id
         self.load_balance = load_balance
         self.paths = paths
+        self.target_port_groups = target_port_groups
 
 
 class SolarisSinglePathEntry(Munch):
     def __init__(self, initiator_port_name, target_port_name, state, disabled, mpath_dev_path,
-                 ports, port_mappings):
+                 ports, port_mappings, alua_state):
         self.initiator_port_name = initiator_port_name
         self.target_port_name = target_port_name
         self.is_iscsi_session = False
@@ -36,6 +37,7 @@ class SolarisSinglePathEntry(Munch):
         self.port_mappings = port_mappings
         self.mpath_dev_path = mpath_dev_path
         self.hctl = self._get_hctl()
+        self.alua_state = alua_state
 
     def _get_target_uid_and_iqn(self):
         '''returns iscsi target iqn and session uid'''
@@ -126,25 +128,49 @@ class SolarisSinglePathEntry(Munch):
         return self.hctl
 
 
+class SolarisTargetPortGroupsEntry(Munch):
+    def __init__(self, target_port_group_id, explicit_failover, access_state, target_ports):
+        self.target_port_group_id = target_port_group_id
+        self.explicit_failover = explicit_failover
+        self.access_state = access_state
+        self.target_ports = target_ports
+
+
+class SolarisTargetPort(Munch):
+    def __init__(self, name, relative_id):
+        self.name = name
+        self.relative_id = relative_id
+
+
 class SolarisMultipathClient(object):
     MULTIPATH_DEVICE_PATTERN = r'(?:/dev/rdsk/|/scsi_vhci/)[\w\@\-]+'
     MULTIPATH_DEVICE_REGEXP = re.compile(MULTIPATH_DEVICE_PATTERN, re.MULTILINE)
 
     # The regular expression used to "slice" the output of "mpathadm show" - a detailed list of all the multipaths we
     # have on the current host, into logical units, each with its list of paths:
-    MPATHADM_OUTPUT_PATTERN = r"\s*(?P<mpath_dev_path>{})\n".format(MULTIPATH_DEVICE_PATTERN) + \
-                              r".*?Vendor:\s*(?P<vendor_id>[\w]+)" + \
-                              r".*?Product:\s*(?P<product_id>[\w]+)" + \
-                              r".*?Current Load Balance:\s*(?P<load_balance>[\w\-]+)" + \
-                              r".*?(?:Paths:)?(?P<paths>.*)"
+    MPATHADM_OUTPUT_PATTERN = (r"\s*(?P<mpath_dev_path>{})\n"
+                               r".*?Vendor:\s*(?P<vendor_id>[\w]+)"
+                               r".*?Product:\s*(?P<product_id>[\w]+)"
+                               r".*?Current Load Balance:\s*(?P<load_balance>[\w\-]+)"
+                               r".*?(?:Paths:)?(?P<paths>.*)".format(MULTIPATH_DEVICE_PATTERN))
     MPATHADM_OUTPUT_REGEXP = re.compile(MPATHADM_OUTPUT_PATTERN, re.MULTILINE | re.DOTALL)
 
-    PATH_PATTERN = r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*" + \
-                   r"^\s*Target Port Name:\s*(?P<target_port_name>\S+)\s*" + \
-                   r"^\s*Override Path:\s*(?P<override_path>\w+)\s*" + \
-                   r"^\s*Path State:\s*(?P<state>\w+)\s*" + \
-                   r"^\s*Disabled:\s*(?P<disabled>\w+)"
+    PATH_PATTERN = (r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*"
+                    r"^\s*Target Port Name:\s*(?P<target_port_name>\S+)\s*"
+                    r"^\s*Override Path:\s*(?P<override_path>\w+)\s*"
+                    r"^\s*Path State:\s*(?P<state>\w+)\s*"
+                    r"^\s*Disabled:\s*(?P<disabled>\w+)")
     PATH_REGEXP = re.compile(PATH_PATTERN, re.MULTILINE | re.DOTALL)
+
+    TARGET_PORT_PATTERN = (r"^\s*Name:\s*(?P<name>[a-z0-9]+)\s*"
+                           r"^\s*Relative ID:\s*(?P<relative_id>\d+)")
+    TARGET_PORT_REGEXP = re.compile(TARGET_PORT_PATTERN, re.MULTILINE | re.DOTALL)
+
+    TARGET_PORT_GROUPS_PATTERN = (r"\s*ID:\s*(?P<target_port_group_id>\d+)\n"
+                                  r"\s*Explicit Failover:\s*(?P<explicit_failover>\w+)\n"
+                                  r"\s*Access State:\s*(?P<access_state>(?:\w+\s?)+)\n"
+                                  r"\s*Target Ports:\s*\n(?P<target_ports>(\s+Name:\s+[a-z0-9]+\n\s+Relative ID:\s+\d+)+)")
+    TARGET_PORT_GROUPS_REGEXP = re.compile(TARGET_PORT_GROUPS_PATTERN)
 
     LOGICAL_UNIT_HEADER = 'Logical Unit:'    # Header for each logical unit entry in the output of mpathadm
 
@@ -171,6 +197,7 @@ class SolarisMultipathClient(object):
             logical_unit_dict = logical_unit_match.groupdict()
 
             paths = self.get_paths(logical_unit_dict)
+            target_port_groups = self.get_target_port_groups(logical_unit_dict)
 
             mpath_dev_path = logical_unit_dict['mpath_dev_path']
             mpath_dev_path = path.join('/devices', mpath_dev_path.lstrip('/')) if \
@@ -178,7 +205,7 @@ class SolarisMultipathClient(object):
             multipaths.append(
                 SolarisMultipathEntry(mpath_dev_path,
                                       logical_unit_dict['vendor_id'], logical_unit_dict['product_id'],
-                                      logical_unit_dict['load_balance'], paths))
+                                      logical_unit_dict['load_balance'], paths, target_port_groups))
         return multipaths
 
     def _run_command(self, cmd):
@@ -212,13 +239,32 @@ class SolarisMultipathClient(object):
     def get_paths(self, logical_unit_dict):
         paths = []
         mpath_dev_path = logical_unit_dict['mpath_dev_path']
+        target_port_groups = self.get_target_port_groups(logical_unit_dict)
+        port_access_states = {target_port.name: target_port_group.access_state
+                              for target_port_group in target_port_groups
+                              for target_port in target_port_group.target_ports}
         for path_match in self.PATH_REGEXP.finditer(logical_unit_dict['paths']):
             path_dict = path_match.groupdict()
             paths.append(SolarisSinglePathEntry(
                 path_dict['initiator_port_name'], path_dict['target_port_name'], path_dict['state'],
-                path_dict['disabled'], mpath_dev_path, self._ports, self._port_mappings))
+                path_dict['disabled'], mpath_dev_path, self._ports, self._port_mappings,
+                port_access_states[path_dict['target_port_name']]))
         logger.debug("paths found: %s", paths)
         return paths
+
+    def get_target_port_groups(self, logical_unit_dict):
+        target_port_groups = []
+        for target_port_group_match in self.TARGET_PORT_GROUPS_REGEXP.finditer(logical_unit_dict['paths']):
+            target_port_groups_dict = target_port_group_match.groupdict()
+            target_ports = []
+            for target_port in self.TARGET_PORT_REGEXP.finditer(target_port_groups_dict['target_ports']):
+                target_port_dict = target_port.groupdict()
+                target_ports.append(SolarisTargetPort(**target_port_dict))
+            target_port_groups_dict['target_ports'] = target_ports
+            # del target_port_groups_dict['ports']
+            target_port_groups.append(SolarisTargetPortGroupsEntry(**target_port_groups_dict))
+        logger.debug("target_port_groups found: %s", target_port_groups)
+        return target_port_groups
 
 
 class SolarisRoundRobin(multipath.RoundRobin):
@@ -332,6 +378,17 @@ class SolarisPath(multipath.Path):
         stats = all_stats[full_dev_path]['c{}'.format(self.get_hctl().get_host())][self.multipath_object_path.target_port_name]
         return multipath.PathStatistics(stats.bytes_read, stats.bytes_written, stats.read_io_count, stats.write_io_count)
 
+    def get_alua_state(self):
+        from infi.storagemodel.base.multipath import ALUAState
+        alua_state = self.multipath_object_path.alua_state
+        if 'standy' in alua_state:
+            return ALUAState.STANDBY
+        elif 'not optimized' in alua_state:
+            return ALUAState.ACTIVE_NON_OPTIMIZED
+        elif 'optimized' in alua_state:
+            return ALUAState.ACTIVE_OPTIMIZED
+        else:
+            return ALUAState.UNAVAILABLE
 
 class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
     def __init__(self, *args, **kwargs):
