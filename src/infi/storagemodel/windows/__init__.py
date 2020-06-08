@@ -35,9 +35,9 @@ class WindowsStorageModel(StorageModel):
 
     def _initiate_rescan(self, wait_for_completion=True, raise_error=False):
         from infi.devicemanager import DeviceManager
-        from infi.storagemodel.base.gevent_wrapper import joinall, defer, spawn
+        from infi.storagemodel.base.gevent_wrapper import joinall, spawn
         dm = DeviceManager()
-        rescan_callables = (defer(controller.rescan) for controller in dm.storage_controllers)
+        rescan_callables = (controller.rescan for controller in dm.storage_controllers)
         greenlets = [spawn(item) for item in rescan_callables]
         if wait_for_completion:
             joinall(greenlets, raise_error=True)

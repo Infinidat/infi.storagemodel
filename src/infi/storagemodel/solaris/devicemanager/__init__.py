@@ -106,7 +106,7 @@ class DeviceManager(object):
     @classmethod
     def get_ctds_tuple_from_device_name(cls, dev_string):
         try:
-            return findall("c([0-9A-F]*)(?:t([0-9A-F]*))?d(\d*)(?:s(\d*))?", dev_string)[0]
+            return findall(r"c([0-9A-F]*)(?:t([0-9A-F]*))?d(\d*)(?:s(\d*))?", dev_string)[0]
         except:
             logger.exception("Can't parse device name: {}".format(dev_string))
             return None
@@ -154,8 +154,9 @@ class DeviceManager(object):
 
     @classmethod
     def _get_path_to_inst_tuples(cls):
-        device_map_data = open(DEVICE_MAP_PATH, "rb").read()
-        devices = findall("\"(.*)\" (\d*) \"(.*)\"", device_map_data)
+        with open(DEVICE_MAP_PATH, "r") as fd:
+            device_map_data = fd.read()
+        devices = findall(r"\"(.*)\" (\d*) \"(.*)\"", device_map_data)
         return [(x[0], x[2] + x[1]) for x in devices]
 
     @classmethod

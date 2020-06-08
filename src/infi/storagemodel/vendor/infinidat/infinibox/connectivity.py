@@ -21,7 +21,9 @@ def get_system_serial_from_iqn(iqn_str):
         raise InvalidInfiniboxConnectivity("Invalid IQN {}".format(iqn_str))
     if last_iqn_field.startswith("infinibox-sn-"):
         try:
-            return int(last_iqn_field.split("-")[-2])
+            parts = last_iqn_field.split("-")
+            # Due to a bug in infinisim we sometimes need to take parts[3] instead of parts[2] - INFRADEV-13513
+            return int(parts[2] if parts[2].isdigit() else parts[3])
         except ValueError:
             raise InvalidInfiniboxConnectivity("Invalid InfiniBox IQN {}".format(iqn_str))
     raise InvalidInfiniboxConnectivity("Could not get InfiniBox serial from IQN {}".format(iqn_str))

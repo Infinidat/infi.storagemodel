@@ -136,7 +136,7 @@ class KStat(object):
 
     def ks_name_to_human_readable(self, ks_name):
         from re import findall
-        res = findall("(.*)\.t(.*)\.(fp.*)", ks_name)
+        res = findall(r"(.*)\.t(.*)\.(fp.*)", ks_name)
         if len(res) != 1:
             return
         dev_name, target_pid, fp = res[0]
@@ -156,7 +156,7 @@ class KStat(object):
             elem = ks.contents.kc_chain.contents
             while True:
                 if elem and elem.ks_type == KSTAT_TYPE_IO:
-                    human_readable = self.ks_name_to_human_readable(elem.ks_name)
+                    human_readable = self.ks_name_to_human_readable(elem.ks_name.decode())
                     if human_readable:
                         dev_path, target, ctrl =  human_readable
                         res.setdefault(dev_path, {}).setdefault(ctrl, {}).setdefault(target, self._get_path_statistics(ks, elem))
@@ -194,4 +194,4 @@ def drvpid2port(pid):
     iocdata.addr = ctypes.cast(ctypes.create_string_buffer(MAXNAMELEN), ctypes.c_char_p)
     with open("/devices/scsi_vhci:devctl", 'rb') as block_device:
         ioctl(block_device, SCSI_VHCI_GET_TARGET_LONGNAME, iocdata)
-    return iocdata.addr
+    return iocdata.addr.decode()

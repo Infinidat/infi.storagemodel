@@ -2,7 +2,7 @@ Overview
 ========
 
 A cross-plaform storage management library in Python.
-See http://storagemodel.readthedocs.org/en/develop/index.html for the complete documentation.
+See https://storagemodel.readthedocs.io/ for the complete documentation.
 
 Checking out the code
 =====================
