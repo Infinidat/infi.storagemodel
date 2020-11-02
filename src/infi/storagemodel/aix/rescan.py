@@ -56,8 +56,13 @@ class AixRescan(AixModelMixin):
                 device.get_scsi_standard_inquiry()
             except DeviceError:
                 pass
-            if all(path.get_state() == "down" for path in device.get_paths()):
+            paths_states = {path: path.get_state() for path in device.get_paths()}
+            if all(state == "down" for state in paths_states.values()):
                 execute_assert_success(["rmdev", "-dl", device.get_display_name()])
+                continue
+            for path, path_state in paths_states.items():
+                if path_state == "down":
+                    execute_assert_success(["rmpath", "-dl", device.get_display_name(), "-i", path.get_path_id()])
 
     def rescan(self):
         self._add_new_devices()
