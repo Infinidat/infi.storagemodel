@@ -95,12 +95,13 @@ class ConnectivityFactoryImpl(object):
 
     def get_iscsi_hctl_mappings(self):
         from infi.iscsiapi.iscsi_exceptions import NotReadyException
+        from infi.execute.exceptions import ExecutionError
         result = {}
         try:
             for session in self.get_iscsi_sessions():
                 hct = (session.get_hct().get_host(), session.get_hct().get_channel(), session.get_hct().get_target())
                 result[hct] = (session.get_source_iqn(), session.get_target().get_iqn())
-        except (ImportError, NotReadyException):
+        except (ImportError, NotReadyException, ExecutionError):
             return result
         return result
 
