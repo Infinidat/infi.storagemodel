@@ -157,6 +157,7 @@ class SolarisMultipathClient(object):
 
     PATH_PATTERN = (r"^\s*Initiator Port Name:\s*(?P<initiator_port_name>\S+)\s*"
                     r"^\s*Target Port Name:\s*(?P<target_port_name>\S+)\s*"
+                    r"^(\s*Logical Unit Number:\s*(?P<logical_unit_number>\S+)\s*)?"
                     r"^\s*Override Path:\s*(?P<override_path>\w+)\s*"
                     r"^\s*Path State:\s*(?P<state>\w+)\s*"
                     r"^\s*Disabled:\s*(?P<disabled>\w+)")
