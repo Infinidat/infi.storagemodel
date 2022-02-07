@@ -147,7 +147,10 @@ class LinuxVeritasMultipathModel(multipath.VeritasMultipathModel):
 
     def _get_list_of_active_devices(self, client):
         all_devices = client.get_list_of_multipath_devices()
-        logger.debug("all multipath devices = {}".format(all_devices))
+        device_gen = (repr(device) for device in all_devices)
+        logger.debug("all mulitpath devices =")
+        for device_repr in device_gen:
+            logger.debug(device_repr)
         active_devices = [device for device in all_devices if self._is_device_active(device)]
         return active_devices
 
