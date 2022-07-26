@@ -11,6 +11,14 @@ class SophisticatedMixin(object):
     @cached_method
     def get_management_address(self):
         """ Returns the management IPv4 address of the InfiniBox as string """
+        from infi.vendata.vmware_powertools.utils.addressdb import ManagementAddressesStore
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+
+        if isinstance(self.device, VMwareNVMeStorageController):
+            serial = self.device.get_system_serial()
+            mgmt = ManagementAddressesStore.get(serial)
+            return mgmt.management_address
+
         try:
             return self._get_key_from_json_page('ip', 0xcb)
         except InquiryException:
@@ -19,6 +27,14 @@ class SophisticatedMixin(object):
     @cached_method
     def get_management_port(self):
         """ Returns the management port number of the InfiniBox """
+        from infi.vendata.vmware_powertools.utils.addressdb import ManagementAddressesStore
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+
+        if isinstance(self.device, VMwareNVMeStorageController):
+            serial = self.device.get_system_serial()
+            mgmt = ManagementAddressesStore.get(serial)
+            return mgmt.management_port
+
         try:
             return self._get_key_from_json_page('port', 0xcb)
         except InquiryException:
@@ -63,6 +79,10 @@ class SophisticatedMixin(object):
                 return self._get_key_from_json_page('system_name') # x <= 1.4
 
     def _get_system_version_from_json_page(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            import pdb; pdb.set_trace()
+
         try:
             return self._get_key_from_json_page('system_version', 0xc6)
         except InquiryException:
@@ -94,38 +114,77 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_host_name(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            import pdb; pdb.set_trace()
+
         return self._get_host_name_from_json_page()
 
     @cached_method
     def get_cluster_name(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            import pdb; pdb.set_trace()
+
         return self._get_cluster_name_from_json_page()
 
     @cached_method
     def get_system_serial(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            return self.device.get_system_serial()
+
         return self._get_system_serial_from_json_page()
 
     @cached_method
     def get_system_name(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            return self.device._box.get_name()
+
         return self._get_system_name_from_json_page()
 
     @cached_method
     def get_system_version(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            try:
+                return self.device._box.get_version()
+            except AttributeError:
+                import pdb; pdb.set_trace()
+
         return self._get_system_version_from_json_page()
 
     @cached_method
     def get_host_id(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            return self.device.get_host_id()
+
         return self._get_host_entity_id_from_json_page()
 
     @cached_method
     def get_cluster_id(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            import pdb; pdb.set_trace()
+
         return self._get_cluster_entity_id_from_json_page()
 
     @cached_method
     def get_pool_id(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            import pdb; pdb.set_trace()
+
         return self._get_pool_id_from_json_page()
 
     @cached_method
     def get_pool_name(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            import pdb; pdb.set_trace()
+
         return self.get_string_data(page=0xca)
 
     # Active-Active and Mobility:
