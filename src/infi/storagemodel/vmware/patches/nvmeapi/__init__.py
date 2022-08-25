@@ -1,3 +1,8 @@
+from calendar import c
+from pprint import pp
+import re
+from sqlite3 import adapters
+
 from .infi import nvmeapi
 from .infi.nvmeapi import base
 #from .infi.nvmeapi import auth as nvmeapi_auth_module
@@ -5,21 +10,22 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
 from infi.dtypes.nqn import NQN
 from logging import getLogger
-
+from infi.pyvmomi_wrapper.esxcli import EsxCLI   
 
 logger = getLogger(__name__)
 
 
 PROPERTY_COLLECTOR_KEY = 'infi.nvmeapi'
+#HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
 HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
-NVME_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.NvmeTopology.adapter'
-
+NVME_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.nvmeTopology.adapter'
+#NVME_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice'
 
 def install_property_collectors_on_client(client):
     from infi.pyvmomi_wrapper.property_collector import HostSystemCachedPropertyCollector
     if PROPERTY_COLLECTOR_KEY in client.property_collectors:
         return
-    collector = HostSystemCachedPropertyCollector(client, [HBAAPI_PROPERTY_PATH])
+    collector = HostSystemCachedPropertyCollector(client, [HBAAPI_PROPERTY_PATH, NVME_TOPOLOGY_PROPERTY_PATH])
     client.property_collectors[PROPERTY_COLLECTOR_KEY] = collector
 
 
@@ -57,71 +63,138 @@ class ConnectionManager(base.ConnectionManager):
     def _get_all_host_bus_adapters(self):
         return self._get_properties().get(HBAAPI_PROPERTY_PATH, [])
 
-    def _get_all_NVMe_host_bus_adapters(self):
+
+    def _get_NVMe_Topology(self):
+        return self._get_properties().get(NVME_TOPOLOGY_PROPERTY_PATH, [])
+
+
+    def get_all_NVMe_host_bus_adapters(self):
         from pyVmomi import vim
         all_host_bus_adapters = self._get_all_host_bus_adapters()
         logger.debug("all_host_bus_adapters = {}".format([(adapter.device, type(adapter)) for adapter in all_host_bus_adapters]))
         return [adapter for adapter in all_host_bus_adapters if isinstance(adapter, vim.host.HostBusAdapter) and adapter.driver == "nvmetcp"]
 
-    def _get_NVMe_host_bus_adapter(self, adapter=None):
+
+    def _get_all_NVMe_adapters(self):
+        from pyVmomi import vim
+        import pdb; pdb.set_trace()
+        adapters = [adapter for adapter in self._get_NVMe_Topology() if isinstance(adapter, vim.host.NvmeTopology.Interface) and adapter.driver == "nvmetcp"]
+        return adapters
+    
+    def get_all_NVMe_adapters_ids(self):
+        return [adapter.adapter.replace("key-vim.host.TcpHba-","") for adapter in self._get_all_NVMe_adapters()]
+  
+    def _get_NVMe_controllers(self, specifiedadapter=None):
+        from pyVmomi import vim
         # the host bus adapter to retrieve can be either from parameter (specific adapter requested by caller, e.g. to
         # get NQN of specific session where adapter is known) or from 'set_adapter' (default adapter that caller wants
         # to work with - e.g. to login) or None for default behavior (use the software adapter)
         # adapter
-        from pyVmomi import vim
-        adapters = self._get_all_host_bus_adapters()
-        to_match = adapter or self._adapter
-        if to_match:
-            # requested specific adapter - "to_match" is string like "vmhba33"
-            adapters = [adapter for adapter in adapters if adapter.device == to_match]
+        if specifiedadapter:
+            return [adapter.connectedController for adapter in self._get_all_NVMe_adapters() if isinstance(adapter.connectedController, vim.host.NvmeController) and adapter == specifiedadapter]
         else:
-            # default is "software adapter"
-            adapters = [adapter for adapter in adapters if adapter.driver == 'nvmetcp']
-        if len(adapters) == 0:
-            raise RuntimeError("No matching NVMe adatpers found on host.")
-        return adapters[0]
+            import pdb; pdb.set_trace()
+            controllers = [controller for adapter.connectedController in self._get_all_NVMe_adapters() for controller in controller.connectedController if isinstance(controller, vim.host.NvmeController)]
+            return controllers
 
     def _get_host_storage_system(self):
         host = self._client.get_managed_object_by_reference(self._moref)
         return host.configManager.storageSystem
 
-    def _get_source_nqn(self, adapter=None):
-        # this get_source_nqn returns a single NQN for the currently used hba
-        # the external get_source_nqn returns all NQNs (from all adapters), in order for 'register' to register all
-        # available NQNs on host
-        NVMe_adapter = self._get_NVMe_host_bus_adapter(adapter)
-        return NQN(NVMe_adapter.NVMeName)
+    def _get_esxcli(self):
+        from infi.vendata.vmware_powertools.vcenter.shortcuts import moref_to_object
+        host  = moref_to_object(self._moref)
+        esxcli = EsxCLI(host)
+        esxcli._load_datatypes()
+        return esxcli
 
+    def _get_host_nqn(self):
+        import pdb; pdb.set_trace()
+        nvme_info = self._get_esxcli().get('nvme.info')
+        response = nvme_info.Get()
+        try:
+            host_nqn = response.HostNQN
+        except KeyError:
+            raise RuntimeError("HostNQN NOT initialized.")
+        return host_nqn
+
+    def get_nvme_adapters(self):
+        import pdb; pdb.set_trace()
+        from pyVmomi import vim
+        nvme_info = self._get_esxcli().get('nvme.adapter')
+        response = nvme_info.List()
+        response = [adapter.Adapter for adapter in response if adapter.Driver == "nvmetcp"]
+        return response
+
+    def get_host_nqn(self):
+        return [NQN(self._get_host_nqn())]    
+       
     def get_source_nqn(self):
         import pdb; pdb.set_trace()
-        adaptrs = self._get_all_NVMe_host_bus_adapters()
-        return [NQN(NVMe_adapter.NVMeName) for NVMe_adapter in self._get_all_NVMe_host_bus_adapters()]
+        controllers =  [controller.name for controller in self._get_NVMe_controllers() if controller.associatedAdapter.replace("key-vim.host.TcpHba-","") == adapter_name]
+        return [NQN(NVMe_controller.name) for NVMe_controller in self._get_NVMe_controllers()]
 
-    def set_source_NQN(self, NQN):
-        _ = NQN(NQN)   # checks NQN is valid
-        self._get_host_storage_system().UpdateInternetScsiName(self._get_source_nqn(), NQN)
+    def get_connection_details(self, controller):
+        name = controller.name
+        details = name.split('#')
+        if len(details) == 3: 
+            ip = details[2].split(':')[0]
+            adapter = details[1]
+            subnqn = details[2]
+            connection_details = {'ipaddress': ip, 'adapter': adapter, 'subsystemnqn': subnqn}
+            return connection_details
+        else:
+            raise ValueError("Details from {} can not be parserd".format(name))
 
-    def discover(self, ip_address, port=3260):
-        # ugly trick: in VMware discovery and login_all happen at once, so we don't do the login here
-        # and don't return a real "Target" object. Everything happens in login_all
-        return (ip_address, port)
+    def _connect_subsystem(self, connection_details):
+        nvme_fabrics = self._get_esxcli().get("nvme.fabrics")
+        response = nvme_fabrics.Connect(connection_details)
+        if type(response) == str:
+            raise RuntimeError(response)
+        else:
+            logger.debug("Controller {} connected".format(str(connection_details)))
+     
+    def discover_adapter(self, discover_endpoint, adapter):
+        import pdb; pdb.set_trace()
+        nvme_fabrics = self._get_esxcli().get('nvme.fabrics')
+        response = nvme_fabrics.Discover(ip=discover_endpoint, a=adapter)
+        return response
+    
+    def discover(self, discover_endpoint):
+        nvme_targets = []
+        for adapter in self.get_nvme_adapters():
+            nvme_targets.append(self.discover_adapter(discover_endpoint, adapter))
+        return nvme_targets
 
-    def undiscover(self, target=None):
-        # real undiscover happens with "logout_all"
-        pass
+    def connect_adapters(self, nvme_targets):
+        for target in nvme_targets:
+            connection_details = self.get_connection_details(target)
+            try:
+                self._connect_subsystem(connection_details)
+            except RuntimeError:
+                    raise RuntimeError("Controller already {} conneted. NVMe connection for {} can not be established".format(str(connection_details), name))
+        else:
+            raise RuntimeError("No configred NVMe controllers. NVMe connection for {} can not be established.".format(name))
 
-    def login_all(self, target, auth=None):
-        # this function does "discover" too.
-        # "target" is just the ip/port as returned by the fake "discover"
-        from pyVmomi import vim
-        vmauth = None
-        NVMe_adapter = self._get_NVMe_host_bus_adapter()
-        storage_system = self._get_host_storage_system()
-        send_target = vim.HostInternetScsiHbaSendTarget(address=target[0], port=target[1],
-                                                        authenticationProperties=vmauth)
-        msg = "Adding NVMe SendTarget. target={}:{}. hba adapter device={}"
-        logger.info(msg.format(target[0], target[1], NVMe_adapter.device))
-        storage_system.AddInternetScsiSendTargets(NVMeHbaDevice=NVMe_adapter.device, targets=[send_target])
+    def _disconnect_subsystem(self, connection_details):
+        nvme_fabrics = self._get_esxcli().get('nvme.fabrics')
+        response = nvme_fabrics.Disconnect(connection_details)
+        if type(response) == str:
+            raise RuntimeError(response)
+        else:
+            logger.debug("Controller {} connected".format(str(connection_details)))   
+
+    def disconnect_all_adapters(self, adapter=None):
+        controllers = self._get_NVMe_controllers()
+        if controllers:
+            for controller in controllers:
+                connection_details = self.get_connection_details(controller)
+                try:
+                    self._disconnect_subsystem(connection_details)
+                except RuntimeError:
+                        raise RuntimeError("Controller already {} conneted. NVMe connection for {} can not be established".format(str(connection_details), name))
+        else:
+            raise RuntimeError("No configred NVMe controllers. NVMe connection for {} can not be established.".format(name))
 
     def logout_all(self, target):
         from pyVmomi import vim
@@ -137,46 +210,6 @@ class ConnectionManager(base.ConnectionManager):
         send_target = vim.HostInternetScsiHbaSendTarget(address=target.get_discovery_endpoint().get_ip_address(),
                                                         port=target.get_discovery_endpoint().get_port())
         storage_system.RemoveInternetScsiSendTargets(NVMeHbaDevice=NVMe_adapter.device, targets=[send_target])
-
-    def get_discovered_targets(self):
-        from itertools import groupby
-        result = []
-        for NVMe_adapter in self._get_all_NVMe_host_bus_adapters():
-            for parent, targets in groupby(NVMe_adapter.configuredStaticTarget, lambda target: target.parent):
-                if ':' not in parent:
-                    logger.debug("parent {!r} is not sendtarget for targets: {}".format(parent, targets))
-                    continue
-                discovery_endpoint_ip, discovery_endpoint_port = parent.split(":")
-                discovery_endpoint = base.Endpoint(discovery_endpoint_ip, int(discovery_endpoint_port))
-                endpoints = []
-                for target in targets:
-                    endpoints.append(base.Endpoint(target.address, target.port))
-                NQN = target.NVMeName
-                target = base.Target(endpoints, discovery_endpoint, NQN)
-                # ugly trick to pass NVMe_adapter - just add this attribute to the target
-                target.NVMe_adapter = NVMe_adapter
-                result.append(target)
-        return result
-
-    def get_sessions(self):
-        # this returns very incomplete structures, enough to make get_NVMe_hctl_mappings (for get_connectivty) work
-        from infi.dtypes.hctl import HCT
-        from pyVmomi import vim
-        import pdb; pdb.set_trace()
-        result = []
-        nvme_topology_adapters = self._get_properties(NVME_TOPOLOGY_PROPERTY_PATH, [])
-        for nvme_adapter in nvme_topology_adapters:
-            for nvme_target in nvme_adapter.target:
-                if isinstance(nvme_target.transport, vim.HostInternetScsiTargetTransport):
-                    h, c, t = nvme_target.key.split("-")[-1].split(":")
-                    hct = HCT(h, int(c), int(t))
-                    source_NQN = self._get_source_nqn(h)
-                    target_NQN = nvme_target.transport.NVMeName
-                    msg = "get_sessions: adding session for target with NQN {} from NQN {}. HCT {}"
-                    logger.debug(msg.format(target_NQN, source_NQN, hct))
-                    target = base.Target(None, None, target_NQN)
-                    result.append(base.Session(target, None, None, source_NQN, None, hct))
-        return result
 
 
 class ConnectionManagerFactory(object):
