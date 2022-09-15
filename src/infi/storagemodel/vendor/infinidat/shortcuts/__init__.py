@@ -16,6 +16,7 @@ def get_infinidat_native_multipath_block_devices():
 
 def get_infinidat_native_multipath_storage_controller_devices():
     model = infi.storagemodel.get_storage_model().get_native_multipath()
+
     return model.filter_vendor_specific_devices(model.get_all_multipath_storage_controller_devices(), vid_pid)
 
 def get_infinidat_non_multipathed_scsi_block_devices():
@@ -75,8 +76,12 @@ def get_infinidat_block_devices_and_controllers():
 def get_infinidat_block_devices_and_controllers__mapped_to_lun0():
     from infi.storagemodel.base.multipath import MultipathBlockDevice, MultipathStorageController
     from infi.storagemodel.base.scsi import SCSIDevice, SCSIStorageController
+    from infi.storagemodel.vmware.patches.nvmeapi.infi.nvmeapi import get_nvmeapi
+
+
+    nvmeapi = get_nvmeapi()
     devices = get_infinidat_block_devices_and_controllers()
     return [device for device in devices if
             (isinstance(device, (SCSIDevice, SCSIStorageController)) and device.get_hctl().get_lun() == 0) or \
             (isinstance(device, (MultipathStorageController, MultipathBlockDevice)) and
-             any(path.get_hctl().get_lun() == 0 for path in device.get_paths()))]
+             any(path.get_hctl().get_lun() == 0 for path in device.get_paths()))] + nvmeapi.get_nvme_connected_boxes()
