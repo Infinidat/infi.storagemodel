@@ -1,4 +1,5 @@
 from calendar import c
+import ipaddress
 from pprint import pp
 import re
 from sqlite3 import adapters
@@ -10,16 +11,50 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
 from infi.dtypes.nqn import NQN
 from logging import getLogger
-from infi.pyvmomi_wrapper.esxcli import EsxCLI   
+from infi.pyvmomi_wrapper.esxcli import EsxCLI
+from infinisdk.infinibox import InfiniBox
 
 logger = getLogger(__name__)
-
 
 PROPERTY_COLLECTOR_KEY = 'infi.nvmeapi'
 #HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
 HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
 NVME_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.nvmeTopology.adapter'
 #NVME_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice'
+
+class NVMe_Connected_IBox():
+    def __init__(self, serial) -> None:
+        self.serial = serial
+        box = InfiniBox('box-ht05')
+        box.api.set_auth('admin', '123456')
+        self.wrapped_infinibox = box
+    
+    def get_vendor(self):
+        return self
+    
+    def get_management_address(self):
+        if self.wrapped_infinibox.get_api_addresses():
+            if self.wrapped_infinibox.get_api_addresses()[0]:
+                return self.wrapped_infinibox.get_api_addresses()[0][0]
+    
+    def get_management_port(self):
+        if self.wrapped_infinibox.get_api_addresses():
+            if self.wrapped_infinibox.get_api_addresses()[0]:
+                return self.wrapped_infinibox.get_api_addresses()[0][1]
+
+    def get_host_id(self):
+        #HARDCODED
+        return 14330
+
+    def get_system_version(self):
+        return self.wrapped_infinibox.get_version()
+
+    def get_system_serial(self):
+        return self.wrapped_infinibox.get_serial()
+
+    def get_system_name(self):
+        return self.wrapped_infinibox.get_name()
+
 
 def install_property_collectors_on_client(client):
     from infi.pyvmomi_wrapper.property_collector import HostSystemCachedPropertyCollector
@@ -63,10 +98,8 @@ class ConnectionManager(base.ConnectionManager):
     def _get_all_host_bus_adapters(self):
         return self._get_properties().get(HBAAPI_PROPERTY_PATH, [])
 
-
     def _get_NVMe_Topology(self):
         return self._get_properties().get(NVME_TOPOLOGY_PROPERTY_PATH, [])
-
 
     def get_all_NVMe_host_bus_adapters(self):
         from pyVmomi import vim
@@ -74,11 +107,9 @@ class ConnectionManager(base.ConnectionManager):
         logger.debug("all_host_bus_adapters = {}".format([(adapter.device, type(adapter)) for adapter in all_host_bus_adapters]))
         return [adapter for adapter in all_host_bus_adapters if isinstance(adapter, vim.host.HostBusAdapter) and adapter.driver == "nvmetcp"]
 
-
     def _get_all_NVMe_adapters(self):
         from pyVmomi import vim
-        import pdb; pdb.set_trace()
-        adapters = [adapter for adapter in self._get_NVMe_Topology() if isinstance(adapter, vim.host.NvmeTopology.Interface) and adapter.driver == "nvmetcp"]
+        adapters = [adapter for adapter in self._get_NVMe_Topology() if isinstance(adapter, vim.host.NvmeTopology.Interface) and adapter.connectedController]
         return adapters
     
     def get_all_NVMe_adapters_ids(self):
@@ -93,9 +124,17 @@ class ConnectionManager(base.ConnectionManager):
         if specifiedadapter:
             return [adapter.connectedController for adapter in self._get_all_NVMe_adapters() if isinstance(adapter.connectedController, vim.host.NvmeController) and adapter == specifiedadapter]
         else:
-            import pdb; pdb.set_trace()
-            controllers = [controller for adapter.connectedController in self._get_all_NVMe_adapters() for controller in controller.connectedController if isinstance(controller, vim.host.NvmeController)]
+            adapter_controllers_lists = [adapter.connectedController for adapter in self._get_all_NVMe_adapters()]
+            controllers = [controller for adapter_list in adapter_controllers_lists for controller in adapter_list if controller.transportType == 'tcp']
             return controllers
+
+    def get_nvme_connected_boxes(self):
+        nvme_connected_boxes = []
+        nvme_topology_box_serials = {int(controller.serialNumber.strip()) for controller in self._get_NVMe_controllers()}
+        for serial in nvme_topology_box_serials:
+            dummy_box = NVMe_Connected_IBox(serial)
+            nvme_connected_boxes.append(dummy_box)
+        return nvme_connected_boxes
 
     def _get_host_storage_system(self):
         host = self._client.get_managed_object_by_reference(self._moref)
@@ -109,7 +148,6 @@ class ConnectionManager(base.ConnectionManager):
         return esxcli
 
     def _get_host_nqn(self):
-        import pdb; pdb.set_trace()
         nvme_info = self._get_esxcli().get('nvme.info')
         response = nvme_info.Get()
         try:
@@ -119,8 +157,6 @@ class ConnectionManager(base.ConnectionManager):
         return host_nqn
 
     def get_nvme_adapters(self):
-        import pdb; pdb.set_trace()
-        from pyVmomi import vim
         nvme_info = self._get_esxcli().get('nvme.adapter')
         response = nvme_info.List()
         response = [adapter.Adapter for adapter in response if adapter.Driver == "nvmetcp"]
@@ -130,51 +166,63 @@ class ConnectionManager(base.ConnectionManager):
         return [NQN(self._get_host_nqn())]    
        
     def get_source_nqn(self):
-        import pdb; pdb.set_trace()
         controllers =  [controller.name for controller in self._get_NVMe_controllers() if controller.associatedAdapter.replace("key-vim.host.TcpHba-","") == adapter_name]
         return [NQN(NVMe_controller.name) for NVMe_controller in self._get_NVMe_controllers()]
+    
+    def _get_host_storage_system(self):
+        host = self._client.get_managed_object_by_reference(self._moref)
+        return host.configManager.storageSystem
 
-    def get_connection_details(self, controller):
-        name = controller.name
-        details = name.split('#')
-        if len(details) == 3: 
-            ip = details[2].split(':')[0]
-            adapter = details[1]
-            subnqn = details[2]
-            connection_details = {'ipaddress': ip, 'adapter': adapter, 'subsystemnqn': subnqn}
+    def _get_adaptet_connection_details(self, adapter, response):
+            connection_details = []
+            adapter = self._adapter
+            for controller in response:
+                try:
+                    ipaddress = controller.TransportAddress
+                    subnqn = controller.SubsystemNQN    
+                except KeyError as e:
+                    logger.debug("Controller not properly configured " + e)
+                    continue
+                else:
+                    connection_details.append({'ipaddress': ipaddress, 'adapter': adapter, 'subsystemnqn': subnqn})   
             return connection_details
-        else:
-            raise ValueError("Details from {} can not be parserd".format(name))
 
     def _connect_subsystem(self, connection_details):
+  
+        from pyVmomi import vim
         nvme_fabrics = self._get_esxcli().get("nvme.fabrics")
-        response = nvme_fabrics.Connect(connection_details)
-        if type(response) == str:
-            raise RuntimeError(response)
+        response = nvme_fabrics.Connect(ipaddress=connection_details['ipaddress'], adapter=connection_details['adapter'], subsystemnqn=connection_details['subsystemnqn'])   
+        if type(response) == vim.EsxCLI.CLIFault:
+            raise RuntimeError(response.errMsg.join(" "))
         else:
             logger.debug("Controller {} connected".format(str(connection_details)))
-     
+
     def discover_adapter(self, discover_endpoint, adapter):
-        import pdb; pdb.set_trace()
+        
         nvme_fabrics = self._get_esxcli().get('nvme.fabrics')
-        response = nvme_fabrics.Discover(ip=discover_endpoint, a=adapter)
-        return response
+        response = nvme_fabrics.Discover(ipaddress=discover_endpoint, adapter=adapter)
+        if response:
+            return self._get_adaptet_connection_details(adapter, response)
+        else:
+            raise ValueError("Details from {} can not be parserd".format(adapter))
     
     def discover(self, discover_endpoint):
         nvme_targets = []
+        topology = self._get_NVMe_Topology()
         for adapter in self.get_nvme_adapters():
-            nvme_targets.append(self.discover_adapter(discover_endpoint, adapter))
+            nvme_targets.extend(self.discover_adapter(discover_endpoint, adapter))
         return nvme_targets
 
     def connect_adapters(self, nvme_targets):
-        for target in nvme_targets:
-            connection_details = self.get_connection_details(target)
-            try:
-                self._connect_subsystem(connection_details)
-            except RuntimeError:
-                    raise RuntimeError("Controller already {} conneted. NVMe connection for {} can not be established".format(str(connection_details), name))
+        if nvme_targets:
+            for target in nvme_targets:
+                try:
+                    self._connect_subsystem(target)
+                except RuntimeError:
+                        raise RuntimeError("Controller already {} conneted. NVMe connection for {} can not be established".format(str(connection_details), name))
         else:
             raise RuntimeError("No configred NVMe controllers. NVMe connection for {} can not be established.".format(name))
+
 
     def _disconnect_subsystem(self, connection_details):
         nvme_fabrics = self._get_esxcli().get('nvme.fabrics')
@@ -184,7 +232,7 @@ class ConnectionManager(base.ConnectionManager):
         else:
             logger.debug("Controller {} connected".format(str(connection_details)))   
 
-    def disconnect_all_adapters(self, adapter=None):
+    def disconnect_all_adapters(self):
         controllers = self._get_NVMe_controllers()
         if controllers:
             for controller in controllers:
@@ -195,21 +243,6 @@ class ConnectionManager(base.ConnectionManager):
                         raise RuntimeError("Controller already {} conneted. NVMe connection for {} can not be established".format(str(connection_details), name))
         else:
             raise RuntimeError("No configred NVMe controllers. NVMe connection for {} can not be established.".format(name))
-
-    def logout_all(self, target):
-        from pyVmomi import vim
-        # this function does "undiscover" too.
-        # "target" is an actual Target object as returned from get_discovered_targets
-        NVMe_adapter = target.NVMe_adapter
-        storage_system = self._get_host_storage_system()
-        static_targets = [vim.HostInternetScsiHbaStaticTarget(address=endpoint.get_ip_address(),
-                                                              port=endpoint.get_port(),
-                                                              NVMeName=target.get_NQN())
-                          for endpoint in target.get_endpoints()]
-        storage_system.RemoveInternetScsiStaticTargets(NVMeHbaDevice=NVMe_adapter.device, targets=static_targets)
-        send_target = vim.HostInternetScsiHbaSendTarget(address=target.get_discovery_endpoint().get_ip_address(),
-                                                        port=target.get_discovery_endpoint().get_port())
-        storage_system.RemoveInternetScsiSendTargets(NVMeHbaDevice=NVMe_adapter.device, targets=[send_target])
 
 
 class ConnectionManagerFactory(object):
@@ -250,3 +283,4 @@ class ConnectionManagerFactory(object):
         else:
             cls.models_by_greenlet[current] = value
         return value
+
