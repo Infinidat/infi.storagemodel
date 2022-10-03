@@ -31,6 +31,11 @@ class StorageModel(object):
         return self._create_scsi_model()
 
     @cached_method
+    def get_nvme(self):
+        """Returns a `infi.storagemodel.base.scsi.NVMEModel` object which represents the NVME layer"""
+        return self._create_nvme_model()
+
+    @cached_method
     def get_native_multipath(self):
         """Returns a `infi.storagemodel.base.multipath.MultipathFrameworkModel` object, as seen by the operating system's built-in MPIO driver"""
         # TODO what to do in case native multipath is not installed?
@@ -135,6 +140,10 @@ class StorageModel(object):
         raise NotImplementedError()
 
     def _create_scsi_model(self):  # pragma: no cover
+        # platform implementation
+        raise NotImplementedError()
+
+    def _create_nvme_model(self):  # pragma: no cover
         # platform implementation
         raise NotImplementedError()
 

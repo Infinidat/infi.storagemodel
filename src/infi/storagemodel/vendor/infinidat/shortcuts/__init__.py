@@ -10,6 +10,10 @@ def get_infinidat_scsi_block_devices():
     model = infi.storagemodel.get_storage_model().get_scsi()
     return model.filter_vendor_specific_devices(model.get_all_scsi_block_devices(), vid_pid)
 
+def get_infinidat_nvme_block_devices():
+    model = infi.storagemodel.get_storage_model()
+    return model.get_nvme_controllers()
+
 def get_infinidat_native_multipath_block_devices():
     model = infi.storagemodel.get_storage_model().get_native_multipath()
     return model.filter_vendor_specific_devices(model.get_all_multipath_block_devices(), vid_pid)
@@ -55,7 +59,7 @@ def get_infinidat_block_devices():
     veritas_multipath_devices = get_infinidat_veritas_multipath_block_devices()
     native_multipath_devices = get_infinidat_native_multipath_block_devices()
     veritas_non_multipath_devices = get_infinidat_non_veritas_multipathed_scsi_block_devices()
-    native_non_multipath_devices = get_infinidat_non_multipathed_scsi_block_devices()
+    native_non_multipath_devices = get_infinidat_non_multipathed_scsi_block_devices() + get_infinidat_nvme_block_devices()
     if veritas_multipath_devices:
         return list(set(veritas_multipath_devices + veritas_non_multipath_devices))
     if native_multipath_devices:
@@ -76,12 +80,11 @@ def get_infinidat_block_devices_and_controllers():
 def get_infinidat_block_devices_and_controllers__mapped_to_lun0():
     from infi.storagemodel.base.multipath import MultipathBlockDevice, MultipathStorageController
     from infi.storagemodel.base.scsi import SCSIDevice, SCSIStorageController
-    from infi.storagemodel.vmware.patches.nvmeapi.infi.nvmeapi import get_nvmeapi
+    from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
 
-
-    nvmeapi = get_nvmeapi()
     devices = get_infinidat_block_devices_and_controllers()
     return [device for device in devices if
             (isinstance(device, (SCSIDevice, SCSIStorageController)) and device.get_hctl().get_lun() == 0) or \
+            (isinstance(device, (VMwareNVMeStorageController))) or \
             (isinstance(device, (MultipathStorageController, MultipathBlockDevice)) and
-             any(path.get_hctl().get_lun() == 0 for path in device.get_paths()))] + nvmeapi.get_nvme_connected_boxes()
+             any(path.get_hctl().get_lun() == 0 for path in device.get_paths()))]

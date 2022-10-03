@@ -78,6 +78,10 @@ class ISCSIConnectivity(object):
             self.get_source_iqn(), self.get_target_iqn())
 
 
+class NVMEConnectivity(object):
+    pass
+
+
 class ConnectivityFactoryImpl(object):
     @cached_method
     def get_iscsi_sessions(self):

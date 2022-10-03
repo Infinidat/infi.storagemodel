@@ -4,8 +4,8 @@ from pprint import pp
 import re
 from sqlite3 import adapters
 
-from .infi import nvmeapi
-from .infi.nvmeapi import base
+from infi import nvmeapi
+from infi.nvmeapi import base
 #from .infi.nvmeapi import auth as nvmeapi_auth_module
 from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
@@ -67,7 +67,7 @@ def install_property_collectors_on_client(client):
 @contextmanager
 def with_host(client, host):
     from infi.pyvmomi_wrapper import get_reference_to_managed_object
-    monkey_patch(infi.nvmeapi, "get_nvmeapi", ConnectionManagerFactory.get)
+    monkey_patch(nvmeapi, "get_nvmeapi", ConnectionManagerFactory.get)
     previous = ConnectionManagerFactory.get()
     try:
         ConnectionManagerFactory.set(ConnectionManagerFactory.create(client, host))

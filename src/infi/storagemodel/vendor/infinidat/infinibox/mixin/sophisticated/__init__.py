@@ -102,6 +102,7 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_system_serial(self):
+        import pdb; pdb.set_trace()
         return self._get_system_serial_from_json_page()
 
     @cached_method
