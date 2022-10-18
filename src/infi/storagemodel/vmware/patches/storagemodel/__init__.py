@@ -464,6 +464,19 @@ class VMwareNVMeStorageController():
         from infi.storagemodel.connectivity import NVMEConnectivity
         return NVMEConnectivity()
 
+    def get_canonical_name(self):
+        return self._obj.attachedNamespace[0].name
+
+    def get_ibox_serial(self):
+        name = self.get_canonical_name()
+        serial = name.split('.').pop()
+        return serial[16:27] + serial[28:] + serial[:16]
+
+    def get_ibox_volumes(self):
+        if hasattr(self, '_box'):
+            serial = self.get_ibox_serial()
+            return self._box.volumes.find(serial=serial).to_list()
+
 
 class VMwareMultipathStorageController(VMwareMultipathDevice, multipath.MultipathStorageController):
     @cached_method

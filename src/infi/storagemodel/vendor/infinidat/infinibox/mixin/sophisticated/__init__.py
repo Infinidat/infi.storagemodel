@@ -102,7 +102,9 @@ class SophisticatedMixin(object):
 
     @cached_method
     def get_system_serial(self):
-        import pdb; pdb.set_trace()
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            return self.device.get_system_serial()
         return self._get_system_serial_from_json_page()
 
     @cached_method
