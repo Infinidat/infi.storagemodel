@@ -11,6 +11,14 @@ class SophisticatedMixin(object):
     @cached_method
     def get_management_address(self):
         """ Returns the management IPv4 address of the InfiniBox as string """
+        from infi.vendata.vmware_powertools.utils.addressdb import ManagementAddressesStore
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+
+        if isinstance(self.device, VMwareNVMeStorageController):
+            serial = self.device.get_system_serial()
+            mgmt = ManagementAddressesStore.get(serial)
+            return mgmt.management_address
+
         try:
             return self._get_key_from_json_page('ip', 0xcb)
         except InquiryException:
@@ -63,6 +71,10 @@ class SophisticatedMixin(object):
                 return self._get_key_from_json_page('system_name') # x <= 1.4
 
     def _get_system_version_from_json_page(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            import pdb; pdb.set_trace()
+
         try:
             return self._get_key_from_json_page('system_version', 0xc6)
         except InquiryException:
@@ -105,14 +117,23 @@ class SophisticatedMixin(object):
         from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
         if isinstance(self.device, VMwareNVMeStorageController):
             return self.device.get_system_serial()
+
         return self._get_system_serial_from_json_page()
 
     @cached_method
     def get_system_name(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            import pdb; pdb.set_trace()
+
         return self._get_system_name_from_json_page()
 
     @cached_method
     def get_system_version(self):
+        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
+        if isinstance(self.device, VMwareNVMeStorageController):
+            return self.device._box.get_version()
+
         return self._get_system_version_from_json_page()
 
     @cached_method
