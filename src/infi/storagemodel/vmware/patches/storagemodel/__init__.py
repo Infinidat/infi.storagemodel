@@ -438,8 +438,15 @@ class VMwareNVMeStorageController():
         return int(self._obj.serialNumber)
 
     def get_vendor(self):
+        from infi.vendata.powertools.utils import auth
         from infi.storagemodel.vendor import VendorFactory
-        return VendorFactory.create_multipath_controller_by_vid_pid(self.get_vendor_id(), self)
+
+        vendor = VendorFactory.create_multipath_controller_by_vid_pid(self.get_vendor_id(), self)
+
+        # Ugly hack for NVMe purpose
+        auth.CREDENTIALS_STORE._set_box(self)
+
+        return vendor
 
     def get_vendor_id(self):
         return ('NFINIDAT', 'InfiniBox')
@@ -472,10 +479,46 @@ class VMwareNVMeStorageController():
         serial = name.split('.').pop()
         return serial[16:27] + serial[28:] + serial[:16]
 
+    def get_volumes(self):
+        vol_ids = []
+        for ns in self._obj.attachedNamespace:
+            _, vid = ns.name.split('.')
+            vol_ids.append(vid[16:27] + vid[28:] + vid[:16])
+
+        return [
+            vol for vol in self._box.volumes.get_all()
+            if vol.get_serial() in vol_ids
+        ]
+
+    def get_volume(self):
+        if hasattr(self, '_box'):
+            serial = self.get_ibox_serial()
+            return self._box.volumes.get(serial=serial)
+
+    def get_volume_id(self):
+        volume = self.get_volume()
+        if volume:
+            return volume.id
+
     def get_ibox_volumes(self):
         if hasattr(self, '_box'):
             serial = self.get_ibox_serial()
             return self._box.volumes.find(serial=serial).to_list()
+
+    def get_host_id(self):
+        subnqn = self.get_subnqn()
+        _, ids = subnqn.split(':')
+        _, _, host_id = ids.split('-')
+        return int(host_id)
+
+    def get_scsi_test_unit_ready(self):
+        return None
+
+    def get_scsi_inquiry_pages(self):
+        return []
+
+    def get_paths(self):
+        return None
 
 
 class VMwareMultipathStorageController(VMwareMultipathDevice, multipath.MultipathStorageController):
