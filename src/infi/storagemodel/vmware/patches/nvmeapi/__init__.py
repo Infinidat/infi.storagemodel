@@ -4,8 +4,8 @@ from pprint import pp
 import re
 from sqlite3 import adapters
 
-from infi import nvmeapi
-from infi.nvmeapi import base
+from .infi import nvmeapi
+from .infi.nvmeapi import base
 #from .infi.nvmeapi import auth as nvmeapi_auth_module
 from infi.pyutils.contexts import contextmanager
 from infi.pyutils.patch import monkey_patch
