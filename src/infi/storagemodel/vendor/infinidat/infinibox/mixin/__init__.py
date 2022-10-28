@@ -29,7 +29,7 @@ class multipath_block_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBox
         return "<Infinibox Mixin for {!r}>".format(self.device)
 
 
-class multipath_controller_class(InfiniBoxInquiryMixin, SophisticatedMixin, VendorMultipathStorageController):
+class multipath_controller_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBoxVolumeMixin, VendorMultipathStorageController):
     def __repr__(self):
         return "<Infinibox Mixin for {!r}>".format(self.device)
 

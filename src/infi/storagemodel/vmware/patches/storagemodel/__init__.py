@@ -7,6 +7,8 @@ from infi.dtypes.hctl import HCTL
 from time import time
 from logging import getLogger
 import infi.storagemodel
+# from storagemodel.vendor.infinidat.infinibox.mixin import volume
+# from storagemodel.vendor.infinidat.infinibox.mixin import volume
 
 logger = getLogger(__name__)
 
@@ -474,16 +476,17 @@ class VMwareNVMeStorageController():
     def get_canonical_name(self):
         return self._obj.attachedNamespace[0].name
 
-    def get_ibox_serial(self):
-        name = self.get_canonical_name()
-        serial = name.split('.').pop()
-        return serial[16:27] + serial[28:] + serial[:16]
-
-    def get_volumes(self):
+    def get_volumes_ids(self):
         vol_ids = []
         for ns in self._obj.attachedNamespace:
             _, vid = ns.name.split('.')
-            vol_ids.append(vid[16:27] + vid[28:] + vid[:16])
+            if vid:
+                vol_ids.append(vid[16:27] + vid[28:] + vid[:16])
+
+        return vol_ids
+
+    def get_volumes(self):
+        vol_ids = self.get_volumes_ids()
 
         return [
             vol for vol in self._box.volumes.get_all()
@@ -491,19 +494,18 @@ class VMwareNVMeStorageController():
         ]
 
     def get_volume(self):
-        if hasattr(self, '_box'):
-            serial = self.get_ibox_serial()
-            return self._box.volumes.get(serial=serial)
+        if hasattr(self, '_box') and hasattr(self, 'volume_id'):
+            return self._box.volumes.get_by_id(self.volume_id)
 
-    def get_volume_id(self):
+    def get_volume_name(self):
         volume = self.get_volume()
         if volume:
-            return volume.id
+            return volume.get_name()
+        return ""
 
-    def get_ibox_volumes(self):
-        if hasattr(self, '_box'):
-            serial = self.get_ibox_serial()
-            return self._box.volumes.find(serial=serial).to_list()
+    def get_volume_id(self):
+        if hasattr(self, 'volume_id'):
+            return self.volume_id
 
     def get_host_id(self):
         subnqn = self.get_subnqn()
@@ -519,6 +521,16 @@ class VMwareNVMeStorageController():
 
     def get_paths(self):
         return None
+
+    def get_display_name(self):
+        return self.__class__.__name__
+
+    def get_uuid(self):
+        volume = self.get_volume()
+        return volume.get_field('nguid')
+
+    def set_volume_id(self, volume_id):
+        self.volume_id = volume_id
 
 
 class VMwareMultipathStorageController(VMwareMultipathDevice, multipath.MultipathStorageController):
