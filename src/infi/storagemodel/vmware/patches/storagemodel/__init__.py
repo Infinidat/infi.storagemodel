@@ -7,10 +7,13 @@ from infi.dtypes.hctl import HCTL
 from time import time
 from logging import getLogger
 import infi.storagemodel
+# from storagemodel.vendor.infinidat.infinibox.mixin import volume
+# from storagemodel.vendor.infinidat.infinibox.mixin import volume
 
 logger = getLogger(__name__)
 
 PROPERTY_COLLECTOR_KEY = "infi.storagemodel.vmware.native_multipath"
+NVME_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.nvmeTopology.adapter'
 SCSI_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.scsiTopology.adapter'
 SCSI_LUNS_PROPERTY_PATH = "config.storageDevice.scsiLun"
 MULTIPATH_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.multipathInfo.lun'
@@ -157,6 +160,29 @@ class VMwareHostStorageModel(StorageModel):
 
     def _create_scsi_model(self):
         return VMwareHostSCSIModel()
+
+    def _create_nvme_model(self):
+        return VMwareHostNVMEModel()
+
+    def get_nvme_controllers(self):
+        vhsm = self._client.property_collectors['infi.nvmeapi']
+        host = vhsm.get_properties().get(self._moref)
+        adapters = host.get(NVME_TOPOLOGY_PROPERTY_PATH)
+        nvme_controllers = []
+
+        if not adapters:
+            return nvme_controllers
+
+        for adapter in adapters:
+            try:
+                controllers = adapter.connectedController
+            except AttributeError:
+                continue
+
+            for controller in controllers:
+                nvme_controllers.append(VMwareNVMeStorageController(self._client, self._moref, controller))
+
+        return nvme_controllers
 
     def _create_native_multipath_model(self):
         return VMwareNativeMultipathModel(self._client, self._moref)
@@ -388,6 +414,125 @@ class VMwareMultipathDevice(VMwareInquiryInformationMixin):
         return self._scsi_lun_data_object.canonicalName
 
 
+class VMwareNVMeStorageController():
+    def __init__(self, client, host_moref, obj):
+        self._client = client
+        self._moref = host_moref
+        self._obj = obj
+        self.set_properties()
+
+    def set_properties(self):
+        name = self.get_name()
+
+        try:
+            subnqn, adapter, ip = name.split('#')
+        except ValueError:
+            return
+
+        self._subnqn = subnqn
+        self._adapter = adapter
+        self._ip = ip
+
+    def get_model(self):
+        return self._obj.model.strip()
+
+    def get_system_serial(self):
+        return int(self._obj.serialNumber)
+
+    def get_vendor(self):
+        from infi.vendata.powertools.utils import auth
+        from infi.storagemodel.vendor import VendorFactory
+
+        vendor = VendorFactory.create_multipath_controller_by_vid_pid(self.get_vendor_id(), self)
+
+        # Ugly hack for NVMe purpose
+        auth.CREDENTIALS_STORE._set_box(self)
+
+        return vendor
+
+    def get_vendor_id(self):
+        return ('NFINIDAT', 'InfiniBox')
+
+    def get_subnqn(self):
+        assert(self._subnqn == self._obj.subnqn)
+        return self._obj.subnqn
+
+    def get_key(self):
+        return self._obj.key
+
+    def get_name(self):
+        return self._obj.name
+
+    def get_adapter(self):
+        return self._adapter
+
+    def get_ip(self):
+        return self._ip
+
+    def get_connectivity(self):
+        from infi.storagemodel.connectivity import NVMEConnectivity
+        return NVMEConnectivity()
+
+    def get_canonical_name(self):
+        return self._obj.attachedNamespace[0].name
+
+    def get_volumes_ids(self):
+        vol_ids = []
+        for ns in self._obj.attachedNamespace:
+            _, vid = ns.name.split('.')
+            if vid:
+                vol_ids.append(vid[16:27] + vid[28:] + vid[:16])
+
+        return vol_ids
+
+    def get_volumes(self):
+        vol_ids = self.get_volumes_ids()
+
+        return [
+            vol for vol in self._box.volumes.get_all()
+            if vol.get_serial() in vol_ids
+        ]
+
+    def get_volume(self):
+        if hasattr(self, '_box') and hasattr(self, 'volume_id'):
+            return self._box.volumes.get_by_id(self.volume_id)
+
+    def get_volume_name(self):
+        volume = self.get_volume()
+        if volume:
+            return volume.get_name()
+        return ""
+
+    def get_volume_id(self):
+        if hasattr(self, 'volume_id'):
+            return self.volume_id
+
+    def get_host_id(self):
+        subnqn = self.get_subnqn()
+        _, ids = subnqn.split(':')
+        _, _, host_id = ids.split('-')
+        return int(host_id)
+
+    def get_scsi_test_unit_ready(self):
+        return None
+
+    def get_scsi_inquiry_pages(self):
+        return []
+
+    def get_paths(self):
+        return None
+
+    def get_display_name(self):
+        return self.__class__.__name__
+
+    def get_uuid(self):
+        volume = self.get_volume()
+        return volume.get_field('nguid')
+
+    def set_volume_id(self, volume_id):
+        self.volume_id = volume_id
+
+
 class VMwareMultipathStorageController(VMwareMultipathDevice, multipath.MultipathStorageController):
     @cached_method
     def get_multipath_access_path(self):
@@ -411,6 +556,16 @@ class VMwareHostSCSIModel(scsi.SCSIModel):
         # Everything in VMware is controlled by some Multipathing Plug-in
         return []
 
+
+class VMwareHostNVMEModel():
+    @cached_method
+    def get_all_nvme_block_devices(self):
+        return []
+
+    @cached_method
+    def get_all_storage_controller_devices(self):
+        # Everything in VMware is controlled by some Multipathing Plug-in
+        return []
 
 class VMwareNativeMultipathModel(multipath.NativeMultipathModel):
     def __init__(self, client, moref):
