@@ -22,39 +22,6 @@ HBAAPI_PROPERTY_PATH = 'config.storageDevice.hostBusAdapter'
 NVME_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice.nvmeTopology.adapter'
 #NVME_TOPOLOGY_PROPERTY_PATH = 'config.storageDevice'
 
-class NVMe_Connected_IBox():
-    def __init__(self, serial) -> None:
-        self.serial = serial
-        box = InfiniBox('box-ht05')
-        box.api.set_auth('admin', '123456')
-        self.wrapped_infinibox = box
-    
-    def get_vendor(self):
-        return self
-    
-    def get_management_address(self):
-        if self.wrapped_infinibox.get_api_addresses():
-            if self.wrapped_infinibox.get_api_addresses()[0]:
-                return self.wrapped_infinibox.get_api_addresses()[0][0]
-    
-    def get_management_port(self):
-        if self.wrapped_infinibox.get_api_addresses():
-            if self.wrapped_infinibox.get_api_addresses()[0]:
-                return self.wrapped_infinibox.get_api_addresses()[0][1]
-
-    def get_host_id(self):
-        #HARDCODED
-        return 14330
-
-    def get_system_version(self):
-        return self.wrapped_infinibox.get_version()
-
-    def get_system_serial(self):
-        return self.wrapped_infinibox.get_serial()
-
-    def get_system_name(self):
-        return self.wrapped_infinibox.get_name()
-
 
 def install_property_collectors_on_client(client):
     from infi.pyvmomi_wrapper.property_collector import HostSystemCachedPropertyCollector
@@ -67,7 +34,7 @@ def install_property_collectors_on_client(client):
 @contextmanager
 def with_host(client, host):
     from infi.pyvmomi_wrapper import get_reference_to_managed_object
-    monkey_patch(nvmeapi, "get_nvmeapi", ConnectionManagerFactory.get)
+    monkey_patch(infi.nvmeapi, "get_nvmeapi", ConnectionManagerFactory.get)
     previous = ConnectionManagerFactory.get()
     try:
         ConnectionManagerFactory.set(ConnectionManagerFactory.create(client, host))
@@ -127,14 +94,6 @@ class ConnectionManager(base.ConnectionManager):
             adapter_controllers_lists = [adapter.connectedController for adapter in self._get_all_NVMe_adapters()]
             controllers = [controller for adapter_list in adapter_controllers_lists for controller in adapter_list if controller.transportType == 'tcp']
             return controllers
-
-    def get_nvme_connected_boxes(self):
-        nvme_connected_boxes = []
-        nvme_topology_box_serials = {int(controller.serialNumber.strip()) for controller in self._get_NVMe_controllers()}
-        for serial in nvme_topology_box_serials:
-            dummy_box = NVMe_Connected_IBox(serial)
-            nvme_connected_boxes.append(dummy_box)
-        return nvme_connected_boxes
 
     def _get_host_storage_system(self):
         host = self._client.get_managed_object_by_reference(self._moref)
@@ -226,23 +185,30 @@ class ConnectionManager(base.ConnectionManager):
 
     def _disconnect_subsystem(self, connection_details):
         nvme_fabrics = self._get_esxcli().get('nvme.fabrics')
-        response = nvme_fabrics.Disconnect(connection_details)
+        response = nvme_fabrics.Disconnect(adapter=connection_details["adapter"], subsystemnqn=connection_details["subsystemnqn"])
         if type(response) == str:
             raise RuntimeError(response)
         else:
-            logger.debug("Controller {} connected".format(str(connection_details)))   
+            logger.debug("Controller {} disconnected".format(str(connection_details)))
 
-    def disconnect_all_adapters(self):
+    def _get_controllers_connection_details(self, controller):
+        serial = str.strip(controller.serialNumber)
+        connection_data = controller.name.split("#")
+        connection_details = {'ipaddress': connection_data[-1], 'adapter': connection_data[-2], 'subsystemnqn': controller.subnqn}
+        return serial, connection_details
+
+    def disconnect_all_adapters_by_serial(self, system_serial):
         controllers = self._get_NVMe_controllers()
         if controllers:
             for controller in controllers:
-                connection_details = self.get_connection_details(controller)
-                try:
-                    self._disconnect_subsystem(connection_details)
-                except RuntimeError:
-                        raise RuntimeError("Controller already {} conneted. NVMe connection for {} can not be established".format(str(connection_details), name))
+                serial, connection_details = self._get_controllers_connection_details(controller)
+                if serial == str(system_serial):
+                    try:
+                        self._disconnect_subsystem(connection_details)
+                    except RuntimeError:
+                            raise RuntimeError("Controller already {} conneted. NVMe connection for {} can not be established".format(str(connection_details), system_serial))
         else:
-            raise RuntimeError("No configred NVMe controllers. NVMe connection for {} can not be established.".format(name))
+            raise RuntimeError("No configred NVMe controllers. NVMe connection for {} can not be established.".format(system_serial))
 
 
 class ConnectionManagerFactory(object):
