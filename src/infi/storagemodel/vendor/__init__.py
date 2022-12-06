@@ -28,12 +28,6 @@ class VendorMultipathStorageController(object):
         self.device = device
 
 
-class VendorNVMeStorageController(object):
-    def __init__(self, device):
-        super(VendorNVMeStorageController, self).__init__()
-        self.device = device
-
-
 class VendorFactoryImpl(object):
     def __init__(self):
         super(VendorFactoryImpl, self).__init__()
@@ -41,14 +35,13 @@ class VendorFactoryImpl(object):
         self._register_builtin_factories()
 
     def register(self, vid_pid, scsi_block_class, scsi_controller_class, scsi_enclosure_class,
-                 multipath_block_class, multipath_controller_class, nvme_controller_class):
+                 multipath_block_class, multipath_controller_class):
         assert vid_pid not in self.vendor_mapping
         assert issubclass(scsi_block_class, VendorSCSIBlockDevice)
         assert issubclass(scsi_controller_class, VendorSCSIStorageController)
         assert issubclass(scsi_enclosure_class, VendorSCSIEnclosureDevice)
         assert issubclass(multipath_block_class, VendorMultipathBlockDevice)
         assert issubclass(multipath_controller_class, VendorMultipathStorageController)
-        assert issubclass(nvme_controller_class, VendorNVMeStorageController)
         self.vendor_mapping[vid_pid] = dict(scsi_block=scsi_block_class, scsi_controller=scsi_controller_class,
                                             scsi_enclosure=scsi_enclosure_class,
                                             multipath_block=multipath_block_class,
@@ -73,12 +66,9 @@ class VendorFactoryImpl(object):
     def create_multipath_controller_by_vid_pid(self, vid_pid, device):
         return self._create_device_by_vid_pid(vid_pid, 'multipath_controller', device)
 
-    def create_nvme_controller_by_vid_pid(self, vid_pid, device):
-        return self._create_device_by_vid_pid(vid_pid, 'nvme_controller', device)
-
     def _register_builtin_factories(self):
         from .infinidat.infinibox import mixin, vid_pid
         self.register(vid_pid, mixin.scsi_block_class, mixin.scsi_controller_class, mixin.scsi_enclosure_class,
-                      mixin.multipath_block_class, mixin.multipath_controller_class, mixin.nvme_controller_class)
+                      mixin.multipath_block_class, mixin.multipath_controller_class)
 
 VendorFactory = VendorFactoryImpl()

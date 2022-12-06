@@ -16,11 +16,6 @@ class InfiniBoxVolumeMixin(object):
     @cached_method
     def get_volume_id(self):
         """ Returns the volume id within the InfiniBox """
-        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
-
-        if isinstance(self.device, VMwareNVMeStorageController):
-            return self.device.get_volume_id()
-
         try:
             return self._get_key_from_json_page('vol_entity_id', 0xc6)
         except InquiryException:
@@ -29,11 +24,6 @@ class InfiniBoxVolumeMixin(object):
     @cached_method
     def get_volume_name(self):
         """ Returns the volume name inside the Infinibox, or None if not a volume """
-        from infi.storagemodel.vmware.patches.storagemodel import VMwareNVMeStorageController
-
-        if isinstance(self.device, VMwareNVMeStorageController):
-            return self.device.get_volume_name()
-
         return self._get_volume_name_from_json_page()
 
     @cached_method

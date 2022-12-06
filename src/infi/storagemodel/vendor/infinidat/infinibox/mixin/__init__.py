@@ -1,5 +1,5 @@
 from infi.storagemodel.vendor import VendorSCSIBlockDevice, VendorSCSIStorageController, VendorSCSIEnclosureDevice
-from infi.storagemodel.vendor import VendorMultipathBlockDevice, VendorMultipathStorageController, VendorNVMeStorageController
+from infi.storagemodel.vendor import VendorMultipathBlockDevice, VendorMultipathStorageController
 
 from logging import getLogger
 log = getLogger(__name__)
@@ -29,11 +29,6 @@ class multipath_block_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBox
         return "<Infinibox Mixin for {!r}>".format(self.device)
 
 
-class multipath_controller_class(InfiniBoxInquiryMixin, SophisticatedMixin, InfiniBoxVolumeMixin, VendorMultipathStorageController):
-    def __repr__(self):
-        return "<Infinibox Mixin for {!r}>".format(self.device)
-
-
-class nvme_controller_class(VendorNVMeStorageController):
+class multipath_controller_class(InfiniBoxInquiryMixin, SophisticatedMixin, VendorMultipathStorageController):
     def __repr__(self):
         return "<Infinibox Mixin for {!r}>".format(self.device)
