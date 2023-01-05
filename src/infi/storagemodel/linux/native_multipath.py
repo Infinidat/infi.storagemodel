@@ -141,7 +141,10 @@ class LinuxNativeMultipathModel(multipath.NativeMultipathModel):
         from infi.exceptools import chain
         try:
             all_devices = client.get_list_of_multipath_devices()
-            logger.debug("all multipath devices = {}".format(all_devices))
+            device_gen = (repr(device) for device in all_devices)
+            logger.debug("all mulitpath devices =")
+            for device_repr in device_gen:
+                logger.debug(device_repr)
             active_devices = [device for device in all_devices if self._is_device_active(device)]
         except TimeoutExpired:
             logger.error("communication with multipathd timed out")
