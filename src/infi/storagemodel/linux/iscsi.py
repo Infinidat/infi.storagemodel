@@ -1,12 +1,12 @@
 from logging import getLogger
 from infi.execute import execute
+from infi.os_info import system_is_rhel_based
 
 logger = getLogger(__name__)
 
 
 def is_iscsiadm_installed():
-    from infi.os_info import get_platform_string
-    if 'centos' in get_platform_string() or 'redhat' in get_platform_string():
+    if system_is_rhel_based():
         logger.debug("checking if iSCSI sw is installed")
         process = execute(['/bin/rpm', '-q', '--quiet', 'iscsi-initiator-utils'])
         if process.get_returncode() != 0:
