@@ -376,7 +376,11 @@ class SolarisPath(multipath.Path):
         from os import readlink
         all_stats = KStat().get_io_stats()
         full_dev_path = '/scsi_vhci/' + readlink(self.device_path).split('/')[-1].split(':')[0]
-        stats = all_stats[full_dev_path]['c{}'.format(self.get_hctl().get_host())][self.multipath_object_path.target_port_name]
+        if self.multipath_object_path.is_iscsi_session:
+            key = self.multipath_object_path.iscsi_session_uid
+        else:
+            key = 'c' + self.get_hctl().get_host()
+        stats = all_stats[full_dev_path][key][self.multipath_object_path.target_port_name]
         return multipath.PathStatistics(stats.bytes_read, stats.bytes_written, stats.read_io_count, stats.write_io_count)
 
     def get_alua_state(self):

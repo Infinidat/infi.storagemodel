@@ -136,16 +136,21 @@ class KStat(object):
 
     def ks_name_to_human_readable(self, ks_name):
         from re import findall
-        res = findall(r"(.*)\.t(.*)\.(fp.*)", ks_name)
+        res = findall(r'(.*)\.t(\d+)\.((?:fp|iscsi).*)', ks_name)
         if len(res) != 1:
             return
-        dev_name, target_pid, fp = res[0]
+        dev_name, target_pid, ctrl_name = res[0]
         inst_to_path = DeviceManager.get_inst_to_path_mapping()
         path_to_cfg = DeviceManager.get_path_to_cfg_mapping()
         dev_path = inst_to_path[dev_name]
-        ctrl_path = inst_to_path[fp]
-        ctrl_inst = path_to_cfg[ctrl_path]
+        if ctrl_name not in inst_to_path:
+            return
+        ctrl_path = inst_to_path[ctrl_name]
         target = drvpid2port(int(target_pid))
+        if ctrl_path in path_to_cfg:
+            ctrl_inst = path_to_cfg[ctrl_path]
+        else:
+            ctrl_inst = target.split(',')[0]
         return dev_path, target, ctrl_inst
 
 
