@@ -136,7 +136,7 @@ class KStat(object):
 
     def ks_name_to_human_readable(self, ks_name):
         from re import findall
-        res = findall(r'(.*)\.t(\d+)\.((?:fp|iscsi).*)', ks_name)
+        res = findall(r'(sd\d+)\.t(\d+)\.((?:fp|iscsi)\d+)', ks_name)
         if len(res) != 1:
             return
         dev_name, target_pid, ctrl_name = res[0]

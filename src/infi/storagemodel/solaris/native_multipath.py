@@ -382,7 +382,7 @@ class SolarisPath(multipath.Path):
         if self.multipath_object_path.is_iscsi_session:
             key = self.multipath_object_path.iscsi_session_uid
         else:
-            key = 'c' + self.get_hctl().get_host()
+            key = 'c' + str(self.get_hctl().get_host())
         stats = all_stats[full_dev_path][key][self.multipath_object_path.target_port_name]
         return multipath.PathStatistics(stats.bytes_read, stats.bytes_written, stats.read_io_count, stats.write_io_count)
 
