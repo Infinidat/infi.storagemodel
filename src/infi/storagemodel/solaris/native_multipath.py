@@ -44,7 +44,7 @@ class SolarisSinglePathEntry(Munch):
         from infi.dtypes.iqn import IQN
         iqn = self.target_port_name.split(',')[1]
         _ = IQN(iqn)
-        uid = self.target_port_name.split(',')[2]
+        uid = self.target_port_name.split(',')[0]
         return iqn, uid
 
     def _get_path_lun_fc(self):
@@ -87,7 +87,7 @@ class SolarisSinglePathEntry(Munch):
                 if result_iqn != self.target_iqn:
                     continue
                 for indent_line in range(line_number + 1, len(output)):
-                    if re.search(r'TPGT:', output[indent_line]):
+                    if re.search(r'ISID:', output[indent_line]):
                         uid = output[indent_line].split()[1]
                         if uid != self.iscsi_session_uid:
                             break
