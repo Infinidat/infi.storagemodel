@@ -154,8 +154,14 @@ class DeviceManager(object):
 
     @classmethod
     def _get_path_to_inst_tuples(cls):
-        with open(DEVICE_MAP_PATH, "r") as fd:
-            device_map_data = fd.read()
+        from infi.os_info import get_platform_string
+        from infi.storagemodel.unix.utils import execute_command
+        if 'solaris-10' in get_platform_string():
+            with open(DEVICE_MAP_PATH, "r") as fd:
+                device_map_data = fd.read()
+        else:
+            process = execute_command(['sysobjadm', 'device-list', '-I'])
+            device_map_data = process.get_stdout().decode()
         devices = findall(r"\"(.*)\" (\d*) \"(.*)\"", device_map_data)
         return [(x[0], x[2] + x[1]) for x in devices]
 

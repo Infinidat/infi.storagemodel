@@ -44,7 +44,7 @@ class SolarisSinglePathEntry(Munch):
         from infi.dtypes.iqn import IQN
         iqn = self.target_port_name.split(',')[1]
         _ = IQN(iqn)
-        uid = self.target_port_name.split(',')[2]
+        uid = self.target_port_name.split(',')[0]
         return iqn, uid
 
     def _get_path_lun_fc(self):
@@ -87,7 +87,7 @@ class SolarisSinglePathEntry(Munch):
                 if result_iqn != self.target_iqn:
                     continue
                 for indent_line in range(line_number + 1, len(output)):
-                    if re.search(r'TPGT:', output[indent_line]):
+                    if re.search(r'ISID:', output[indent_line]):
                         uid = output[indent_line].split()[1]
                         if uid != self.iscsi_session_uid:
                             break
@@ -376,7 +376,14 @@ class SolarisPath(multipath.Path):
         from os import readlink
         all_stats = KStat().get_io_stats()
         full_dev_path = '/scsi_vhci/' + readlink(self.device_path).split('/')[-1].split(':')[0]
-        stats = all_stats[full_dev_path]['c{}'.format(self.get_hctl().get_host())][self.multipath_object_path.target_port_name]
+        # we use different keys to retrieve kstat statistics numbers on Solaris:
+        # for iSCSI transport we use iSCSI session ID
+        # for FC transport we use FC port name
+        if self.multipath_object_path.is_iscsi_session:
+            key = self.multipath_object_path.iscsi_session_uid
+        else:
+            key = 'c' + str(self.get_hctl().get_host())
+        stats = all_stats[full_dev_path][key][self.multipath_object_path.target_port_name]
         return multipath.PathStatistics(stats.bytes_read, stats.bytes_written, stats.read_io_count, stats.write_io_count)
 
     def get_alua_state(self):
