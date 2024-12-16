@@ -402,13 +402,14 @@ class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
     def __init__(self, *args, **kwargs):
         super(SolarisNativeMultipathModel, self).__init__(*args, **kwargs)
         self._device_manager = DeviceManager()
+        self._client = SolarisMultipathClient()
 
     def _is_device_active(self, multipath_device):
         return any('OK' in path.state and 'no' in path.disabled for path in multipath_device.paths)
 
     @cached_method
-    def _get_list_of_active_devices(self, client):
-        all_devices = client.get_list_of_multipath_devices()
+    def _get_list_of_active_devices(self):
+        all_devices = self._client.get_list_of_multipath_devices()
         device_gen = (repr(device) for device in all_devices)
         logger.debug("all mulitpath devices =")
         for device_repr in device_gen:
@@ -418,8 +419,7 @@ class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
 
     @cached_method
     def get_all_multipath_block_devices(self):
-        client = SolarisMultipathClient()
-        devices = self._get_list_of_active_devices(client)
+        devices = self._get_list_of_active_devices()
         result = [SolarisNativeMultipathBlockDevice(d) for d in devices if 'array-controller' not in d.device_path]
         msg = "Got {}  block devices from multipath client (out of {} total)"
         logger.debug(msg.format(len(result), len(devices)))
@@ -428,8 +428,7 @@ class SolarisNativeMultipathModel(multipath.NativeMultipathModel):
     @cached_method
     def get_all_multipath_storage_controller_devices(self):
         # TODO get actual device path from device manager
-        client = SolarisMultipathClient()
-        devices = self._get_list_of_active_devices(client)
+        devices = self._get_list_of_active_devices()
         result = [SolarisNativeMultipathStorageController(d) for d in devices if 'array-controller' in d.device_path]
         msg = "Got {} storage controller devices from multipath client (out of {} total)"
         logger.debug(msg.format(len(result), len(devices)))
