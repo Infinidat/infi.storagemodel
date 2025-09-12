@@ -31,13 +31,15 @@ class SophisticatedMixin(object):
         return address, port
 
     def _get_key_from_json_page(self, key, page=0xc5):
-        data = self.get_json_data(page)
+        try:
+            data = self.get_json_data(page)
+        except KeyError as error:
+            error = "Failed to get JSON data from VPD page {}: {}".format(page, error)
+            logger.error(error)
+            raise chain(InquiryException(error))
         if key in data:
             return data[key]
-        elif 'Error' in data:
-            error = 'unable to get {} key from VPD page {}: {}'.format(key, page, data['Error'])
-        else:
-            error = 'key {} does not exist in JSON response'.format(key)
+        error = "Key {} does not exist in VPD page {}: {}".format(key, page, data)
         logger.error(error)
         raise chain(InquiryException(error))
 
