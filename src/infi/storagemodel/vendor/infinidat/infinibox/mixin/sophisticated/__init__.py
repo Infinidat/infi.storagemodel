@@ -32,10 +32,16 @@ class SophisticatedMixin(object):
 
     def _get_key_from_json_page(self, key, page=0xc5):
         try:
-            return self.get_json_data(page)[key]
-        except KeyError:
-            logger.debug("key {} does not exist in JSON response".format(key))
-            raise chain(InquiryException("KeyError: {}".format(key)))
+            data = self.get_json_data(page)
+        except KeyError as error:
+            error = "Failed to get JSON data from VPD page {}: {}".format(page, error)
+            logger.error(error)
+            raise chain(InquiryException(error))
+        if key in data:
+            return data[key]
+        error = "Key {} does not exist in VPD page {}: {}".format(key, page, data)
+        logger.error(error)
+        raise chain(InquiryException(error))
 
     def _get_key_from_replication_json_page(self, key):
         if 0xcc in self.device.get_scsi_inquiry_pages():
