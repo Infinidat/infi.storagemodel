@@ -6,7 +6,7 @@ from infi.pyutils.contexts import contextmanager
 from infi.pyutils.lazy import clear_cache
 from unittest import TestCase, SkipTest
 from mock import Mock, patch
-from six.moves import builtins
+import builtins
 try:
     from os import name, readlink, listdir
 except ImportError:
