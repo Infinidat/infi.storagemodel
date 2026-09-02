@@ -1,12 +1,3 @@
-def setUp():
-    from infi.storagemodel.base.gevent_wrapper import reinit
-    from unittest import SkipTest
-    from os import name
-    if name == 'nt':
-        raise SkipTest()
-    else:
-        reinit()
-
 from infi.pyutils.contexts import contextmanager
 
 
@@ -23,8 +14,18 @@ def sync_wait(*args, **kwargs):
     return data
 
 def test():
+    from infi.storagemodel.base.gevent_wrapper import reinit
     from infi.storagemodel.linux.rescan_scsi_bus import logic, getters, scsi
     from mock import patch
+    from unittest import SkipTest
+    from os import name
+
+    # why: this was a module-level setUp(). nose runs a module fixture through try_run(), which
+    # calls inspect.getargspec, and Python 3.11 removed it. Doing the same work inside the test
+    # keeps the behaviour and never reaches that path.
+    if name == 'nt':
+        raise SkipTest("this test covers the Linux rescan logic")
+    reinit()
 
     with patch("infi.asi.coroutines.sync_adapter.sync_wait", new=sync_wait):
         with patch.object(logic, 'get_lun_type') as get_lun_type:
